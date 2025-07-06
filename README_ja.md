@@ -119,8 +119,8 @@ npm run lint
 
 - TypeScriptは厳格モードで動作
 - ESLintでコード品質を管理
-- データはブラウザのlocalStorageに保存（プライバシーに配慮）
+- データはブラウザのlocalStorageに保存
 
 ## ライセンス
 
-このプロジェクトは [MIT License](LICENSE) の下で公開されています。
+[MIT License](LICENSE) の下で公開されています。

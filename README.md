@@ -119,8 +119,8 @@ npm run lint
 
 - TypeScript runs in strict mode
 - Code quality managed with ESLint
-- Data stored in browser localStorage (privacy-conscious)
+- Data stored in browser localStorage
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+[MIT License](LICENSE).
