@@ -1,0 +1,61 @@
+{
+  "title": "Spoke Length Calculator",
+  "input": {
+    "heading": "Input Values",
+    "preset": "Preset",
+    "presetPlaceholder": "Select a preset",
+    "presetOption": "Please Select",
+    "erd": "ERD (mm)",
+    "erdPlaceholder": "Effective Rim Diameter",
+    "pcdLeft": "PCD [L] (mm)",
+    "pcdRight": "PCD [R] (mm)",
+    "pcdLeftPlaceholder": "Left Side",
+    "pcdRightPlaceholder": "Right Side",
+    "flangeDistanceLeft": "Flange Distance [L] (mm)",
+    "flangeDistanceRight": "Flange Distance [R] (mm)",
+    "flangeLeftPlaceholder": "Left Side",
+    "flangeRightPlaceholder": "Right Side",
+    "spokeHoleDiameter": "Spoke Hole Diameter (mm)",
+    "spokeHolePlaceholder": "Spoke Hole Diameter",
+    "numberOfSpokes": "Number of Spokes",
+    "selectOption": "Please Select",
+    "crossingsLeft": "Crossings [L]",
+    "crossingsRight": "Crossings [R]",
+    "radialLacing": "0 (Radial Lacing)"
+  },
+  "buttons": {
+    "calculate": "Calculate",
+    "save": "Save",
+    "jsonDisplay": "JSON Display",
+    "jsonShort": "JSON",
+    "loadJson": "Load JSON File",
+    "load": "Load",
+    "copyToClipboard": "Copy to Clipboard",
+    "downloadJson": "Download JSON",
+    "close": "Close"
+  },
+  "results": {
+    "heading": "Calculation Results",
+    "left": "Left Side",
+    "right": "Right Side",
+    "placeholder": "Calculation results will be displayed here",
+    "calculationName": "Calculation Name",
+    "namePlaceholder": "Name your calculation for saving",
+    "savedCalculations": "Saved Calculations",
+    "jsonOutput": "JSON Output"
+  },
+  "alerts": {
+    "fillAllFields": "Please fill in all fields",
+    "enterCalculationName": "Please enter a calculation name",
+    "performCalculationFirst": "Please perform calculation first",
+    "saved": "Calculation result saved",
+    "copiedToClipboard": "JSON data copied to clipboard",
+    "copyFailed": "Copy failed. Please copy manually.",
+    "jsonLoaded": "Calculation data loaded from JSON file",
+    "invalidJsonFormat": "Invalid JSON file format",
+    "jsonLoadFailed": "Failed to load JSON file",
+    "jsonDownloaded": "JSON file downloaded successfully",
+    "presetLoadError": "Failed to load some preset files. Check console for details.",
+    "presetValidationError": "Preset data validation error: {{details}}"
+  }
+}

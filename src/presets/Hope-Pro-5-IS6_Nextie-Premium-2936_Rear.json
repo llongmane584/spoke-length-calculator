@@ -1,0 +1,25 @@
+{
+  "displayName": "Hope Pro 5 IS6 + Nextie Premium 2936 (Rear)",
+  "category": "MTB",
+  "description": "Rear wheel preset for Hope Pro 5 IS6 hub with Nextie Premium 29x36 rim",
+  "inputs": {
+    "erd": "581",
+    "pitchCircleLeft": "57",
+    "pitchCircleRight": "59",
+    "flangeDistanceLeft": "35",
+    "flangeDistanceRight": "22.6",
+    "spokeHoleDiameter": "2.6",
+    "numberOfSpokes": "32",
+    "crossingsLeft": "3",
+    "crossingsRight": "3"
+  },
+  "results": {
+    "left": 281.7,
+    "right": 280.1
+  },
+  "timestamp": "2025-06-29T09:10:17.817Z",
+  "metadata": {
+    "calculator": "Bicycle Spoke Length Calculator",
+    "version": "1.0"
+  }
+}
