@@ -99,7 +99,7 @@ npm run lint
 │       ├── Hope-Pro-5-IS6_Nextie-Premium-2936_Front.json
 │       └── Hope-Pro-5-IS6_Nextie-Premium-2936_Rear.json
 ├── public/                        # 静的ファイル
-│   └── wheel.png
+│   └── calculator.svg
 ├── dist/                          # ビルド出力
 ├── CLAUDE.md                      # AI assistant instructions
 ├── README.md                      # 英語版ドキュメント
