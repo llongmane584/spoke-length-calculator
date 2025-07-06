@@ -123,4 +123,4 @@ npm run lint
 
 ## ライセンス
 
-[MIT License](LICENSE) の下で公開されています。
+[MIT License](LICENSE)
