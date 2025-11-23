@@ -39,19 +39,19 @@
 
 ```bash
 # 依存関係のインストール
-npm install
+pnpm install
 
 # 開発サーバーの起動
-npm run dev
+pnpm dev
 
 # プロダクションビルド
-npm run build
+pnpm build
 
 # ビルドのプレビュー
-npm run preview
+pnpm preview
 
 # コード品質チェック
-npm run lint
+pnpm lint
 ```
 
 ## 使い方
@@ -105,7 +105,7 @@ npm run lint
 ├── README.md                      # 英語版ドキュメント
 ├── README_ja.md                   # 日本語版ドキュメント
 ├── package.json                   # 依存関係と設定
-├── package-lock.json              # 依存関係ロックファイル
+├── pnpm-lock.yaml                 # 依存関係ロックファイル
 ├── vite.config.ts                 # Vite設定
 ├── tsconfig.json                  # TypeScript設定
 ├── tsconfig.app.json              # アプリ固有TypeScript設定
