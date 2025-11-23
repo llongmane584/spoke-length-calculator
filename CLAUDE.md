@@ -35,13 +35,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - When working with issues, always specify issue numbers clearly
 
 ### Development
-- `npm run dev` - Start development server with hot module replacement
-- `npm run build` - Compile TypeScript and create production build
-- `npm run lint` - Run ESLint to check code quality
-- `npm run preview` - Preview production build locally
+- `pnpm dev` - Start development server with hot module replacement
+- `pnpm build` - Compile TypeScript and create production build
+- `pnpm lint` - Run ESLint to check code quality
+- `pnpm preview` - Preview production build locally
 
 ### Installation
-- `npm install` - Install all dependencies
+- `pnpm install` - Install all dependencies
 
 ## Architecture
 

@@ -39,19 +39,19 @@ Most of the code in this project was created with [Claude Code](https://claude.a
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Start development server
-npm run dev
+pnpm dev
 
 # Production build
-npm run build
+pnpm build
 
 # Preview build
-npm run preview
+pnpm preview
 
 # Code quality check
-npm run lint
+pnpm lint
 ```
 
 ## Usage
@@ -105,7 +105,7 @@ npm run lint
 ├── README.md                      # English documentation
 ├── README_ja.md                   # Japanese documentation
 ├── package.json                   # Dependencies and configuration
-├── package-lock.json              # Locked dependencies
+├── pnpm-lock.yaml                 # Locked dependencies
 ├── vite.config.ts                 # Vite configuration
 ├── tsconfig.json                  # TypeScript configuration
 ├── tsconfig.app.json              # App-specific TypeScript config
