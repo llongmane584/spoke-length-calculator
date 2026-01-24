@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Download, Trash2, Calculator, Upload, Globe } from 'lucide-react';
+import { Save, Trash2, Calculator, Languages, FileJson, FileUp, Sun, Moon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from './hooks/useToast';
+import { useTheme } from './hooks/useTheme';
+import { ConfirmDialog } from './components/ConfirmDialog';
 
 // Dynamic import of preset data
 const presetModules = import.meta.glob('./presets/*.json', { eager: true });
@@ -169,7 +171,7 @@ const NumberInput: React.FC<NumberInputProps> = ({ value, onChange, step, min, m
       onChange={handleChange}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
-      className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${className || ''}`}
+      className={`w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent ${className || ''}`}
       placeholder={placeholder}
     />
   );
@@ -178,6 +180,7 @@ const NumberInput: React.FC<NumberInputProps> = ({ value, onChange, step, min, m
 const SpokeLengthCalculator: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { showToast } = useToast();
+  const { theme, toggleTheme } = useTheme();
   const [inputs, setInputs] = useState<Inputs>({
     erd: '',
     pitchCircleLeft: '',
@@ -197,6 +200,8 @@ const SpokeLengthCalculator: React.FC = () => {
   const [jsonData, setJsonData] = useState('');
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [presetOptions, setPresetOptions] = useState<PresetOption[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [calculationToDelete, setCalculationToDelete] = useState<number | null>(null);
 
   // Dynamically load preset data
   useEffect(() => {
@@ -390,9 +395,26 @@ const SpokeLengthCalculator: React.FC = () => {
 
   // Delete saved calculation
   const deleteCalculation = (id: number) => {
-    const updated = savedCalculations.filter(calc => calc.id !== id);
-    setSavedCalculations(updated);
-    localStorage.setItem('spokeCalculations', JSON.stringify(updated));
+    setCalculationToDelete(id);
+    setShowDeleteConfirm(true);
+  };
+
+  // Confirm deletion
+  const confirmDelete = () => {
+    if (calculationToDelete !== null) {
+      const updated = savedCalculations.filter(calc => calc.id !== calculationToDelete);
+      setSavedCalculations(updated);
+      localStorage.setItem('spokeCalculations', JSON.stringify(updated));
+      showToast(t('alerts.deleted'), 'success');
+    }
+    setShowDeleteConfirm(false);
+    setCalculationToDelete(null);
+  };
+
+  // Cancel deletion
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setCalculationToDelete(null);
   };
 
   // JSON export
@@ -475,26 +497,39 @@ const SpokeLengthCalculator: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-      <div className="bg-white rounded-xl shadow-lg p-8">
+    <div className="max-w-4xl mx-auto p-6 bg-slate-100 dark:bg-slate-900 min-h-screen transition-colors">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
-            <Calculator className="w-8 h-8 text-blue-600" />
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
+            <Calculator className="w-8 h-8 text-slate-700 dark:text-slate-300" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
               {t('title')}
-              <span className="block sm:inline text-base sm:text-lg font-normal text-gray-600"></span>
+              <span className="block sm:inline text-base sm:text-lg font-normal text-slate-600 dark:text-slate-400"></span>
             </h1>
           </div>
-          <div className="flex items-center gap-2">
-            <Globe className="w-5 h-5 text-gray-600" />
-            <select
-              value={i18n.language}
-              onChange={(e) => handleLanguageChange(e.target.value)}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              title={t('theme.toggle')}
             >
-              <option value="en">English</option>
-              <option value="ja">日本語</option>
-            </select>
+              {theme === 'dark' ? (
+                <Sun className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+              ) : (
+                <Moon className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+              )}
+            </button>
+            <div className="flex items-center gap-2">
+              <Languages className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+              <select
+                value={i18n.language}
+                onChange={(e) => handleLanguageChange(e.target.value)}
+                className="px-3 py-1 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              >
+                <option value="en">English</option>
+                <option value="ja">日本語</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -502,17 +537,17 @@ const SpokeLengthCalculator: React.FC = () => {
         <div className="flex flex-col gap-10">
           {/* Input section */}
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-700 border-b pb-2">{t('input.heading')}</h2>
+            <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600 pb-2">{t('input.heading')}</h2>
 
             <div className="space-y-4">
               {/* Preset selection - only show if presets exist */}
               {presetOptions.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">{t('input.preset')}</label>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.preset')}</label>
                   <select
                     value={selectedPreset}
                     onChange={(e) => loadPreset(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   >
                     <option value="">{t('input.presetOption')}</option>
                     {presetOptions.map((preset) => (
@@ -525,7 +560,7 @@ const SpokeLengthCalculator: React.FC = () => {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">{t('input.erd')}</label>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.erd')}</label>
                 <NumberInput
                   value={inputs.erd}
                   onChange={(value) => handleInputChange('erd', value)}
@@ -538,7 +573,7 @@ const SpokeLengthCalculator: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
                     <span className="md:hidden">{t('input.pcdLeft')}</span>
                     <span className="hidden md:block">{t('input.pcdLeft')}</span>
                   </label>
@@ -552,7 +587,7 @@ const SpokeLengthCalculator: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
                     <span className="md:hidden">{t('input.pcdRight')}</span>
                     <span className="hidden md:block">{t('input.pcdRight')}</span>
                   </label>
@@ -569,7 +604,7 @@ const SpokeLengthCalculator: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">{t('input.flangeDistanceLeft')}</label>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.flangeDistanceLeft')}</label>
                   <NumberInput
                     value={inputs.flangeDistanceLeft}
                     onChange={(value) => handleInputChange('flangeDistanceLeft', value)}
@@ -580,7 +615,7 @@ const SpokeLengthCalculator: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">{t('input.flangeDistanceRight')}</label>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.flangeDistanceRight')}</label>
                   <NumberInput
                     value={inputs.flangeDistanceRight}
                     onChange={(value) => handleInputChange('flangeDistanceRight', value)}
@@ -593,7 +628,7 @@ const SpokeLengthCalculator: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">{t('input.spokeHoleDiameter')}</label>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.spokeHoleDiameter')}</label>
                 <NumberInput
                   value={inputs.spokeHoleDiameter !== '' && !isNaN(parseFloat(inputs.spokeHoleDiameter))
                     ? parseFloat(inputs.spokeHoleDiameter).toFixed(1)
@@ -607,11 +642,11 @@ const SpokeLengthCalculator: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">{t('input.numberOfSpokes')}</label>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.numberOfSpokes')}</label>
                 <select
                   value={inputs.numberOfSpokes}
                   onChange={(e) => handleInputChange('numberOfSpokes', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 >
                   <option value="">{t('input.selectOption')}</option>
                   <option value="24">24</option>
@@ -623,11 +658,11 @@ const SpokeLengthCalculator: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">{t('input.crossingsLeft')}</label>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.crossingsLeft')}</label>
                   <select
                     value={inputs.crossingsLeft}
                     onChange={(e) => handleInputChange('crossingsLeft', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   >
                     <option value="">{t('input.selectOption')}</option>
                     <option value="0">{t('input.radialLacing')}</option>
@@ -638,11 +673,11 @@ const SpokeLengthCalculator: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">{t('input.crossingsRight')}</label>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.crossingsRight')}</label>
                   <select
                     value={inputs.crossingsRight}
                     onChange={(e) => handleInputChange('crossingsRight', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   >
                     <option value="">{t('input.selectOption')}</option>
                     <option value="0">{t('input.radialLacing')}</option>
@@ -658,7 +693,7 @@ const SpokeLengthCalculator: React.FC = () => {
             <div className="flex justify-center pt-4">
               <button
                 onClick={calculateSpokeLength}
-                className="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300 flex items-center justify-center gap-2"
+                className="w-full bg-slate-700 dark:bg-slate-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors duration-300 flex items-center justify-center gap-2"
               >
                 <Calculator className="w-5 h-5" />
                 {t('buttons.calculate')}
@@ -668,22 +703,22 @@ const SpokeLengthCalculator: React.FC = () => {
 
           {/* Results and save section */}
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-700 border-b pb-2">{t('results.heading')}</h2>
+            <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600 pb-2">{t('results.heading')}</h2>
             {results.left !== null && results.right !== null ? (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+              <div className="bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-700 rounded-lg p-6">
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-700">{t('results.left')}</h3>
-                    <p className="text-3xl font-bold text-green-600">{results.left.toFixed(1)} mm</p>
+                    <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">{t('results.left')}</h3>
+                    <p className="text-3xl font-bold text-teal-700 dark:text-teal-400">{results.left.toFixed(1)} mm</p>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-700">{t('results.right')}</h3>
-                    <p className="text-3xl font-bold text-green-600">{results.right.toFixed(1)} mm</p>
+                    <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">{t('results.right')}</h3>
+                    <p className="text-3xl font-bold text-teal-700 dark:text-teal-400">{results.right.toFixed(1)} mm</p>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-500">
+              <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-600 rounded-lg p-6 text-center text-slate-500 dark:text-slate-400">
                 {t('results.placeholder')}
               </div>
             )}
@@ -691,28 +726,28 @@ const SpokeLengthCalculator: React.FC = () => {
             {/* Save and export */}
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">{t('results.calculationName')}</label>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('results.calculationName')}</label>
                 <input
                   type="text"
                   value={calculationName}
                   onChange={(e) => setCalculationName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   placeholder={t('results.namePlaceholder')}
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={saveCalculation}
-                  className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
+                  className="bg-teal-600 dark:bg-teal-700 hover:bg-teal-700 dark:hover:bg-teal-800 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
                 >
                   <Save className="w-4 h-4" />
                   {t('buttons.save')}
                 </button>
                 <button
                   onClick={exportToJSON}
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
+                  className="bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-800 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
                 >
-                  <Download className="w-4 h-4" />
+                  <FileJson className="w-4 h-4" />
                   <span className="sm:hidden">{t('buttons.jsonShort')}</span>
                   <span className="hidden sm:inline">{t('buttons.jsonDisplay')}</span>
                 </button>
@@ -726,8 +761,8 @@ const SpokeLengthCalculator: React.FC = () => {
                     onChange={loadFromJSON}
                     className="hidden"
                   />
-                  <span className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer">
-                    <Upload className="w-4 h-4" />
+                  <span className="w-full bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-800 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer">
+                    <FileUp className="w-4 h-4" />
                     {t('buttons.loadJson')}
                   </span>
                 </label>
@@ -737,27 +772,27 @@ const SpokeLengthCalculator: React.FC = () => {
             {/* List of saved calculations */}
             {savedCalculations.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-3">{t('results.savedCalculations')}</h3>
+                <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-3">{t('results.savedCalculations')}</h3>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {savedCalculations.map((calc) => (
-                    <div key={calc.id} className="bg-gray-50 rounded-lg p-3 flex items-center justify-between">
+                    <div key={calc.id} className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 flex items-center justify-between">
                       <div className="flex-1">
-                        <p className="font-medium text-gray-700">{calc.name}</p>
-                        <p className="text-sm text-gray-500">{calc.timestamp}</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="font-medium text-slate-700 dark:text-slate-300">{calc.name}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{calc.timestamp}</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
                           {t('results.left')}: {calc.results.left !== null ? calc.results.left.toFixed(1) : '-'}mm / {t('results.right')}: {calc.results.right !== null ? calc.results.right.toFixed(1) : '-'}mm
                         </p>
                       </div>
                       <div className="flex gap-2">
                         <button
                           onClick={() => loadCalculation(calc)}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          className="text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 text-sm font-medium"
                         >
                           {t('buttons.load')}
                         </button>
                         <button
                           onClick={() => deleteCalculation(calc.id)}
-                          className="text-red-600 hover:text-red-800"
+                          className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -772,13 +807,13 @@ const SpokeLengthCalculator: React.FC = () => {
 
         {/* JSON data display modal */}
         {showJsonOutput && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-700">{t('results.jsonOutput')}</h3>
+                <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">{t('results.jsonOutput')}</h3>
                 <button
                   onClick={() => setShowJsonOutput(false)}
-                  className="text-gray-500 hover:text-gray-700 text-xl leading-none"
+                  className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xl leading-none"
                 >
                   ✕
                 </button>
@@ -786,25 +821,25 @@ const SpokeLengthCalculator: React.FC = () => {
               <textarea
                 value={jsonData}
                 readOnly
-                className="w-full flex-1 min-h-64 p-3 border border-gray-300 rounded-md text-sm font-mono bg-gray-50 resize-none mb-4"
+                className="w-full flex-1 min-h-64 p-3 border border-slate-300 dark:border-slate-600 rounded-md text-sm font-mono bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 resize-none mb-4"
               />
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <button
                   onClick={copyToClipboard}
-                  className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
+                  className="bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-800 text-white py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
                 >
                   {t('buttons.copyToClipboard')}
                 </button>
                 <button
                   onClick={downloadJSON}
-                  className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
+                  className="bg-teal-600 dark:bg-teal-700 hover:bg-teal-700 dark:hover:bg-teal-800 text-white py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
                 >
-                  <Download className="w-4 h-4" />
+                  <FileJson className="w-4 h-4" />
                   {t('buttons.downloadJson')}
                 </button>
                 <button
                   onClick={() => setShowJsonOutput(false)}
-                  className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition-colors duration-200 w-full sm:w-auto justify-center"
+                  className="bg-slate-500 dark:bg-slate-600 hover:bg-slate-600 dark:hover:bg-slate-700 text-white py-2 px-4 rounded-md transition-colors duration-200 w-full sm:w-auto justify-center"
                 >
                   {t('buttons.close')}
                 </button>
@@ -812,6 +847,15 @@ const SpokeLengthCalculator: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Delete confirmation dialog */}
+        <ConfirmDialog
+          isOpen={showDeleteConfirm}
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+          title={t('dialog.deleteConfirm.title')}
+          message={t('dialog.deleteConfirm.message')}
+        />
       </div>
     </div>
   );

@@ -49,6 +49,7 @@
     "enterCalculationName": "計算名を入力してください",
     "performCalculationFirst": "まず計算を実行してください",
     "saved": "計算結果を保存しました",
+    "deleted": "計算を削除しました",
     "copiedToClipboard": "JSONデータをクリップボードにコピーしました",
     "copyFailed": "コピーに失敗しました。手動でコピーしてください。",
     "jsonLoaded": "JSONファイルから計算データを読み込みました",
@@ -57,5 +58,18 @@
     "jsonDownloaded": "JSONファイルのダウンロードが完了しました",
     "presetLoadError": "一部のプリセットファイルの読み込みに失敗しました。詳細はコンソールを確認してください。",
     "presetValidationError": "プリセットデータの検証エラー: {{details}}"
+  },
+  "theme": {
+    "light": "ライトモード",
+    "dark": "ダークモード",
+    "toggle": "テーマ切替"
+  },
+  "dialog": {
+    "deleteConfirm": {
+      "title": "削除の確認",
+      "message": "この保存された計算を削除してもよろしいですか？"
+    },
+    "cancel": "キャンセル",
+    "confirm": "削除"
   }
 }

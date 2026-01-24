@@ -49,6 +49,7 @@
     "enterCalculationName": "Please enter a calculation name",
     "performCalculationFirst": "Please perform calculation first",
     "saved": "Calculation result saved",
+    "deleted": "Calculation deleted successfully",
     "copiedToClipboard": "JSON data copied to clipboard",
     "copyFailed": "Copy failed. Please copy manually.",
     "jsonLoaded": "Calculation data loaded from JSON file",
@@ -57,5 +58,18 @@
     "jsonDownloaded": "JSON file downloaded successfully",
     "presetLoadError": "Failed to load some preset files. Check console for details.",
     "presetValidationError": "Preset data validation error: {{details}}"
+  },
+  "theme": {
+    "light": "Light Mode",
+    "dark": "Dark Mode",
+    "toggle": "Toggle Theme"
+  },
+  "dialog": {
+    "deleteConfirm": {
+      "title": "Confirm Deletion",
+      "message": "Are you sure you want to delete this saved calculation?"
+    },
+    "cancel": "Cancel",
+    "confirm": "Delete"
   }
 }
