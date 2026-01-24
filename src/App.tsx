@@ -171,7 +171,7 @@ const NumberInput: React.FC<NumberInputProps> = ({ value, onChange, step, min, m
       onChange={handleChange}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
-      className={`w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent ${className || ''}`}
+      className={`w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${className || ''}`}
       placeholder={placeholder}
     />
   );
@@ -524,7 +524,7 @@ const SpokeLengthCalculator: React.FC = () => {
               <select
                 value={i18n.language}
                 onChange={(e) => handleLanguageChange(e.target.value)}
-                className="px-3 py-1 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                className="px-3 py-1 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="en">English</option>
                 <option value="ja">日本語</option>
@@ -547,7 +547,7 @@ const SpokeLengthCalculator: React.FC = () => {
                   <select
                     value={selectedPreset}
                     onChange={(e) => loadPreset(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">{t('input.presetOption')}</option>
                     {presetOptions.map((preset) => (
@@ -646,7 +646,7 @@ const SpokeLengthCalculator: React.FC = () => {
                 <select
                   value={inputs.numberOfSpokes}
                   onChange={(e) => handleInputChange('numberOfSpokes', e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">{t('input.selectOption')}</option>
                   <option value="24">24</option>
@@ -662,7 +662,7 @@ const SpokeLengthCalculator: React.FC = () => {
                   <select
                     value={inputs.crossingsLeft}
                     onChange={(e) => handleInputChange('crossingsLeft', e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">{t('input.selectOption')}</option>
                     <option value="0">{t('input.radialLacing')}</option>
@@ -677,7 +677,7 @@ const SpokeLengthCalculator: React.FC = () => {
                   <select
                     value={inputs.crossingsRight}
                     onChange={(e) => handleInputChange('crossingsRight', e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">{t('input.selectOption')}</option>
                     <option value="0">{t('input.radialLacing')}</option>
@@ -705,15 +705,15 @@ const SpokeLengthCalculator: React.FC = () => {
           <div className="space-y-6">
             <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600 pb-2">{t('results.heading')}</h2>
             {results.left !== null && results.right !== null ? (
-              <div className="bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-700 rounded-lg p-6">
+              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div>
                     <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">{t('results.left')}</h3>
-                    <p className="text-3xl font-bold text-teal-700 dark:text-teal-400">{results.left.toFixed(1)} mm</p>
+                    <p className="text-3xl font-bold text-blue-800 dark:text-blue-400">{results.left.toFixed(1)} mm</p>
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">{t('results.right')}</h3>
-                    <p className="text-3xl font-bold text-teal-700 dark:text-teal-400">{results.right.toFixed(1)} mm</p>
+                    <p className="text-3xl font-bold text-blue-800 dark:text-blue-400">{results.right.toFixed(1)} mm</p>
                   </div>
                 </div>
               </div>
@@ -731,14 +731,14 @@ const SpokeLengthCalculator: React.FC = () => {
                   type="text"
                   value={calculationName}
                   onChange={(e) => setCalculationName(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder={t('results.namePlaceholder')}
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={saveCalculation}
-                  className="bg-teal-600 dark:bg-teal-700 hover:bg-teal-700 dark:hover:bg-teal-800 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
+                  className="bg-blue-700 dark:bg-blue-800 hover:bg-blue-800 dark:hover:bg-blue-900 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
                 >
                   <Save className="w-4 h-4" />
                   {t('buttons.save')}
@@ -786,7 +786,7 @@ const SpokeLengthCalculator: React.FC = () => {
                       <div className="flex gap-2">
                         <button
                           onClick={() => loadCalculation(calc)}
-                          className="text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 text-sm font-medium"
+                          className="text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 text-sm font-medium"
                         >
                           {t('buttons.load')}
                         </button>
@@ -832,7 +832,7 @@ const SpokeLengthCalculator: React.FC = () => {
                 </button>
                 <button
                   onClick={downloadJSON}
-                  className="bg-teal-600 dark:bg-teal-700 hover:bg-teal-700 dark:hover:bg-teal-800 text-white py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
+                  className="bg-blue-700 dark:bg-blue-800 hover:bg-blue-800 dark:hover:bg-blue-900 text-white py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
                 >
                   <FileJson className="w-4 h-4" />
                   {t('buttons.downloadJson')}
