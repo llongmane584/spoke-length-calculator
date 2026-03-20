@@ -501,7 +501,6 @@ const SpokeLengthCalculator: React.FC = () => {
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
-            <Calculator className="w-8 h-8 text-slate-700 dark:text-slate-300" />
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
               {t('title')}
               <span className="block sm:inline text-base sm:text-lg font-normal text-slate-600 dark:text-slate-400"></span>
