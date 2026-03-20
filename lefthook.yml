@@ -1,0 +1,8 @@
+pre-commit:
+  parallel: true
+  commands:
+    lint:
+      glob: "**/*.{ts,tsx}"
+      run: pnpm eslint {staged_files}
+    typecheck:
+      run: pnpm tsc -b
