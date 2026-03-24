@@ -275,7 +275,13 @@ const SpokeLengthCalculator: React.FC = () => {
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang);
     localStorage.setItem('preferredLanguage', lang);
+    document.documentElement.lang = lang;
   };
+
+  // Keep lang attribute in sync with i18n language
+  useEffect(() => {
+    document.documentElement.lang = i18n.language;
+  }, [i18n.language]);
 
   // Load saved calculations from local storage
   useEffect(() => {
