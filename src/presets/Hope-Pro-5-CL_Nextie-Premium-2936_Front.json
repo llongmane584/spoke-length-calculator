@@ -1,0 +1,25 @@
+{
+  "displayName": "Hope Pro 5 CL + Nextie Premium 2936 (Front)",
+  "category": "MTB",
+  "description": "Front wheel preset for Hope Pro 5 CL hub with Nextie Premium 29x36 rim",
+  "inputs": {
+    "erd": "581",
+    "pitchCircleLeft": "43",
+    "pitchCircleRight": "43",
+    "flangeDistanceLeft": "27",
+    "flangeDistanceRight": "35.6",
+    "spokeHoleDiameter": "2.6",
+    "numberOfSpokes": "32",
+    "crossingsLeft": "3",
+    "crossingsRight": "3"
+  },
+  "results": {
+    "left": 282.9,
+    "right": 283.9
+  },
+  "timestamp": "2026-04-06T09:22:39.544Z",
+  "metadata": {
+    "calculator": "Bicycle Spoke Length Calculator",
+    "version": "1.0"
+  }
+}
