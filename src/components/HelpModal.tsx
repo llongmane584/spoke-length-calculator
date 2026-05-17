@@ -30,6 +30,8 @@ function ArrowDefs() {
 }
 
 function ErdDiagram() {
+  const { t } = useTranslation()
+
   return (
     <svg viewBox="0 0 320 200" className="w-full max-w-sm h-auto text-slate-700 dark:text-slate-200" aria-hidden="true">
       <ArrowDefs />
@@ -38,7 +40,7 @@ function ErdDiagram() {
       <line x1="102" y1="100" x2="218" y2="100" stroke={ACCENT} strokeWidth="1.5" markerStart="url(#hm-arr-start)" markerEnd="url(#hm-arr-end)" />
       <text x="160" y="94" textAnchor="middle" fontSize="13" fill={ACCENT} fontWeight="600">ERD</text>
       <circle cx="160" cy="42" r="3" fill={ACCENT} />
-      <text x="160" y="32" textAnchor="middle" fontSize="10" fill="currentColor">nipple seat</text>
+      <text x="160" y="32" textAnchor="middle" fontSize="10" fill="currentColor">{t('input.help.erd.diagram.nippleSeat')}</text>
     </svg>
   )
 }
@@ -69,6 +71,8 @@ function PcdDiagram() {
 }
 
 function FlangeDistanceDiagram() {
+  const { t } = useTranslation()
+
   return (
     <svg viewBox="0 0 320 200" className="w-full max-w-sm h-auto text-slate-700 dark:text-slate-200" aria-hidden="true">
       <ArrowDefs />
@@ -86,7 +90,7 @@ function FlangeDistanceDiagram() {
       <circle cx="200" cy="140" r="4" fill="none" stroke="currentColor" strokeWidth="1.2" />
       {/* centerline */}
       <line x1="160" y1="40" x2="160" y2="170" stroke="currentColor" strokeDasharray="4 3" strokeWidth="1" opacity="0.6" />
-      <text x="160" y="35" textAnchor="middle" fontSize="9" fill="currentColor" opacity="0.7">hub center</text>
+      <text x="160" y="35" textAnchor="middle" fontSize="9" fill="currentColor" opacity="0.7">{t('input.help.flangeDistance.diagram.hubCenter')}</text>
       {/* left arrow */}
       <line x1="160" y1="160" x2="120" y2="160" stroke={ACCENT} strokeWidth="1.5" markerStart="url(#hm-arr-start)" markerEnd="url(#hm-arr-end)" />
       <text x="140" y="175" textAnchor="middle" fontSize="11" fill={ACCENT} fontWeight="600">FD [L]</text>
@@ -98,6 +102,8 @@ function FlangeDistanceDiagram() {
 }
 
 function SpokeHoleDiameterDiagram() {
+  const { t } = useTranslation()
+
   return (
     <svg viewBox="0 0 320 200" className="w-full max-w-sm h-auto text-slate-700 dark:text-slate-200" aria-hidden="true">
       <ArrowDefs />
@@ -109,13 +115,14 @@ function SpokeHoleDiameterDiagram() {
       <line x1="60" y1="180" x2="260" y2="40" stroke="currentColor" strokeWidth="2" />
       {/* diameter arrow */}
       <line x1="118" y1="110" x2="202" y2="110" stroke={ACCENT} strokeWidth="1.5" markerStart="url(#hm-arr-start)" markerEnd="url(#hm-arr-end)" />
-      <text x="160" y="104" textAnchor="middle" fontSize="11" fill={ACCENT} fontWeight="600">hole Ø</text>
-      <text x="160" y="172" textAnchor="middle" fontSize="10" fill="currentColor" opacity="0.7">spoke</text>
+      <text x="160" y="104" textAnchor="middle" fontSize="11" fill={ACCENT} fontWeight="600">{t('input.help.spokeHoleDiameter.diagram.holeDiameter')}</text>
+      <text x="160" y="172" textAnchor="middle" fontSize="10" fill="currentColor" opacity="0.7">{t('input.help.spokeHoleDiameter.diagram.spoke')}</text>
     </svg>
   )
 }
 
 function CrossingsDiagram() {
+  const { t } = useTranslation()
   const cx1 = 90
   const cy = 100
   const cx2 = 230
@@ -157,14 +164,14 @@ function CrossingsDiagram() {
       {radial(cx1).map((l, i) => (
         <line key={i} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="currentColor" strokeWidth="1.3" />
       ))}
-      <text x={cx1} y={185} textAnchor="middle" fontSize="11" fill={ACCENT} fontWeight="600">0 (radial)</text>
+      <text x={cx1} y={185} textAnchor="middle" fontSize="11" fill={ACCENT} fontWeight="600">{t('input.help.crossings.diagram.radial')}</text>
       {/* 2-cross */}
       <circle cx={cx2} cy={cy} r={rimR} fill="none" stroke="currentColor" strokeWidth="2" />
       <circle cx={cx2} cy={cy} r={hubR} fill="none" stroke="currentColor" strokeWidth="2" />
       {cross2(cx2).map((l, i) => (
         <line key={i} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="currentColor" strokeWidth="1.3" />
       ))}
-      <text x={cx2} y={185} textAnchor="middle" fontSize="11" fill={ACCENT} fontWeight="600">2 cross</text>
+      <text x={cx2} y={185} textAnchor="middle" fontSize="11" fill={ACCENT} fontWeight="600">{t('input.help.crossings.diagram.twoCross')}</text>
     </svg>
   )
 }

@@ -26,7 +26,10 @@
       "erd": {
         "title": "ERD (Effective Rim Diameter)",
         "description": "The diameter measured between the points where the spoke nipples seat on the rim — i.e., the effective circle the spoke ends form.\n\nThis is NOT the rim's outer or bead diameter. Most rim makers publish the ERD; if not, measure it with a ruler or dedicated ERD gauge.\n\nUnit: mm.",
-        "ariaLabel": "Help for ERD"
+        "ariaLabel": "Help for ERD",
+        "diagram": {
+          "nippleSeat": "nipple seat"
+        }
       },
       "pcd": {
         "title": "PCD (Pitch Circle Diameter)",
@@ -36,17 +39,28 @@
       "flangeDistance": {
         "title": "Flange Distance",
         "description": "The horizontal distance from the hub's center plane (centerline of the locknuts) to each flange.\n\nLeft and Right are usually asymmetric due to cassette / disc rotor offset — measure each side independently.\n\nUnit: mm.",
-        "ariaLabel": "Help for Flange Distance"
+        "ariaLabel": "Help for Flange Distance",
+        "diagram": {
+          "hubCenter": "hub center"
+        }
       },
       "spokeHoleDiameter": {
         "title": "Spoke Hole Diameter",
         "description": "The diameter of the spoke holes on the hub flange. Used to correct the spoke length so the spoke reaches across the hole rather than its center.\n\nTypically around 2.5 mm for standard hubs.\n\nUnit: mm.",
-        "ariaLabel": "Help for Spoke Hole Diameter"
+        "ariaLabel": "Help for Spoke Hole Diameter",
+        "diagram": {
+          "holeDiameter": "hole Ø",
+          "spoke": "spoke"
+        }
       },
       "crossings": {
         "title": "Crossings",
         "description": "The number of times each spoke crosses other spokes between the hub and the rim.\n\n0 = radial (straight from hub to rim).\n2 or 3 cross is most common; 4 cross is used on some high-load builds.\n\nLeft and Right can use different crossing counts.",
-        "ariaLabel": "Help for Crossings"
+        "ariaLabel": "Help for Crossings",
+        "diagram": {
+          "radial": "0 (radial)",
+          "twoCross": "2 cross"
+        }
       }
     }
   },
