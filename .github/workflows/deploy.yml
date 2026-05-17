@@ -8,6 +8,8 @@ on:
       - '.gitignore'
       - '.env.example'
       - 'docs/**'
+      - 'claude/**'
+      - 'agents/**'
 
 permissions:
   contents: read
