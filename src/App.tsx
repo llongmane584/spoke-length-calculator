@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from './hooks/useToast';
 import { useTheme } from './hooks/useTheme';
 import { ConfirmDialog } from './components/ConfirmDialog';
+import { HelpButton } from './components/HelpButton';
+import { HelpModal, type HelpTopic } from './components/HelpModal';
 
 // Dynamic import of preset data
 const presetModules = import.meta.glob('./presets/*.json', { eager: true });
@@ -202,6 +204,7 @@ const SpokeLengthCalculator: React.FC = () => {
   const [presetOptions, setPresetOptions] = useState<PresetOption[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [calculationToDelete, setCalculationToDelete] = useState<number | null>(null);
+  const [helpTopic, setHelpTopic] = useState<HelpTopic | null>(null);
 
   // Dynamically load preset data
   useEffect(() => {
@@ -565,7 +568,10 @@ const SpokeLengthCalculator: React.FC = () => {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.erd')}</label>
+                <div className="flex items-center gap-1 mb-1">
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.erd')}</label>
+                  <HelpButton topic="erd" onOpen={setHelpTopic} />
+                </div>
                 <NumberInput
                   value={inputs.erd}
                   onChange={(value) => handleInputChange('erd', value)}
@@ -578,10 +584,13 @@ const SpokeLengthCalculator: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                    <span className="md:hidden">{t('input.pcdLeft')}</span>
-                    <span className="hidden md:block">{t('input.pcdLeft')}</span>
-                  </label>
+                  <div className="flex items-center gap-1 mb-1">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
+                      <span className="md:hidden">{t('input.pcdLeft')}</span>
+                      <span className="hidden md:block">{t('input.pcdLeft')}</span>
+                    </label>
+                    <HelpButton topic="pcd" onOpen={setHelpTopic} />
+                  </div>
                   <NumberInput
                     value={inputs.pitchCircleLeft}
                     onChange={(value) => handleInputChange('pitchCircleLeft', value)}
@@ -592,10 +601,13 @@ const SpokeLengthCalculator: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                    <span className="md:hidden">{t('input.pcdRight')}</span>
-                    <span className="hidden md:block">{t('input.pcdRight')}</span>
-                  </label>
+                  <div className="flex items-center gap-1 mb-1">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
+                      <span className="md:hidden">{t('input.pcdRight')}</span>
+                      <span className="hidden md:block">{t('input.pcdRight')}</span>
+                    </label>
+                    <HelpButton topic="pcd" onOpen={setHelpTopic} />
+                  </div>
                   <NumberInput
                     value={inputs.pitchCircleRight}
                     onChange={(value) => handleInputChange('pitchCircleRight', value)}
@@ -609,7 +621,10 @@ const SpokeLengthCalculator: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.flangeDistanceLeft')}</label>
+                  <div className="flex items-center gap-1 mb-1">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.flangeDistanceLeft')}</label>
+                    <HelpButton topic="flangeDistance" onOpen={setHelpTopic} />
+                  </div>
                   <NumberInput
                     value={inputs.flangeDistanceLeft}
                     onChange={(value) => handleInputChange('flangeDistanceLeft', value)}
@@ -620,7 +635,10 @@ const SpokeLengthCalculator: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.flangeDistanceRight')}</label>
+                  <div className="flex items-center gap-1 mb-1">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.flangeDistanceRight')}</label>
+                    <HelpButton topic="flangeDistance" onOpen={setHelpTopic} />
+                  </div>
                   <NumberInput
                     value={inputs.flangeDistanceRight}
                     onChange={(value) => handleInputChange('flangeDistanceRight', value)}
@@ -633,7 +651,10 @@ const SpokeLengthCalculator: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.spokeHoleDiameter')}</label>
+                <div className="flex items-center gap-1 mb-1">
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.spokeHoleDiameter')}</label>
+                  <HelpButton topic="spokeHoleDiameter" onOpen={setHelpTopic} />
+                </div>
                 <NumberInput
                   value={inputs.spokeHoleDiameter !== '' && !isNaN(parseFloat(inputs.spokeHoleDiameter))
                     ? parseFloat(inputs.spokeHoleDiameter).toFixed(1)
@@ -663,7 +684,10 @@ const SpokeLengthCalculator: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.crossingsLeft')}</label>
+                  <div className="flex items-center gap-1 mb-1">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.crossingsLeft')}</label>
+                    <HelpButton topic="crossings" onOpen={setHelpTopic} />
+                  </div>
                   <select
                     value={inputs.crossingsLeft}
                     onChange={(e) => handleInputChange('crossingsLeft', e.target.value)}
@@ -678,7 +702,10 @@ const SpokeLengthCalculator: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.crossingsRight')}</label>
+                  <div className="flex items-center gap-1 mb-1">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.crossingsRight')}</label>
+                    <HelpButton topic="crossings" onOpen={setHelpTopic} />
+                  </div>
                   <select
                     value={inputs.crossingsRight}
                     onChange={(e) => handleInputChange('crossingsRight', e.target.value)}
@@ -861,6 +888,9 @@ const SpokeLengthCalculator: React.FC = () => {
           title={t('dialog.deleteConfirm.title')}
           message={t('dialog.deleteConfirm.message')}
         />
+
+        {/* Help modal */}
+        <HelpModal topic={helpTopic} onClose={() => setHelpTopic(null)} />
       </div>
     </div>
   );
