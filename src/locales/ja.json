@@ -17,7 +17,7 @@
     "flangeRightPlaceholder": "右側",
     "spokeHoleDiameter": "Spoke Hole Diameter (mm)",
     "spokeHolePlaceholder": "スポーク穴直径",
-    "numberOfSpokes": "Number of Spokes",
+    "numberOfSpokes": "スポーク本数",
     "selectOption": "選択してください",
     "crossingsLeft": "Crossings [L]",
     "crossingsRight": "Crossings [R]",
