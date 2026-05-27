@@ -918,434 +918,432 @@ const SpokeLengthCalculator: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-slate-100 dark:bg-slate-900 min-h-screen transition-colors">
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
-              {titleText}
-              <span className="block sm:inline text-base sm:text-lg font-normal text-slate-600 dark:text-slate-400"></span>
-            </h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-              title={t('theme.toggle')}
+    <div className="min-h-screen p-4 sm:p-6 md:p-8 dark:bg-slate-900 transition-colors">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
+            {titleText}
+            <span className="block sm:inline text-base sm:text-lg font-normal text-slate-600 dark:text-slate-400"></span>
+          </h1>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            title={t('theme.toggle')}
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+            ) : (
+              <Moon className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+            )}
+          </button>
+          <div className="flex items-center gap-2">
+            <Languages className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+            <select
+              value={i18n.language}
+              onChange={(e) => handleLanguageChange(e.target.value)}
+              className="px-3 py-1 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              {theme === 'dark' ? (
-                <Sun className="w-5 h-5 text-slate-600 dark:text-slate-300" />
-              ) : (
-                <Moon className="w-5 h-5 text-slate-600 dark:text-slate-300" />
-              )}
-            </button>
-            <div className="flex items-center gap-2">
-              <Languages className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-              <select
-                value={i18n.language}
-                onChange={(e) => handleLanguageChange(e.target.value)}
-                className="px-3 py-1 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="en">English</option>
-                <option value="ja">日本語</option>
-              </select>
-            </div>
+              <option value="en">English</option>
+              <option value="ja">日本語</option>
+            </select>
           </div>
         </div>
+      </div>
 
-        {/* Single column vertical layout */}
-        <div className="flex flex-col gap-10">
-          {/* Input section */}
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600 pb-2">{t('input.heading')}</h2>
+      {/* Single column vertical layout */}
+      <div className="flex flex-col gap-10">
+        {/* Input section */}
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600 pb-2">{t('input.heading')}</h2>
 
-            <div className="space-y-4">
-              {/* Preset selection - only show if presets exist */}
-              {presetOptions.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.preset')}</label>
-                  <select
-                    value={selectedPreset}
-                    onChange={(e) => loadPreset(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">{t('input.presetOption')}</option>
-                    {presetOptions.map((preset) => (
-                      <option key={preset.id} value={preset.id}>
-                        {preset.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
+          <div className="space-y-4">
+            {/* Preset selection - only show if presets exist */}
+            {presetOptions.length > 0 && (
               <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.erd')}</label>
-                  <HelpButton topic="erd" onOpen={setHelpTopic} />
-                </div>
-                <NumberInput
-                  id="erd"
-                  value={inputs.erd}
-                  onChange={(value) => handleInputChange('erd', value)}
-                  onBlur={() => markFieldTouched('erd')}
-                  step={1}
-                  min={1}
-                  max={1000}
-                  error={visibleFieldErrors.erd}
-                  placeholder={t('input.erdPlaceholder')}
-                />
-                <FieldError id="erd-error" message={visibleFieldErrors.erd} />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
-                      <span className="md:hidden">{t('input.pcdLeft')}</span>
-                      <span className="hidden md:block">{t('input.pcdLeft')}</span>
-                    </label>
-                    <HelpButton topic="pcd" onOpen={setHelpTopic} />
-                  </div>
-                  <NumberInput
-                    id="pitchCircleLeft"
-                    value={inputs.pitchCircleLeft}
-                    onChange={(value) => handleInputChange('pitchCircleLeft', value)}
-                    onBlur={() => markFieldTouched('pitchCircleLeft')}
-                    step={1}
-                    min={1}
-                    max={100}
-                    error={visibleFieldErrors.pitchCircleLeft}
-                    placeholder={t('input.flangeLeftPlaceholder')}
-                  />
-                  <FieldError id="pitchCircleLeft-error" message={visibleFieldErrors.pitchCircleLeft} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
-                      <span className="md:hidden">{t('input.pcdRight')}</span>
-                      <span className="hidden md:block">{t('input.pcdRight')}</span>
-                    </label>
-                    <HelpButton topic="pcd" onOpen={setHelpTopic} />
-                  </div>
-                  <NumberInput
-                    id="pitchCircleRight"
-                    value={inputs.pitchCircleRight}
-                    onChange={(value) => handleInputChange('pitchCircleRight', value)}
-                    onBlur={() => markFieldTouched('pitchCircleRight')}
-                    step={1}
-                    min={1}
-                    max={100}
-                    error={visibleFieldErrors.pitchCircleRight}
-                    placeholder={t('input.flangeRightPlaceholder')}
-                  />
-                  <FieldError id="pitchCircleRight-error" message={visibleFieldErrors.pitchCircleRight} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.flangeDistanceLeft')}</label>
-                    <HelpButton topic="flangeDistance" onOpen={setHelpTopic} />
-                  </div>
-                  <NumberInput
-                    id="flangeDistanceLeft"
-                    value={inputs.flangeDistanceLeft}
-                    onChange={(value) => handleInputChange('flangeDistanceLeft', value)}
-                    onBlur={() => markFieldTouched('flangeDistanceLeft')}
-                    step={1}
-                    min={1}
-                    max={100}
-                    error={visibleFieldErrors.flangeDistanceLeft}
-                    placeholder={t('input.flangeLeftPlaceholder')}
-                  />
-                  <FieldError id="flangeDistanceLeft-error" message={visibleFieldErrors.flangeDistanceLeft} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.flangeDistanceRight')}</label>
-                    <HelpButton topic="flangeDistance" onOpen={setHelpTopic} />
-                  </div>
-                  <NumberInput
-                    id="flangeDistanceRight"
-                    value={inputs.flangeDistanceRight}
-                    onChange={(value) => handleInputChange('flangeDistanceRight', value)}
-                    onBlur={() => markFieldTouched('flangeDistanceRight')}
-                    step={1}
-                    min={1}
-                    max={100}
-                    error={visibleFieldErrors.flangeDistanceRight}
-                    placeholder={t('input.flangeRightPlaceholder')}
-                  />
-                  <FieldError id="flangeDistanceRight-error" message={visibleFieldErrors.flangeDistanceRight} />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.spokeHoleDiameter')}</label>
-                  <HelpButton topic="spokeHoleDiameter" onOpen={setHelpTopic} />
-                </div>
-                <NumberInput
-                  id="spokeHoleDiameter"
-                  value={inputs.spokeHoleDiameter}
-                  onChange={(value) => handleInputChange('spokeHoleDiameter', value)}
-                  onBlur={() => markFieldTouched('spokeHoleDiameter')}
-                  step={0.1}
-                  min={1.0}
-                  max={3.0}
-                  error={visibleFieldErrors.spokeHoleDiameter}
-                  placeholder={t('input.spokeHolePlaceholder')}
-                />
-                <FieldError id="spokeHoleDiameter-error" message={visibleFieldErrors.spokeHoleDiameter} />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.numberOfSpokes')}</label>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.preset')}</label>
                 <select
-                  id="numberOfSpokes"
-                  value={inputs.numberOfSpokes}
-                  onChange={(e) => handleInputChange('numberOfSpokes', e.target.value)}
-                  onBlur={() => markFieldTouched('numberOfSpokes')}
-                  aria-invalid={visibleFieldErrors.numberOfSpokes !== undefined}
-                  aria-describedby={visibleFieldErrors.numberOfSpokes !== undefined ? 'numberOfSpokes-error' : undefined}
-                  className={getControlClassName(visibleFieldErrors.numberOfSpokes !== undefined)}
-                >
-                  <option value="">{t('input.selectOption')}</option>
-                  <option value="24">24</option>
-                  <option value="28">28</option>
-                  <option value="32">32</option>
-                  <option value="36">36</option>
-                </select>
-                <FieldError id="numberOfSpokes-error" message={visibleFieldErrors.numberOfSpokes} />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.crossingsLeft')}</label>
-                    <HelpButton topic="crossings" onOpen={setHelpTopic} />
-                  </div>
-                  <select
-                    id="crossingsLeft"
-                    value={inputs.crossingsLeft}
-                    onChange={(e) => handleInputChange('crossingsLeft', e.target.value)}
-                    onBlur={() => markFieldTouched('crossingsLeft')}
-                    aria-invalid={visibleFieldErrors.crossingsLeft !== undefined}
-                    aria-describedby={visibleFieldErrors.crossingsLeft !== undefined ? 'crossingsLeft-error' : undefined}
-                    className={getControlClassName(visibleFieldErrors.crossingsLeft !== undefined)}
-                  >
-                    <option value="">{t('input.selectOption')}</option>
-                    <option value="0">{t('input.radialLacing')}</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                  </select>
-                  <FieldError id="crossingsLeft-error" message={visibleFieldErrors.crossingsLeft} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.crossingsRight')}</label>
-                    <HelpButton topic="crossings" onOpen={setHelpTopic} />
-                  </div>
-                  <select
-                    id="crossingsRight"
-                    value={inputs.crossingsRight}
-                    onChange={(e) => handleInputChange('crossingsRight', e.target.value)}
-                    onBlur={() => markFieldTouched('crossingsRight')}
-                    aria-invalid={visibleFieldErrors.crossingsRight !== undefined}
-                    aria-describedby={visibleFieldErrors.crossingsRight !== undefined ? 'crossingsRight-error' : undefined}
-                    className={getControlClassName(visibleFieldErrors.crossingsRight !== undefined)}
-                  >
-                    <option value="">{t('input.selectOption')}</option>
-                    <option value="0">{t('input.radialLacing')}</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                  </select>
-                  <FieldError id="crossingsRight-error" message={visibleFieldErrors.crossingsRight} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Results and save section */}
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600 pb-2">{t('results.heading')}</h2>
-            <div
-              className={[
-                'rounded-lg border p-5 transition-colors sm:p-6',
-                currentResults !== null
-                  ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800'
-                  : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-600',
-              ].join(' ')}
-            >
-              <div className="grid min-h-24 w-full grid-cols-2 items-center gap-3 text-center sm:min-h-20 sm:gap-4">
-                {currentResults !== null ? (
-                  <>
-                    <div>
-                      <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300 sm:text-lg">{resultsLeftText}</h3>
-                      <p className="text-2xl font-bold leading-tight text-blue-800 dark:text-blue-400 sm:text-3xl">
-                        {currentResults.left.toFixed(1)} mm
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300 sm:text-lg">{resultsRightText}</h3>
-                      <p className="text-2xl font-bold leading-tight text-blue-800 dark:text-blue-400 sm:text-3xl">
-                        {currentResults.right.toFixed(1)} mm
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <p className="col-span-2 text-sm text-slate-500 dark:text-slate-400 sm:text-base">
-                    {t('results.placeholder')}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Save and export */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('results.calculationName')}</label>
-                <input
-                  type="text"
-                  value={calculationName}
-                  onChange={(e) => setCalculationName(e.target.value)}
+                  value={selectedPreset}
+                  onChange={(e) => loadPreset(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder={calculationNamePlaceholder}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={saveCalculation}
-                  disabled={!hasValidResults}
-                  className="bg-blue-700 dark:bg-blue-800 hover:bg-blue-800 dark:hover:bg-blue-900 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed dark:disabled:bg-slate-700 dark:disabled:text-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
                 >
-                  <Save className="w-4 h-4" />
-                  {t('buttons.save')}
-                </button>
-                <button
-                  onClick={exportToJSON}
-                  disabled={!hasValidResults}
-                  className="bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-800 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed dark:disabled:bg-slate-700 dark:disabled:text-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
-                >
-                  <FileJson className="w-4 h-4" />
-                  <span className="sm:hidden">{t('buttons.jsonShort')}</span>
-                  <span className="hidden sm:inline">{t('buttons.jsonDisplay')}</span>
-                </button>
-              </div>
-              {/* Load JSON file */}
-              <div className="mt-3">
-                <label className="block">
-                  <input
-                    type="file"
-                    accept=".json"
-                    onChange={loadFromJSON}
-                    className="hidden"
-                  />
-                  <span className="w-full bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-800 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer">
-                    <FileUp className="w-4 h-4" />
-                    {t('buttons.loadJson')}
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            {/* List of saved calculations */}
-            {savedCalculations.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-3">{t('results.savedCalculations')}</h3>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {savedCalculations.map((calc) => (
-                    <div key={calc.id} className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="font-medium text-slate-700 dark:text-slate-300">{calc.name}</p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">{calc.timestamp}</p>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {resultsLeftText}: {calc.results.left !== null ? calc.results.left.toFixed(1) : '-'}mm / {resultsRightText}: {calc.results.right !== null ? calc.results.right.toFixed(1) : '-'}mm
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => loadCalculation(calc)}
-                          className="text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 text-sm font-medium"
-                        >
-                          {t('buttons.load')}
-                        </button>
-                        <button
-                          onClick={() => deleteCalculation(calc.id)}
-                          className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
+                  <option value="">{t('input.presetOption')}</option>
+                  {presetOptions.map((preset) => (
+                    <option key={preset.id} value={preset.id}>
+                      {preset.name}
+                    </option>
                   ))}
-                </div>
+                </select>
               </div>
             )}
-          </div>
-        </div>
 
-        {/* JSON data display modal */}
-        {showJsonOutput && (
-          <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">{t('results.jsonOutput')}</h3>
-                <button
-                  onClick={() => setShowJsonOutput(false)}
-                  className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xl leading-none"
-                >
-                  ✕
-                </button>
+            <div>
+              <div className="flex items-center gap-1 mb-1">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.erd')}</label>
+                <HelpButton topic="erd" onOpen={setHelpTopic} />
               </div>
-              <textarea
-                value={jsonData}
-                readOnly
-                className="w-full flex-1 min-h-64 p-3 border border-slate-300 dark:border-slate-600 rounded-md text-sm font-mono bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 resize-none mb-4"
+              <NumberInput
+                id="erd"
+                value={inputs.erd}
+                onChange={(value) => handleInputChange('erd', value)}
+                onBlur={() => markFieldTouched('erd')}
+                step={1}
+                min={1}
+                max={1000}
+                error={visibleFieldErrors.erd}
+                placeholder={t('input.erdPlaceholder')}
               />
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <button
-                  onClick={copyToClipboard}
-                  className="bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-800 text-white py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
+              <FieldError id="erd-error" message={visibleFieldErrors.erd} />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
+                    <span className="md:hidden">{t('input.pcdLeft')}</span>
+                    <span className="hidden md:block">{t('input.pcdLeft')}</span>
+                  </label>
+                  <HelpButton topic="pcd" onOpen={setHelpTopic} />
+                </div>
+                <NumberInput
+                  id="pitchCircleLeft"
+                  value={inputs.pitchCircleLeft}
+                  onChange={(value) => handleInputChange('pitchCircleLeft', value)}
+                  onBlur={() => markFieldTouched('pitchCircleLeft')}
+                  step={1}
+                  min={1}
+                  max={100}
+                  error={visibleFieldErrors.pitchCircleLeft}
+                  placeholder={t('input.flangeLeftPlaceholder')}
+                />
+                <FieldError id="pitchCircleLeft-error" message={visibleFieldErrors.pitchCircleLeft} />
+              </div>
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
+                    <span className="md:hidden">{t('input.pcdRight')}</span>
+                    <span className="hidden md:block">{t('input.pcdRight')}</span>
+                  </label>
+                  <HelpButton topic="pcd" onOpen={setHelpTopic} />
+                </div>
+                <NumberInput
+                  id="pitchCircleRight"
+                  value={inputs.pitchCircleRight}
+                  onChange={(value) => handleInputChange('pitchCircleRight', value)}
+                  onBlur={() => markFieldTouched('pitchCircleRight')}
+                  step={1}
+                  min={1}
+                  max={100}
+                  error={visibleFieldErrors.pitchCircleRight}
+                  placeholder={t('input.flangeRightPlaceholder')}
+                />
+                <FieldError id="pitchCircleRight-error" message={visibleFieldErrors.pitchCircleRight} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.flangeDistanceLeft')}</label>
+                  <HelpButton topic="flangeDistance" onOpen={setHelpTopic} />
+                </div>
+                <NumberInput
+                  id="flangeDistanceLeft"
+                  value={inputs.flangeDistanceLeft}
+                  onChange={(value) => handleInputChange('flangeDistanceLeft', value)}
+                  onBlur={() => markFieldTouched('flangeDistanceLeft')}
+                  step={1}
+                  min={1}
+                  max={100}
+                  error={visibleFieldErrors.flangeDistanceLeft}
+                  placeholder={t('input.flangeLeftPlaceholder')}
+                />
+                <FieldError id="flangeDistanceLeft-error" message={visibleFieldErrors.flangeDistanceLeft} />
+              </div>
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.flangeDistanceRight')}</label>
+                  <HelpButton topic="flangeDistance" onOpen={setHelpTopic} />
+                </div>
+                <NumberInput
+                  id="flangeDistanceRight"
+                  value={inputs.flangeDistanceRight}
+                  onChange={(value) => handleInputChange('flangeDistanceRight', value)}
+                  onBlur={() => markFieldTouched('flangeDistanceRight')}
+                  step={1}
+                  min={1}
+                  max={100}
+                  error={visibleFieldErrors.flangeDistanceRight}
+                  placeholder={t('input.flangeRightPlaceholder')}
+                />
+                <FieldError id="flangeDistanceRight-error" message={visibleFieldErrors.flangeDistanceRight} />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center gap-1 mb-1">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.spokeHoleDiameter')}</label>
+                <HelpButton topic="spokeHoleDiameter" onOpen={setHelpTopic} />
+              </div>
+              <NumberInput
+                id="spokeHoleDiameter"
+                value={inputs.spokeHoleDiameter}
+                onChange={(value) => handleInputChange('spokeHoleDiameter', value)}
+                onBlur={() => markFieldTouched('spokeHoleDiameter')}
+                step={0.1}
+                min={1.0}
+                max={3.0}
+                error={visibleFieldErrors.spokeHoleDiameter}
+                placeholder={t('input.spokeHolePlaceholder')}
+              />
+              <FieldError id="spokeHoleDiameter-error" message={visibleFieldErrors.spokeHoleDiameter} />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.numberOfSpokes')}</label>
+              <select
+                id="numberOfSpokes"
+                value={inputs.numberOfSpokes}
+                onChange={(e) => handleInputChange('numberOfSpokes', e.target.value)}
+                onBlur={() => markFieldTouched('numberOfSpokes')}
+                aria-invalid={visibleFieldErrors.numberOfSpokes !== undefined}
+                aria-describedby={visibleFieldErrors.numberOfSpokes !== undefined ? 'numberOfSpokes-error' : undefined}
+                className={getControlClassName(visibleFieldErrors.numberOfSpokes !== undefined)}
+              >
+                <option value="">{t('input.selectOption')}</option>
+                <option value="24">24</option>
+                <option value="28">28</option>
+                <option value="32">32</option>
+                <option value="36">36</option>
+              </select>
+              <FieldError id="numberOfSpokes-error" message={visibleFieldErrors.numberOfSpokes} />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.crossingsLeft')}</label>
+                  <HelpButton topic="crossings" onOpen={setHelpTopic} />
+                </div>
+                <select
+                  id="crossingsLeft"
+                  value={inputs.crossingsLeft}
+                  onChange={(e) => handleInputChange('crossingsLeft', e.target.value)}
+                  onBlur={() => markFieldTouched('crossingsLeft')}
+                  aria-invalid={visibleFieldErrors.crossingsLeft !== undefined}
+                  aria-describedby={visibleFieldErrors.crossingsLeft !== undefined ? 'crossingsLeft-error' : undefined}
+                  className={getControlClassName(visibleFieldErrors.crossingsLeft !== undefined)}
                 >
-                  {t('buttons.copyToClipboard')}
-                </button>
-                <button
-                  onClick={downloadJSON}
-                  className="bg-blue-700 dark:bg-blue-800 hover:bg-blue-800 dark:hover:bg-blue-900 text-white py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
+                  <option value="">{t('input.selectOption')}</option>
+                  <option value="0">{t('input.radialLacing')}</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                </select>
+                <FieldError id="crossingsLeft-error" message={visibleFieldErrors.crossingsLeft} />
+              </div>
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.crossingsRight')}</label>
+                  <HelpButton topic="crossings" onOpen={setHelpTopic} />
+                </div>
+                <select
+                  id="crossingsRight"
+                  value={inputs.crossingsRight}
+                  onChange={(e) => handleInputChange('crossingsRight', e.target.value)}
+                  onBlur={() => markFieldTouched('crossingsRight')}
+                  aria-invalid={visibleFieldErrors.crossingsRight !== undefined}
+                  aria-describedby={visibleFieldErrors.crossingsRight !== undefined ? 'crossingsRight-error' : undefined}
+                  className={getControlClassName(visibleFieldErrors.crossingsRight !== undefined)}
                 >
-                  <FileJson className="w-4 h-4" />
-                  {t('buttons.downloadJson')}
-                </button>
-                <button
-                  onClick={() => setShowJsonOutput(false)}
-                  className="bg-slate-500 dark:bg-slate-600 hover:bg-slate-600 dark:hover:bg-slate-700 text-white py-2 px-4 rounded-md transition-colors duration-200 w-full sm:w-auto justify-center"
-                >
-                  {t('buttons.close')}
-                </button>
+                  <option value="">{t('input.selectOption')}</option>
+                  <option value="0">{t('input.radialLacing')}</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                </select>
+                <FieldError id="crossingsRight-error" message={visibleFieldErrors.crossingsRight} />
               </div>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Delete confirmation dialog */}
-        <ConfirmDialog
-          isOpen={showDeleteConfirm}
-          onConfirm={confirmDelete}
-          onCancel={cancelDelete}
-          title={t('dialog.deleteConfirm.title')}
-          message={t('dialog.deleteConfirm.message')}
-        />
+        {/* Results and save section */}
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600 pb-2">{t('results.heading')}</h2>
+          <div
+            className={[
+              'rounded-lg border p-5 transition-colors sm:p-6',
+              currentResults !== null
+                ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800'
+                : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-600',
+            ].join(' ')}
+          >
+            <div className="grid min-h-24 w-full grid-cols-2 items-center gap-3 text-center sm:min-h-20 sm:gap-4">
+              {currentResults !== null ? (
+                <>
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300 sm:text-lg">{resultsLeftText}</h3>
+                    <p className="text-2xl font-bold leading-tight text-blue-800 dark:text-blue-400 sm:text-3xl">
+                      {currentResults.left.toFixed(1)} mm
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300 sm:text-lg">{resultsRightText}</h3>
+                    <p className="text-2xl font-bold leading-tight text-blue-800 dark:text-blue-400 sm:text-3xl">
+                      {currentResults.right.toFixed(1)} mm
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <p className="col-span-2 text-sm text-slate-500 dark:text-slate-400 sm:text-base">
+                  {t('results.placeholder')}
+                </p>
+              )}
+            </div>
+          </div>
 
-        {/* Help modal */}
-        <HelpModal topic={helpTopic} onClose={() => setHelpTopic(null)} />
+          {/* Save and export */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('results.calculationName')}</label>
+              <input
+                type="text"
+                value={calculationName}
+                onChange={(e) => setCalculationName(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder={calculationNamePlaceholder}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={saveCalculation}
+                disabled={!hasValidResults}
+                className="bg-blue-700 dark:bg-blue-800 hover:bg-blue-800 dark:hover:bg-blue-900 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed dark:disabled:bg-slate-700 dark:disabled:text-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                {t('buttons.save')}
+              </button>
+              <button
+                onClick={exportToJSON}
+                disabled={!hasValidResults}
+                className="bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-800 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed dark:disabled:bg-slate-700 dark:disabled:text-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
+              >
+                <FileJson className="w-4 h-4" />
+                <span className="sm:hidden">{t('buttons.jsonShort')}</span>
+                <span className="hidden sm:inline">{t('buttons.jsonDisplay')}</span>
+              </button>
+            </div>
+            {/* Load JSON file */}
+            <div className="mt-3">
+              <label className="block">
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={loadFromJSON}
+                  className="hidden"
+                />
+                <span className="w-full bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-800 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer">
+                  <FileUp className="w-4 h-4" />
+                  {t('buttons.loadJson')}
+                </span>
+              </label>
+            </div>
+          </div>
+
+          {/* List of saved calculations */}
+          {savedCalculations.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-3">{t('results.savedCalculations')}</h3>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {savedCalculations.map((calc) => (
+                  <div key={calc.id} className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="font-medium text-slate-700 dark:text-slate-300">{calc.name}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">{calc.timestamp}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        {resultsLeftText}: {calc.results.left !== null ? calc.results.left.toFixed(1) : '-'}mm / {resultsRightText}: {calc.results.right !== null ? calc.results.right.toFixed(1) : '-'}mm
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => loadCalculation(calc)}
+                        className="text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 text-sm font-medium"
+                      >
+                        {t('buttons.load')}
+                      </button>
+                      <button
+                        onClick={() => deleteCalculation(calc.id)}
+                        className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* JSON data display modal */}
+      {showJsonOutput && (
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">{t('results.jsonOutput')}</h3>
+              <button
+                onClick={() => setShowJsonOutput(false)}
+                className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xl leading-none"
+              >
+                ✕
+              </button>
+            </div>
+            <textarea
+              value={jsonData}
+              readOnly
+              className="w-full flex-1 min-h-64 p-3 border border-slate-300 dark:border-slate-600 rounded-md text-sm font-mono bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 resize-none mb-4"
+            />
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <button
+                onClick={copyToClipboard}
+                className="bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-800 text-white py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
+              >
+                {t('buttons.copyToClipboard')}
+              </button>
+              <button
+                onClick={downloadJSON}
+                className="bg-blue-700 dark:bg-blue-800 hover:bg-blue-800 dark:hover:bg-blue-900 text-white py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
+              >
+                <FileJson className="w-4 h-4" />
+                {t('buttons.downloadJson')}
+              </button>
+              <button
+                onClick={() => setShowJsonOutput(false)}
+                className="bg-slate-500 dark:bg-slate-600 hover:bg-slate-600 dark:hover:bg-slate-700 text-white py-2 px-4 rounded-md transition-colors duration-200 w-full sm:w-auto justify-center"
+              >
+                {t('buttons.close')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        title={t('dialog.deleteConfirm.title')}
+        message={t('dialog.deleteConfirm.message')}
+      />
+
+      {/* Help modal */}
+      <HelpModal topic={helpTopic} onClose={() => setHelpTopic(null)} />
     </div>
   );
 };
