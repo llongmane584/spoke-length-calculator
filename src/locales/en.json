@@ -64,6 +64,17 @@
       }
     }
   },
+  "validation": {
+    "required": "Required",
+    "selectRequired": "Select one",
+    "invalidNumber": "Enter a number",
+    "rangeErd": "1-1000mm",
+    "rangeStandard": "1-100mm",
+    "rangeSpokeHole": "1.0-3.0mm",
+    "selectSpokeCount": "24/28/32/36",
+    "selectCrossings": "Select 0-4",
+    "calculationUnavailable": "Cannot calculate"
+  },
   "buttons": {
     "calculate": "Calculate",
     "save": "Save",
@@ -88,15 +99,19 @@
   "alerts": {
     "fillAllFields": "Please fill in all fields",
     "enterCalculationName": "Please enter a calculation name",
-    "performCalculationFirst": "Please perform calculation first",
+    "performCalculationFirst": "No valid calculation result",
     "saved": "Calculation result saved",
+    "saveFailed": "Failed to save calculation result",
     "deleted": "Calculation deleted successfully",
+    "deleteFailed": "Failed to delete calculation",
     "copiedToClipboard": "JSON data copied to clipboard",
     "copyFailed": "Copy failed. Please copy manually.",
     "jsonLoaded": "Calculation data loaded from JSON file",
+    "jsonLoadedWithValidationErrors": "JSON loaded. Check the input values",
     "invalidJsonFormat": "Invalid JSON file format",
     "jsonLoadFailed": "Failed to load JSON file",
     "jsonDownloaded": "JSON file downloaded successfully",
+    "savedDataLoadFailed": "Some saved data could not be loaded",
     "presetLoadError": "Failed to load some preset files. Check console for details.",
     "presetValidationError": "Preset data validation error: {{details}}"
   },
