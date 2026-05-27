@@ -390,12 +390,18 @@ const getControlClassName = (hasError: boolean, className?: string): string => (
 );
 
 const FieldError: React.FC<{ id: string; message?: string }> = ({ id, message }) => {
-  if (message === undefined) {
-    return null;
-  }
+  const hasMessage = message !== undefined;
 
   return (
-    <p id={id} className="mt-1 text-xs leading-tight text-red-600 dark:text-red-400 sm:text-sm">
+    <p
+      id={id}
+      aria-hidden={!hasMessage}
+      aria-live="polite"
+      className={[
+        'mt-1 h-5 overflow-hidden whitespace-nowrap text-xs leading-5 text-red-600 dark:text-red-400 sm:text-sm',
+        hasMessage ? '' : 'invisible',
+      ].join(' ')}
+    >
       {message}
     </p>
   );
@@ -1169,24 +1175,37 @@ const SpokeLengthCalculator: React.FC = () => {
           {/* Results and save section */}
           <div className="space-y-6">
             <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600 pb-2">{t('results.heading')}</h2>
-            {currentResults !== null ? (
-              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">{resultsLeftText}</h3>
-                    <p className="text-3xl font-bold text-blue-800 dark:text-blue-400">{currentResults.left.toFixed(1)} mm</p>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">{resultsRightText}</h3>
-                    <p className="text-3xl font-bold text-blue-800 dark:text-blue-400">{currentResults.right.toFixed(1)} mm</p>
-                  </div>
-                </div>
+            <div
+              className={[
+                'rounded-lg border p-5 transition-colors sm:p-6',
+                currentResults !== null
+                  ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800'
+                  : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-600',
+              ].join(' ')}
+            >
+              <div className="grid min-h-24 w-full grid-cols-2 items-center gap-3 text-center sm:min-h-20 sm:gap-4">
+                {currentResults !== null ? (
+                  <>
+                    <div>
+                      <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300 sm:text-lg">{resultsLeftText}</h3>
+                      <p className="text-2xl font-bold leading-tight text-blue-800 dark:text-blue-400 sm:text-3xl">
+                        {currentResults.left.toFixed(1)} mm
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300 sm:text-lg">{resultsRightText}</h3>
+                      <p className="text-2xl font-bold leading-tight text-blue-800 dark:text-blue-400 sm:text-3xl">
+                        {currentResults.right.toFixed(1)} mm
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <p className="col-span-2 text-sm text-slate-500 dark:text-slate-400 sm:text-base">
+                    {t('results.placeholder')}
+                  </p>
+                )}
               </div>
-            ) : (
-              <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-600 rounded-lg p-6 text-center text-slate-500 dark:text-slate-400">
-                {t('results.placeholder')}
-              </div>
-            )}
+            </div>
 
             {/* Save and export */}
             <div className="space-y-4">
