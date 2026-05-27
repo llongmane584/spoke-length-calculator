@@ -64,6 +64,17 @@
       }
     }
   },
+  "validation": {
+    "required": "入力してください",
+    "selectRequired": "選択してください",
+    "invalidNumber": "数値を入力",
+    "rangeErd": "1〜1000mm",
+    "rangeStandard": "1〜100mm",
+    "rangeSpokeHole": "1.0〜3.0mm",
+    "selectSpokeCount": "24/28/32/36",
+    "selectCrossings": "0〜4を選択",
+    "calculationUnavailable": "計算不可"
+  },
   "buttons": {
     "calculate": "計算実行",
     "save": "保存",
@@ -88,15 +99,19 @@
   "alerts": {
     "fillAllFields": "全ての項目を入力してください",
     "enterCalculationName": "計算名を入力してください",
-    "performCalculationFirst": "まず計算を実行してください",
+    "performCalculationFirst": "有効な計算結果がありません",
     "saved": "計算結果を保存しました",
+    "saveFailed": "計算結果を保存できませんでした",
     "deleted": "計算を削除しました",
+    "deleteFailed": "計算を削除できませんでした",
     "copiedToClipboard": "JSONデータをクリップボードにコピーしました",
     "copyFailed": "コピーに失敗しました。手動でコピーしてください。",
     "jsonLoaded": "JSONファイルから計算データを読み込みました",
+    "jsonLoadedWithValidationErrors": "JSONを読み込みました。入力値を確認してください",
     "invalidJsonFormat": "無効なJSONファイル形式です",
     "jsonLoadFailed": "JSONファイルの読み込みに失敗しました",
     "jsonDownloaded": "JSONファイルのダウンロードが完了しました",
+    "savedDataLoadFailed": "保存データの一部を読み込めませんでした",
     "presetLoadError": "一部のプリセットファイルの読み込みに失敗しました。詳細はコンソールを確認してください。",
     "presetValidationError": "プリセットデータの検証エラー: {{details}}"
   },

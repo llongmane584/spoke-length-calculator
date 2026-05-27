@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Save, Trash2, Calculator, Languages, FileJson, FileUp, Sun, Moon } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Save, Trash2, Languages, FileJson, FileUp, Sun, Moon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from './hooks/useToast';
 import { useTheme } from './hooks/useTheme';
@@ -24,8 +24,8 @@ interface Inputs {
 }
 
 interface Results {
-  left: number | null;
-  right: number | null;
+  left: number;
+  right: number;
 }
 
 interface SavedCalculation {
@@ -55,18 +55,373 @@ interface PresetOption {
   data: PresetData;
 }
 
+type InputField = keyof Inputs;
+type NumericInputField = Exclude<InputField, 'numberOfSpokes' | 'crossingsLeft' | 'crossingsRight'>;
+type FieldErrors = Partial<Record<InputField, string>>;
+type TouchedFields = Partial<Record<InputField, boolean>>;
+
+interface ParsedInputs {
+  erd: number;
+  pitchCircleLeft: number;
+  pitchCircleRight: number;
+  flangeDistanceLeft: number;
+  flangeDistanceRight: number;
+  spokeHoleDiameter: number;
+  numberOfSpokes: number;
+  crossingsLeft: number;
+  crossingsRight: number;
+}
+
+interface CalculationState {
+  fieldErrors: FieldErrors;
+  results: Results | null;
+}
+
+const inputFields = [
+  'erd',
+  'pitchCircleLeft',
+  'pitchCircleRight',
+  'flangeDistanceLeft',
+  'flangeDistanceRight',
+  'spokeHoleDiameter',
+  'numberOfSpokes',
+  'crossingsLeft',
+  'crossingsRight',
+] as const satisfies readonly InputField[];
+
+const numericFieldRules: Record<NumericInputField, { min: number; max: number; rangeError: string }> = {
+  erd: { min: 1, max: 1000, rangeError: 'validation.rangeErd' },
+  pitchCircleLeft: { min: 1, max: 100, rangeError: 'validation.rangeStandard' },
+  pitchCircleRight: { min: 1, max: 100, rangeError: 'validation.rangeStandard' },
+  flangeDistanceLeft: { min: 1, max: 100, rangeError: 'validation.rangeStandard' },
+  flangeDistanceRight: { min: 1, max: 100, rangeError: 'validation.rangeStandard' },
+  spokeHoleDiameter: { min: 1, max: 3, rangeError: 'validation.rangeSpokeHole' },
+};
+
+const decimalPattern = /^(?:\d+|\d+\.\d*|\.\d+)$/;
+const spokeCountOptions = ['24', '28', '32', '36'];
+const crossingOptions = ['0', '1', '2', '3', '4'];
+
+const createTouchedFields = (value: boolean): TouchedFields => (
+  inputFields.reduce<TouchedFields>((acc, field) => {
+    acc[field] = value;
+    return acc;
+  }, {})
+);
+
+const isRecord = (value: unknown): value is Record<string, unknown> => (
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+);
+
+const normalizeInputValue = (value: unknown): string | null => {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+
+  return null;
+};
+
+const normalizeInputs = (value: unknown): Inputs | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const normalized: Partial<Inputs> = {};
+
+  for (const field of inputFields) {
+    const normalizedValue = normalizeInputValue(value[field]);
+
+    if (normalizedValue === null) {
+      return null;
+    }
+
+    normalized[field] = normalizedValue;
+  }
+
+  return normalized as Inputs;
+};
+
+const normalizeResults = (value: unknown): Results | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const { left, right } = value;
+
+  if (typeof left !== 'number' || typeof right !== 'number') {
+    return null;
+  }
+
+  if (!Number.isFinite(left) || !Number.isFinite(right)) {
+    return null;
+  }
+
+  return { left, right };
+};
+
+const parseNumericField = (field: NumericInputField, rawValue: string): { value: number | null; error?: string } => {
+  const trimmedValue = rawValue.trim();
+  const rule = numericFieldRules[field];
+
+  if (trimmedValue === '') {
+    return { value: null, error: 'validation.required' };
+  }
+
+  if (!decimalPattern.test(trimmedValue)) {
+    return { value: null, error: 'validation.invalidNumber' };
+  }
+
+  const value = Number(trimmedValue);
+
+  if (!Number.isFinite(value)) {
+    return { value: null, error: 'validation.invalidNumber' };
+  }
+
+  if (value < rule.min || value > rule.max) {
+    return { value: null, error: rule.rangeError };
+  }
+
+  return { value };
+};
+
+const parseSelectField = (
+  rawValue: string,
+  options: readonly string[],
+  invalidError: string,
+): { value: number | null; error?: string } => {
+  const trimmedValue = rawValue.trim();
+
+  if (trimmedValue === '') {
+    return { value: null, error: 'validation.selectRequired' };
+  }
+
+  if (!options.includes(trimmedValue)) {
+    return { value: null, error: invalidError };
+  }
+
+  const value = Number(trimmedValue);
+
+  if (!Number.isInteger(value) || !Number.isFinite(value)) {
+    return { value: null, error: invalidError };
+  }
+
+  return { value };
+};
+
+const validateInputs = (inputs: Inputs): { parsed: ParsedInputs | null; fieldErrors: FieldErrors } => {
+  const fieldErrors: FieldErrors = {};
+  const parsed: Partial<ParsedInputs> = {};
+
+  for (const field of Object.keys(numericFieldRules) as NumericInputField[]) {
+    const result = parseNumericField(field, inputs[field]);
+
+    if (result.error !== undefined || result.value === null) {
+      fieldErrors[field] = result.error || 'validation.invalidNumber';
+      continue;
+    }
+
+    parsed[field] = result.value;
+  }
+
+  const spokeCount = parseSelectField(inputs.numberOfSpokes, spokeCountOptions, 'validation.selectSpokeCount');
+  if (spokeCount.error !== undefined || spokeCount.value === null) {
+    fieldErrors.numberOfSpokes = spokeCount.error || 'validation.selectSpokeCount';
+  } else {
+    parsed.numberOfSpokes = spokeCount.value;
+  }
+
+  const crossingsLeft = parseSelectField(inputs.crossingsLeft, crossingOptions, 'validation.selectCrossings');
+  if (crossingsLeft.error !== undefined || crossingsLeft.value === null) {
+    fieldErrors.crossingsLeft = crossingsLeft.error || 'validation.selectCrossings';
+  } else {
+    parsed.crossingsLeft = crossingsLeft.value;
+  }
+
+  const crossingsRight = parseSelectField(inputs.crossingsRight, crossingOptions, 'validation.selectCrossings');
+  if (crossingsRight.error !== undefined || crossingsRight.value === null) {
+    fieldErrors.crossingsRight = crossingsRight.error || 'validation.selectCrossings';
+  } else {
+    parsed.crossingsRight = crossingsRight.value;
+  }
+
+  if (Object.keys(fieldErrors).length > 0) {
+    return { parsed: null, fieldErrors };
+  }
+
+  const completeParsed = parsed as ParsedInputs;
+
+  if (completeParsed.numberOfSpokes <= 0 || completeParsed.numberOfSpokes % 2 !== 0) {
+    return {
+      parsed: null,
+      fieldErrors: {
+        numberOfSpokes: 'validation.selectSpokeCount',
+      },
+    };
+  }
+
+  return { parsed: completeParsed, fieldErrors };
+};
+
+const calculateSpokeResults = (inputs: ParsedInputs): Results | null => {
+  const spokesPerSide = inputs.numberOfSpokes / 2;
+
+  if (!Number.isFinite(spokesPerSide) || spokesPerSide <= 0) {
+    return null;
+  }
+
+  const calculateLength = (pitchCircle: number, flangeDistance: number, crossings: number): number | null => {
+    const flangeRadius = pitchCircle / 2;
+    const rimRadius = inputs.erd / 2;
+    const theta = (2 * Math.PI * crossings) / spokesPerSide;
+
+    if (!Number.isFinite(theta)) {
+      return null;
+    }
+
+    const projectedLengthSquared = (
+      flangeRadius * flangeRadius
+      + rimRadius * rimRadius
+      - 2 * flangeRadius * rimRadius * Math.cos(theta)
+    );
+
+    if (!Number.isFinite(projectedLengthSquared) || projectedLengthSquared < -1e-9) {
+      return null;
+    }
+
+    const projectedLength = Math.sqrt(Math.max(0, projectedLengthSquared));
+    const length = Math.sqrt(projectedLength * projectedLength + flangeDistance * flangeDistance)
+      - inputs.spokeHoleDiameter / 2;
+    const roundedLength = Math.floor(length * 10) / 10;
+
+    if (!Number.isFinite(roundedLength) || roundedLength <= 0) {
+      return null;
+    }
+
+    return roundedLength;
+  };
+
+  const left = calculateLength(inputs.pitchCircleLeft, inputs.flangeDistanceLeft, inputs.crossingsLeft);
+  const right = calculateLength(inputs.pitchCircleRight, inputs.flangeDistanceRight, inputs.crossingsRight);
+
+  if (left === null || right === null) {
+    return null;
+  }
+
+  return { left, right };
+};
+
+const getCalculationState = (inputs: Inputs): CalculationState => {
+  const validation = validateInputs(inputs);
+
+  if (validation.parsed === null) {
+    return {
+      fieldErrors: validation.fieldErrors,
+      results: null,
+    };
+  }
+
+  const results = calculateSpokeResults(validation.parsed);
+
+  if (results === null) {
+    return {
+      fieldErrors: {
+        erd: 'validation.calculationUnavailable',
+      },
+      results: null,
+    };
+  }
+
+  return {
+    fieldErrors: {},
+    results,
+  };
+};
+
+const normalizeSavedCalculation = (value: unknown): SavedCalculation | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const { id, name, inputs, timestamp } = value;
+  const normalizedInputs = normalizeInputs(inputs);
+
+  if (
+    typeof id !== 'number'
+    || !Number.isFinite(id)
+    || typeof name !== 'string'
+    || typeof timestamp !== 'string'
+    || normalizedInputs === null
+  ) {
+    return null;
+  }
+
+  const calculation = getCalculationState(normalizedInputs);
+
+  if (calculation.results === null) {
+    return null;
+  }
+
+  return {
+    id,
+    name,
+    inputs: normalizedInputs,
+    results: calculation.results,
+    timestamp,
+  };
+};
+
+const getControlClassName = (hasError: boolean, className?: string): string => (
+  [
+    'w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:border-transparent transition-colors',
+    hasError
+      ? 'border-red-500 dark:border-red-500 bg-red-50/40 dark:bg-red-950/20 focus:ring-red-500'
+      : 'border-slate-300 dark:border-slate-600 focus:ring-blue-500',
+    className || '',
+  ].join(' ')
+);
+
+const FieldError: React.FC<{ id: string; message?: string }> = ({ id, message }) => {
+  if (message === undefined) {
+    return null;
+  }
+
+  return (
+    <p id={id} className="mt-1 text-xs leading-tight text-red-600 dark:text-red-400 sm:text-sm">
+      {message}
+    </p>
+  );
+};
+
 // Regular number input component
 interface NumberInputProps {
+  id: string;
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   step: number;
   min?: number;
   max?: number;
+  error?: string;
   placeholder?: string;
   className?: string;
 }
 
-const NumberInput: React.FC<NumberInputProps> = ({ value, onChange, step, min, max, placeholder, className }) => {
+const NumberInput: React.FC<NumberInputProps> = ({
+  id,
+  value,
+  onChange,
+  onBlur,
+  step,
+  min,
+  max,
+  error,
+  placeholder,
+  className,
+}) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
 
@@ -95,28 +450,12 @@ const NumberInput: React.FC<NumberInputProps> = ({ value, onChange, step, min, m
       return;
     }
 
-    // Apply min/max limits (but allow during input)
-    if (min !== undefined && numValue < min) {
-      // Apply limit only if not in the middle of input
-      if (!newValue.endsWith('.') && newValue.length > 1) {
-        onChange(min.toString());
-        return;
-      }
-    }
-
-    if (max !== undefined && numValue > max) {
-      // Apply limit only if not in the middle of input
-      if (!newValue.endsWith('.') && newValue.length > 1) {
-        onChange(max.toString());
-        return;
-      }
-    }
-
     onChange(newValue);
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const currentValue = e.target.value;
+    onBlur?.();
 
     // Do nothing for empty string or decimal point only
     if (currentValue === '' || currentValue === '.') {
@@ -165,6 +504,7 @@ const NumberInput: React.FC<NumberInputProps> = ({ value, onChange, step, min, m
 
   return (
     <input
+      id={id}
       type="number"
       step={step}
       min={min}
@@ -173,7 +513,9 @@ const NumberInput: React.FC<NumberInputProps> = ({ value, onChange, step, min, m
       onChange={handleChange}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
-      className={`w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${className || ''}`}
+      aria-invalid={error !== undefined}
+      aria-describedby={error !== undefined ? `${id}-error` : undefined}
+      className={getControlClassName(error !== undefined, className)}
       placeholder={placeholder}
     />
   );
@@ -195,7 +537,6 @@ const SpokeLengthCalculator: React.FC = () => {
     crossingsRight: '3' // 3-cross is also typical
   });
 
-  const [results, setResults] = useState<Results>({ left: null, right: null });
   const [savedCalculations, setSavedCalculations] = useState<SavedCalculation[]>([]);
   const [calculationName, setCalculationName] = useState('');
   const [showJsonOutput, setShowJsonOutput] = useState(false);
@@ -205,6 +546,29 @@ const SpokeLengthCalculator: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [calculationToDelete, setCalculationToDelete] = useState<number | null>(null);
   const [helpTopic, setHelpTopic] = useState<HelpTopic | null>(null);
+  const [touchedFields, setTouchedFields] = useState<TouchedFields>({});
+  const savedCalculationsLoadedRef = useRef(false);
+
+  const calculation = useMemo(() => getCalculationState(inputs), [inputs]);
+  const currentResults = calculation.results;
+  const visibleFieldErrors = useMemo(() => {
+    const errors: Partial<Record<InputField, string>> = {};
+
+    for (const field of inputFields) {
+      const errorKey = calculation.fieldErrors[field];
+
+      if (errorKey !== undefined && (touchedFields[field] || inputs[field] !== '')) {
+        errors[field] = t(errorKey);
+      }
+    }
+
+    return errors;
+  }, [calculation.fieldErrors, inputs, t, touchedFields]);
+  const hasValidResults = currentResults !== null;
+
+  const markFieldTouched = (field: InputField) => {
+    setTouchedFields(prev => ({ ...prev, [field]: true }));
+  };
 
   // Dynamically load preset data
   useEffect(() => {
@@ -215,30 +579,20 @@ const SpokeLengthCalculator: React.FC = () => {
       for (const [path, module] of Object.entries(presetModules)) {
         try {
           const data = module as PresetData;
-          
-          // Validate required fields
-          if (!data.inputs || !data.results) {
-            console.error(`Invalid preset format in ${path}: missing required fields`);
+
+          const normalizedInputs = normalizeInputs(data.inputs);
+          const normalizedResults = normalizeResults(data.results);
+
+          if (normalizedInputs === null || normalizedResults === null) {
+            console.error(`Invalid preset format in ${path}: missing or invalid required fields`);
             hasError = true;
             continue;
           }
 
-          // Detailed validation of input data
-          const requiredInputs = ['erd', 'pitchCircleLeft', 'pitchCircleRight', 
-                                  'flangeDistanceLeft', 'flangeDistanceRight', 
-                                  'spokeHoleDiameter', 'numberOfSpokes', 
-                                  'crossingsLeft', 'crossingsRight'];
-          
-          const missingFields = requiredInputs.filter(field => !data.inputs[field as keyof Inputs]);
-          if (missingFields.length > 0) {
-            console.error(`Invalid preset format in ${path}: missing input fields: ${missingFields.join(', ')}`);
-            hasError = true;
-            continue;
-          }
+          const presetCalculation = getCalculationState(normalizedInputs);
 
-          // Validate result data
-          if (typeof data.results.left !== 'number' || typeof data.results.right !== 'number') {
-            console.error(`Invalid preset format in ${path}: results must contain numeric left and right values`);
+          if (presetCalculation.results === null) {
+            console.error(`Invalid preset format in ${path}: preset inputs cannot be calculated`);
             hasError = true;
             continue;
           }
@@ -255,7 +609,11 @@ const SpokeLengthCalculator: React.FC = () => {
           presets.push({
             id: fileName,
             name: displayName,
-            data: data
+            data: {
+              ...data,
+              inputs: normalizedInputs,
+              results: presetCalculation.results,
+            },
           });
         } catch (error) {
           console.error(`Failed to load preset from ${path}:`, error);
@@ -277,7 +635,11 @@ const SpokeLengthCalculator: React.FC = () => {
   // Language switch handler
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang);
-    localStorage.setItem('preferredLanguage', lang);
+    try {
+      localStorage.setItem('preferredLanguage', lang);
+    } catch (error) {
+      console.error('Failed to save language preference:', error);
+    }
     document.documentElement.lang = lang;
   };
 
@@ -288,70 +650,46 @@ const SpokeLengthCalculator: React.FC = () => {
 
   // Load saved calculations from local storage
   useEffect(() => {
-    const saved = localStorage.getItem('spokeCalculations');
-    if (saved) {
-      setSavedCalculations(JSON.parse(saved));
+    if (savedCalculationsLoadedRef.current) {
+      return;
     }
-  }, []);
+
+    savedCalculationsLoadedRef.current = true;
+
+    try {
+      const saved = localStorage.getItem('spokeCalculations');
+
+      if (!saved) {
+        return;
+      }
+
+      const parsed: unknown = JSON.parse(saved);
+
+      if (!Array.isArray(parsed)) {
+        throw new Error('Saved calculations must be an array');
+      }
+
+      const normalized = parsed
+        .map(normalizeSavedCalculation)
+        .filter((calculation): calculation is SavedCalculation => calculation !== null);
+
+      setSavedCalculations(normalized);
+
+      if (normalized.length !== parsed.length) {
+        showToast(t('alerts.savedDataLoadFailed'), 'warning');
+      }
+    } catch (error) {
+      console.warn('Failed to load saved calculations:', error);
+      setSavedCalculations([]);
+      showToast(t('alerts.savedDataLoadFailed'), 'error');
+    }
+  }, [showToast, t]);
 
   // Update input values
   const handleInputChange = (field: keyof Inputs, value: string) => {
     setInputs(prev => ({ ...prev, [field]: value }));
-  };
-
-  // Spoke length calculation (industry standard formula)
-  const calculateSpokeLength = () => {
-    const {
-      erd, pitchCircleLeft, pitchCircleRight, flangeDistanceLeft, flangeDistanceRight,
-      spokeHoleDiameter, numberOfSpokes, crossingsLeft, crossingsRight
-    } = inputs;
-
-    // Check if all values are entered
-    if (!erd || !pitchCircleLeft || !pitchCircleRight || !flangeDistanceLeft ||
-      !flangeDistanceRight || !spokeHoleDiameter || !numberOfSpokes ||
-      !crossingsLeft || !crossingsRight) {
-      showToast(t('alerts.fillAllFields'), 'warning');
-      return;
-    }
-
-    const erdNum = parseFloat(erd);
-    const pclNum = parseFloat(pitchCircleLeft);
-    const pcrNum = parseFloat(pitchCircleRight);
-    const fdlNum = parseFloat(flangeDistanceLeft);
-    const fdrNum = parseFloat(flangeDistanceRight);
-    const shdNum = parseFloat(spokeHoleDiameter);
-    const spokesNum = parseInt(numberOfSpokes);
-    const intlNum = parseInt(crossingsLeft);
-    const intrNum = parseInt(crossingsRight);
-
-    // Calculate spoke length in 2D + 3D
-    const calculateLength = (pitchCircle: number, flangeDistance: number, crossings: number) => {
-      // Step 1: Calculate third side using cosine theorem (2D)
-      const A = pitchCircle / 2; // Flange radius from spoke hole
-      const B = erdNum / 2; // Rim radius
-      const spokesPerSide = spokesNum / 2;
-      const theta = (2 * Math.PI * crossings) / spokesPerSide; // Radians
-
-      // Cosine theorem: C = √(A² + B² - 2AB cos θ)
-      const C = Math.sqrt(A * A + B * B - 2 * A * B * Math.cos(theta));
-
-      // Step 2: Calculate spoke length using Pythagorean theorem (3D)
-      // L = √(C² + w²) - d/2
-      // Flange distance
-      const w = flangeDistance;
-      // Spoke hole diameter
-      const d = shdNum;
-
-      const length = Math.sqrt(C * C + w * w) - d / 2;
-
-      // Round down to 0.1mm
-      return Math.floor(length * 10) / 10;
-    };
-
-    const leftLength = calculateLength(pclNum, fdlNum, intlNum);
-    const rightLength = calculateLength(pcrNum, fdrNum, intrNum);
-
-    setResults({ left: leftLength, right: rightLength });
+    setTouchedFields(prev => ({ ...prev, [field]: true }));
+    setSelectedPreset('');
   };
 
   // Save calculation results
@@ -361,7 +699,7 @@ const SpokeLengthCalculator: React.FC = () => {
       return;
     }
 
-    if (results.left === null || results.right === null) {
+    if (currentResults === null) {
       showToast(t('alerts.performCalculationFirst'), 'warning');
       return;
     }
@@ -370,13 +708,20 @@ const SpokeLengthCalculator: React.FC = () => {
       id: Date.now(),
       name: calculationName,
       inputs: { ...inputs },
-      results: { ...results },
+      results: { ...currentResults },
       timestamp: new Date().toLocaleString('ja-JP')
     };
 
     const updated = [...savedCalculations, newCalculation];
+    try {
+      localStorage.setItem('spokeCalculations', JSON.stringify(updated));
+    } catch (error) {
+      console.error('Failed to save calculation:', error);
+      showToast(t('alerts.saveFailed'), 'error');
+      return;
+    }
+
     setSavedCalculations(updated);
-    localStorage.setItem('spokeCalculations', JSON.stringify(updated));
     setCalculationName('');
     showToast(t('alerts.saved'), 'success');
   };
@@ -384,20 +729,21 @@ const SpokeLengthCalculator: React.FC = () => {
   // Load saved calculation
   const loadCalculation = (calculation: SavedCalculation) => {
     setInputs(calculation.inputs);
-    setResults(calculation.results);
+    setTouchedFields(createTouchedFields(true));
+    setSelectedPreset('');
   };
 
   // Load preset
   const loadPreset = (presetId: string) => {
     if (presetId === '') {
-      // Do nothing if preset selection is cleared
+      setSelectedPreset('');
       return;
     }
     
     const preset = presetOptions.find(p => p.id === presetId);
     if (preset) {
       setInputs(preset.data.inputs);
-      setResults(preset.data.results);
+      setTouchedFields({});
       setSelectedPreset(presetId);
     }
   };
@@ -412,8 +758,15 @@ const SpokeLengthCalculator: React.FC = () => {
   const confirmDelete = () => {
     if (calculationToDelete !== null) {
       const updated = savedCalculations.filter(calc => calc.id !== calculationToDelete);
+      try {
+        localStorage.setItem('spokeCalculations', JSON.stringify(updated));
+      } catch (error) {
+        console.error('Failed to delete calculation:', error);
+        showToast(t('alerts.deleteFailed'), 'error');
+        return;
+      }
+
       setSavedCalculations(updated);
-      localStorage.setItem('spokeCalculations', JSON.stringify(updated));
       showToast(t('alerts.deleted'), 'success');
     }
     setShowDeleteConfirm(false);
@@ -428,14 +781,14 @@ const SpokeLengthCalculator: React.FC = () => {
 
   // JSON export
   const exportToJSON = () => {
-    if (results.left === null || results.right === null) {
+    if (currentResults === null) {
       showToast(t('alerts.performCalculationFirst'), 'warning');
       return;
     }
 
     const exportData = {
       inputs,
-      results,
+      results: currentResults,
       timestamp: new Date().toISOString(),
       metadata: {
         calculator: 'Bicycle Spoke Length Calculator',
@@ -450,6 +803,11 @@ const SpokeLengthCalculator: React.FC = () => {
 
   // Copy JSON data to clipboard
   const copyToClipboard = () => {
+    if (!navigator.clipboard) {
+      showToast(t('alerts.copyFailed'), 'error');
+      return;
+    }
+
     navigator.clipboard.writeText(jsonData).then(() => {
       showToast(t('alerts.copiedToClipboard'), 'success');
     }).catch(() => {
@@ -485,12 +843,27 @@ const SpokeLengthCalculator: React.FC = () => {
     reader.onload = (e: ProgressEvent<FileReader>) => {
       try {
         if (e.target && typeof e.target.result === 'string') {
-          const jsonData = JSON.parse(e.target.result);
-          // Check JSON data format
-          if (jsonData.inputs && jsonData.results) {
-            setInputs(jsonData.inputs);
-            setResults(jsonData.results);
-            showToast(t('alerts.jsonLoaded'), 'success');
+          const parsed: unknown = JSON.parse(e.target.result);
+
+          if (!isRecord(parsed)) {
+            showToast(t('alerts.invalidJsonFormat'), 'error');
+            return;
+          }
+
+          const normalizedInputs = normalizeInputs(parsed.inputs);
+
+          if (normalizedInputs !== null) {
+            setInputs(normalizedInputs);
+            setTouchedFields(createTouchedFields(true));
+            setSelectedPreset('');
+
+            const importedCalculation = getCalculationState(normalizedInputs);
+            showToast(
+              importedCalculation.results === null
+                ? t('alerts.jsonLoadedWithValidationErrors')
+                : t('alerts.jsonLoaded'),
+              importedCalculation.results === null ? 'warning' : 'success',
+            );
           } else {
             showToast(t('alerts.invalidJsonFormat'), 'error');
           }
@@ -498,6 +871,9 @@ const SpokeLengthCalculator: React.FC = () => {
       } catch {
         showToast(t('alerts.jsonLoadFailed'), 'error');
       }
+    };
+    reader.onerror = () => {
+      showToast(t('alerts.jsonLoadFailed'), 'error');
     };
     reader.readAsText(file);
 
@@ -573,13 +949,17 @@ const SpokeLengthCalculator: React.FC = () => {
                   <HelpButton topic="erd" onOpen={setHelpTopic} />
                 </div>
                 <NumberInput
+                  id="erd"
                   value={inputs.erd}
                   onChange={(value) => handleInputChange('erd', value)}
+                  onBlur={() => markFieldTouched('erd')}
                   step={1}
                   min={1}
                   max={1000}
+                  error={visibleFieldErrors.erd}
                   placeholder={t('input.erdPlaceholder')}
                 />
+                <FieldError id="erd-error" message={visibleFieldErrors.erd} />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -592,13 +972,17 @@ const SpokeLengthCalculator: React.FC = () => {
                     <HelpButton topic="pcd" onOpen={setHelpTopic} />
                   </div>
                   <NumberInput
+                    id="pitchCircleLeft"
                     value={inputs.pitchCircleLeft}
                     onChange={(value) => handleInputChange('pitchCircleLeft', value)}
+                    onBlur={() => markFieldTouched('pitchCircleLeft')}
                     step={1}
                     min={1}
                     max={100}
+                    error={visibleFieldErrors.pitchCircleLeft}
                     placeholder={t('input.flangeLeftPlaceholder')}
                   />
+                  <FieldError id="pitchCircleLeft-error" message={visibleFieldErrors.pitchCircleLeft} />
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1">
@@ -609,13 +993,17 @@ const SpokeLengthCalculator: React.FC = () => {
                     <HelpButton topic="pcd" onOpen={setHelpTopic} />
                   </div>
                   <NumberInput
+                    id="pitchCircleRight"
                     value={inputs.pitchCircleRight}
                     onChange={(value) => handleInputChange('pitchCircleRight', value)}
+                    onBlur={() => markFieldTouched('pitchCircleRight')}
                     step={1}
                     min={1}
                     max={100}
+                    error={visibleFieldErrors.pitchCircleRight}
                     placeholder={t('input.flangeRightPlaceholder')}
                   />
+                  <FieldError id="pitchCircleRight-error" message={visibleFieldErrors.pitchCircleRight} />
                 </div>
               </div>
 
@@ -626,13 +1014,17 @@ const SpokeLengthCalculator: React.FC = () => {
                     <HelpButton topic="flangeDistance" onOpen={setHelpTopic} />
                   </div>
                   <NumberInput
+                    id="flangeDistanceLeft"
                     value={inputs.flangeDistanceLeft}
                     onChange={(value) => handleInputChange('flangeDistanceLeft', value)}
+                    onBlur={() => markFieldTouched('flangeDistanceLeft')}
                     step={1}
                     min={1}
                     max={100}
+                    error={visibleFieldErrors.flangeDistanceLeft}
                     placeholder={t('input.flangeLeftPlaceholder')}
                   />
+                  <FieldError id="flangeDistanceLeft-error" message={visibleFieldErrors.flangeDistanceLeft} />
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1">
@@ -640,13 +1032,17 @@ const SpokeLengthCalculator: React.FC = () => {
                     <HelpButton topic="flangeDistance" onOpen={setHelpTopic} />
                   </div>
                   <NumberInput
+                    id="flangeDistanceRight"
                     value={inputs.flangeDistanceRight}
                     onChange={(value) => handleInputChange('flangeDistanceRight', value)}
+                    onBlur={() => markFieldTouched('flangeDistanceRight')}
                     step={1}
                     min={1}
                     max={100}
+                    error={visibleFieldErrors.flangeDistanceRight}
                     placeholder={t('input.flangeRightPlaceholder')}
                   />
+                  <FieldError id="flangeDistanceRight-error" message={visibleFieldErrors.flangeDistanceRight} />
                 </div>
               </div>
 
@@ -656,23 +1052,29 @@ const SpokeLengthCalculator: React.FC = () => {
                   <HelpButton topic="spokeHoleDiameter" onOpen={setHelpTopic} />
                 </div>
                 <NumberInput
-                  value={inputs.spokeHoleDiameter !== '' && !isNaN(parseFloat(inputs.spokeHoleDiameter))
-                    ? parseFloat(inputs.spokeHoleDiameter).toFixed(1)
-                    : inputs.spokeHoleDiameter}
+                  id="spokeHoleDiameter"
+                  value={inputs.spokeHoleDiameter}
                   onChange={(value) => handleInputChange('spokeHoleDiameter', value)}
+                  onBlur={() => markFieldTouched('spokeHoleDiameter')}
                   step={0.1}
                   min={1.0}
                   max={3.0}
+                  error={visibleFieldErrors.spokeHoleDiameter}
                   placeholder={t('input.spokeHolePlaceholder')}
                 />
+                <FieldError id="spokeHoleDiameter-error" message={visibleFieldErrors.spokeHoleDiameter} />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.numberOfSpokes')}</label>
                 <select
+                  id="numberOfSpokes"
                   value={inputs.numberOfSpokes}
                   onChange={(e) => handleInputChange('numberOfSpokes', e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onBlur={() => markFieldTouched('numberOfSpokes')}
+                  aria-invalid={visibleFieldErrors.numberOfSpokes !== undefined}
+                  aria-describedby={visibleFieldErrors.numberOfSpokes !== undefined ? 'numberOfSpokes-error' : undefined}
+                  className={getControlClassName(visibleFieldErrors.numberOfSpokes !== undefined)}
                 >
                   <option value="">{t('input.selectOption')}</option>
                   <option value="24">24</option>
@@ -680,6 +1082,7 @@ const SpokeLengthCalculator: React.FC = () => {
                   <option value="32">32</option>
                   <option value="36">36</option>
                 </select>
+                <FieldError id="numberOfSpokes-error" message={visibleFieldErrors.numberOfSpokes} />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -689,9 +1092,13 @@ const SpokeLengthCalculator: React.FC = () => {
                     <HelpButton topic="crossings" onOpen={setHelpTopic} />
                   </div>
                   <select
+                    id="crossingsLeft"
                     value={inputs.crossingsLeft}
                     onChange={(e) => handleInputChange('crossingsLeft', e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onBlur={() => markFieldTouched('crossingsLeft')}
+                    aria-invalid={visibleFieldErrors.crossingsLeft !== undefined}
+                    aria-describedby={visibleFieldErrors.crossingsLeft !== undefined ? 'crossingsLeft-error' : undefined}
+                    className={getControlClassName(visibleFieldErrors.crossingsLeft !== undefined)}
                   >
                     <option value="">{t('input.selectOption')}</option>
                     <option value="0">{t('input.radialLacing')}</option>
@@ -700,6 +1107,7 @@ const SpokeLengthCalculator: React.FC = () => {
                     <option value="3">3</option>
                     <option value="4">4</option>
                   </select>
+                  <FieldError id="crossingsLeft-error" message={visibleFieldErrors.crossingsLeft} />
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1">
@@ -707,9 +1115,13 @@ const SpokeLengthCalculator: React.FC = () => {
                     <HelpButton topic="crossings" onOpen={setHelpTopic} />
                   </div>
                   <select
+                    id="crossingsRight"
                     value={inputs.crossingsRight}
                     onChange={(e) => handleInputChange('crossingsRight', e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onBlur={() => markFieldTouched('crossingsRight')}
+                    aria-invalid={visibleFieldErrors.crossingsRight !== undefined}
+                    aria-describedby={visibleFieldErrors.crossingsRight !== undefined ? 'crossingsRight-error' : undefined}
+                    className={getControlClassName(visibleFieldErrors.crossingsRight !== undefined)}
                   >
                     <option value="">{t('input.selectOption')}</option>
                     <option value="0">{t('input.radialLacing')}</option>
@@ -718,34 +1130,25 @@ const SpokeLengthCalculator: React.FC = () => {
                     <option value="3">3</option>
                     <option value="4">4</option>
                   </select>
+                  <FieldError id="crossingsRight-error" message={visibleFieldErrors.crossingsRight} />
                 </div>
               </div>
-            </div>
-
-            <div className="flex justify-center pt-4">
-              <button
-                onClick={calculateSpokeLength}
-                className="w-full bg-slate-700 dark:bg-slate-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors duration-300 flex items-center justify-center gap-2"
-              >
-                <Calculator className="w-5 h-5" />
-                {t('buttons.calculate')}
-              </button>
             </div>
           </div>
 
           {/* Results and save section */}
           <div className="space-y-6">
             <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600 pb-2">{t('results.heading')}</h2>
-            {results.left !== null && results.right !== null ? (
+            {currentResults !== null ? (
               <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div>
                     <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">{t('results.left')}</h3>
-                    <p className="text-3xl font-bold text-blue-800 dark:text-blue-400">{results.left.toFixed(1)} mm</p>
+                    <p className="text-3xl font-bold text-blue-800 dark:text-blue-400">{currentResults.left.toFixed(1)} mm</p>
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">{t('results.right')}</h3>
-                    <p className="text-3xl font-bold text-blue-800 dark:text-blue-400">{results.right.toFixed(1)} mm</p>
+                    <p className="text-3xl font-bold text-blue-800 dark:text-blue-400">{currentResults.right.toFixed(1)} mm</p>
                   </div>
                 </div>
               </div>
@@ -770,14 +1173,16 @@ const SpokeLengthCalculator: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={saveCalculation}
-                  className="bg-blue-700 dark:bg-blue-800 hover:bg-blue-800 dark:hover:bg-blue-900 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
+                  disabled={!hasValidResults}
+                  className="bg-blue-700 dark:bg-blue-800 hover:bg-blue-800 dark:hover:bg-blue-900 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed dark:disabled:bg-slate-700 dark:disabled:text-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
                 >
                   <Save className="w-4 h-4" />
                   {t('buttons.save')}
                 </button>
                 <button
                   onClick={exportToJSON}
-                  className="bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-800 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
+                  disabled={!hasValidResults}
+                  className="bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-800 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed dark:disabled:bg-slate-700 dark:disabled:text-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
                 >
                   <FileJson className="w-4 h-4" />
                   <span className="sm:hidden">{t('buttons.jsonShort')}</span>
