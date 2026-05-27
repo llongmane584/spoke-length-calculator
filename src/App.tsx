@@ -89,6 +89,11 @@ const inputFields = [
   'crossingsRight',
 ] as const satisfies readonly InputField[];
 
+const COMPACT_VIEWPORT_QUERY = '(max-width: 639px)';
+
+const getIsCompactViewport = () =>
+  typeof window !== 'undefined' && window.matchMedia(COMPACT_VIEWPORT_QUERY).matches;
+
 const numericFieldRules: Record<NumericInputField, { min: number; max: number; rangeError: string }> = {
   erd: { min: 1, max: 1000, rangeError: 'validation.rangeErd' },
   pitchCircleLeft: { min: 1, max: 100, rangeError: 'validation.rangeStandard' },
@@ -525,6 +530,7 @@ const SpokeLengthCalculator: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { showToast } = useToast();
   const { theme, toggleTheme } = useTheme();
+  const [isCompactViewport, setIsCompactViewport] = useState(getIsCompactViewport);
   const [inputs, setInputs] = useState<Inputs>({
     erd: '',
     pitchCircleLeft: '',
@@ -565,10 +571,34 @@ const SpokeLengthCalculator: React.FC = () => {
     return errors;
   }, [calculation.fieldErrors, inputs, t, touchedFields]);
   const hasValidResults = currentResults !== null;
+  const titleText = t(isCompactViewport ? 'titleShort' : 'title');
+  const resultsLeftText = t(isCompactViewport ? 'results.leftShort' : 'results.left');
+  const resultsRightText = t(isCompactViewport ? 'results.rightShort' : 'results.right');
+  const calculationNamePlaceholder = t(
+    isCompactViewport ? 'results.namePlaceholderShort' : 'results.namePlaceholder'
+  );
 
   const markFieldTouched = (field: InputField) => {
     setTouchedFields(prev => ({ ...prev, [field]: true }));
   };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia(COMPACT_VIEWPORT_QUERY);
+    const handleChange = (event: MediaQueryListEvent) => {
+      setIsCompactViewport(event.matches);
+    };
+
+    setIsCompactViewport(mediaQuery.matches);
+    mediaQuery.addEventListener('change', handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
 
   // Dynamically load preset data
   useEffect(() => {
@@ -887,7 +917,7 @@ const SpokeLengthCalculator: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
-              {t('title')}
+              {titleText}
               <span className="block sm:inline text-base sm:text-lg font-normal text-slate-600 dark:text-slate-400"></span>
             </h1>
           </div>
@@ -1143,11 +1173,11 @@ const SpokeLengthCalculator: React.FC = () => {
               <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">{t('results.left')}</h3>
+                    <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">{resultsLeftText}</h3>
                     <p className="text-3xl font-bold text-blue-800 dark:text-blue-400">{currentResults.left.toFixed(1)} mm</p>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">{t('results.right')}</h3>
+                    <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">{resultsRightText}</h3>
                     <p className="text-3xl font-bold text-blue-800 dark:text-blue-400">{currentResults.right.toFixed(1)} mm</p>
                   </div>
                 </div>
@@ -1167,7 +1197,7 @@ const SpokeLengthCalculator: React.FC = () => {
                   value={calculationName}
                   onChange={(e) => setCalculationName(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder={t('results.namePlaceholder')}
+                  placeholder={calculationNamePlaceholder}
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -1217,7 +1247,7 @@ const SpokeLengthCalculator: React.FC = () => {
                         <p className="font-medium text-slate-700 dark:text-slate-300">{calc.name}</p>
                         <p className="text-sm text-slate-500 dark:text-slate-400">{calc.timestamp}</p>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {t('results.left')}: {calc.results.left !== null ? calc.results.left.toFixed(1) : '-'}mm / {t('results.right')}: {calc.results.right !== null ? calc.results.right.toFixed(1) : '-'}mm
+                          {resultsLeftText}: {calc.results.left !== null ? calc.results.left.toFixed(1) : '-'}mm / {resultsRightText}: {calc.results.right !== null ? calc.results.right.toFixed(1) : '-'}mm
                         </p>
                       </div>
                       <div className="flex gap-2">

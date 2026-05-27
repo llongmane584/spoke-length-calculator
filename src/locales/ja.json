@@ -1,5 +1,6 @@
 {
   "title": "スポーク長計算機",
+  "titleShort": "スポーク長計算機",
   "input": {
     "heading": "入力値",
     "preset": "プリセット",
@@ -80,7 +81,7 @@
     "save": "保存",
     "jsonDisplay": "JSON表示",
     "jsonShort": "JSON",
-    "loadJson": "JSONファイル読み込み",
+    "loadJson": "JSONファイル読込",
     "load": "読込",
     "copyToClipboard": "クリップボードにコピー",
     "downloadJson": "JSONダウンロード",
@@ -89,10 +90,13 @@
   "results": {
     "heading": "計算結果",
     "left": "左側",
+    "leftShort": "左側",
     "right": "右側",
+    "rightShort": "右側",
     "placeholder": "計算結果がここに表示されます",
     "calculationName": "計算名",
     "namePlaceholder": "計算に名前を付けて保存",
+    "namePlaceholderShort": "計算に名前を付けて保存",
     "savedCalculations": "保存された計算",
     "jsonOutput": "JSON出力"
   },
