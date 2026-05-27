@@ -237,3 +237,9 @@ vite.config.ts.timestamp-*
 
 docs/
 .claude/settings.local.json
+
+#################################
+# Project-local temp/output
+#################################
+tmp/
+.playwright-cli/
