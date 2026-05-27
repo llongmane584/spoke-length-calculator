@@ -1,5 +1,6 @@
 {
   "title": "Spoke Length Calculator",
+  "titleShort": "Spoke Length Calc",
   "input": {
     "heading": "Input Values",
     "preset": "Preset",
@@ -89,10 +90,13 @@
   "results": {
     "heading": "Calculation Results",
     "left": "Left Side",
+    "leftShort": "Left",
     "right": "Right Side",
+    "rightShort": "Right",
     "placeholder": "Calculation results will be displayed here",
     "calculationName": "Calculation Name",
     "namePlaceholder": "Name your calculation for saving",
+    "namePlaceholderShort": "Save name",
     "savedCalculations": "Saved Calculations",
     "jsonOutput": "JSON Output"
   },
