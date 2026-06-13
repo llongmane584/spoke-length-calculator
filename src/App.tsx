@@ -1338,7 +1338,7 @@ const SpokeLengthCalculator: React.FC = () => {
           <span className="text-slate-400 dark:text-slate-500">{showCompare ? '▲' : '▼'}</span>
         </button>
         {showCompare && (
-          <div className="mt-4 rounded-lg border border-slate-200 dark:border-slate-600 p-5">
+          <div className="mt-4 rounded-lg border border-slate-200 dark:border-slate-600 p-5 animate-fade-in-down">
             <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-4">{t('compare.heading')}</h2>
             <CompareWheels
               options={wheelOptions}
