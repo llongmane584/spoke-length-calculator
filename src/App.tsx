@@ -6,6 +6,7 @@ import { useTheme } from './hooks/useTheme';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { HelpButton } from './components/HelpButton';
 import { HelpModal, type HelpTopic } from './components/HelpModal';
+import CompareWheels, { type WheelOption } from './components/CompareWheels';
 
 // Dynamic import of preset data
 const presetModules = import.meta.glob('./presets/*.json', { eager: true });
@@ -560,6 +561,9 @@ const SpokeLengthCalculator: React.FC = () => {
   const [helpTopic, setHelpTopic] = useState<HelpTopic | null>(null);
   const [touchedFields, setTouchedFields] = useState<TouchedFields>({});
   const savedCalculationsLoadedRef = useRef(false);
+  const [showCompare, setShowCompare] = useState(false);
+  const [compareA, setCompareA] = useState('');
+  const [compareB, setCompareB] = useState('');
 
   const calculation = useMemo(() => getCalculationState(inputs), [inputs]);
   const currentResults = calculation.results;
@@ -577,6 +581,33 @@ const SpokeLengthCalculator: React.FC = () => {
     return errors;
   }, [calculation.fieldErrors, inputs, t, touchedFields]);
   const hasValidResults = currentResults !== null;
+
+  const wheelOptions = useMemo((): WheelOption[] => {
+    const presetItems: WheelOption[] = presetOptions.map(p => ({
+      id: `preset:${p.id}`,
+      label: p.name,
+      group: 'preset',
+      spec: {
+        label: p.name,
+        leftLength: p.data.results.left,
+        rightLength: p.data.results.right,
+        spokeCount: parseInt(p.data.inputs.numberOfSpokes, 10) || 32,
+      },
+    }));
+    const savedItems: WheelOption[] = savedCalculations.map(s => ({
+      id: `saved:${s.id}`,
+      label: s.name,
+      group: 'saved',
+      spec: {
+        label: s.name,
+        leftLength: s.results.left,
+        rightLength: s.results.right,
+        spokeCount: parseInt(s.inputs.numberOfSpokes, 10) || 32,
+      },
+    }));
+    return [...presetItems, ...savedItems];
+  }, [presetOptions, savedCalculations]);
+
   const titleText = t(isCompactViewport ? 'titleShort' : 'title');
   const resultsLeftText = t(isCompactViewport ? 'results.leftShort' : 'results.left');
   const resultsRightText = t(isCompactViewport ? 'results.rightShort' : 'results.right');
@@ -1288,6 +1319,29 @@ const SpokeLengthCalculator: React.FC = () => {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Wheel compare section */}
+      <div className="mt-10">
+        <button
+          onClick={() => setShowCompare(prev => !prev)}
+          className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300 font-medium transition-colors"
+        >
+          <span>{t('compare.toggle')}</span>
+          <span className="text-slate-400 dark:text-slate-500">{showCompare ? '▲' : '▼'}</span>
+        </button>
+        {showCompare && (
+          <div className="mt-4 rounded-lg border border-slate-200 dark:border-slate-600 p-5">
+            <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-4">{t('compare.heading')}</h2>
+            <CompareWheels
+              options={wheelOptions}
+              selectedA={compareA}
+              selectedB={compareB}
+              onChangeA={setCompareA}
+              onChangeB={setCompareB}
+            />
+          </div>
+        )}
       </div>
 
       {/* JSON data display modal */}
