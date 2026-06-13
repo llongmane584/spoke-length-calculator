@@ -131,5 +131,26 @@
     },
     "cancel": "Cancel",
     "confirm": "Delete"
+  },
+  "compare": {
+    "heading": "Compare Wheels & Spoke Suggestion",
+    "toggle": "Compare Wheels",
+    "wheelA": "Current Wheel (spokes you have)",
+    "wheelB": "New Wheel (spokes you need)",
+    "placeholder": "Select a wheel",
+    "groupPresets": "Presets",
+    "groupSaved": "Saved Calculations",
+    "totalNeeded": "Spokes needed (B)",
+    "reuseCount": "Reusable from current wheel",
+    "leftoverCount": "Leftover spokes from current wheel",
+    "buyHeading": "Spokes to buy",
+    "buyItem": "{{length}} mm × {{count}} pcs",
+    "sideLeft": "Left",
+    "sideRight": "Right",
+    "noBuy": "No additional spokes needed — all can be reused.",
+    "combinable": "Both sides require the same length (within ±1 mm) — you can order one length for both sides.",
+    "allNew": "No spokes can be reused — full replacement required.",
+    "note": "* Reuse is based on length only (±1 mm tolerance). Spoke gauge and fatigue are not considered.",
+    "selectBoth": "Select both wheels to see the suggestion."
   }
 }

@@ -131,5 +131,26 @@
     },
     "cancel": "キャンセル",
     "confirm": "削除"
+  },
+  "compare": {
+    "heading": "ホイール比較・スポーク買い足し提案",
+    "toggle": "ホイールを比較",
+    "wheelA": "現状ホイール（手持ちスポーク）",
+    "wheelB": "交換後ホイール（必要なスポーク）",
+    "placeholder": "ホイールを選択",
+    "groupPresets": "プリセット",
+    "groupSaved": "保存済み計算",
+    "totalNeeded": "必要本数（B）",
+    "reuseCount": "現状ホイールから流用できる本数",
+    "leftoverCount": "流用後に余る本数",
+    "buyHeading": "買い足しスポーク",
+    "buyItem": "{{length}} mm × {{count}} 本",
+    "sideLeft": "左",
+    "sideRight": "右",
+    "noBuy": "買い足し不要 — すべて流用できます。",
+    "combinable": "左右の必要長が±1mm以内です — 1種類の長さでまとめて注文できます。",
+    "allNew": "流用できるスポークがありません — 全数交換が必要です。",
+    "note": "※ 流用判定は長さのみで行います（許容差±1mm）。スポークのゲージや疲労は考慮しません。",
+    "selectBoth": "両方のホイールを選択すると提案が表示されます。"
   }
 }
