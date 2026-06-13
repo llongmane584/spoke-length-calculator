@@ -561,6 +561,7 @@ const SpokeLengthCalculator: React.FC = () => {
   const [helpTopic, setHelpTopic] = useState<HelpTopic | null>(null);
   const [touchedFields, setTouchedFields] = useState<TouchedFields>({});
   const savedCalculationsLoadedRef = useRef(false);
+  const compareSectionRef = useRef<HTMLDivElement>(null);
   const [showCompare, setShowCompare] = useState(false);
   const [compareA, setCompareA] = useState('');
   const [compareB, setCompareB] = useState('');
@@ -618,6 +619,12 @@ const SpokeLengthCalculator: React.FC = () => {
   const markFieldTouched = (field: InputField) => {
     setTouchedFields(prev => ({ ...prev, [field]: true }));
   };
+
+  useEffect(() => {
+    if (showCompare) {
+      compareSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [showCompare]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -1322,7 +1329,7 @@ const SpokeLengthCalculator: React.FC = () => {
       </div>
 
       {/* Wheel compare section */}
-      <div className="mt-10">
+      <div ref={compareSectionRef} className="mt-10">
         <button
           onClick={() => setShowCompare(prev => !prev)}
           className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300 font-medium transition-colors"
@@ -1331,7 +1338,7 @@ const SpokeLengthCalculator: React.FC = () => {
           <span className="text-slate-400 dark:text-slate-500">{showCompare ? '▲' : '▼'}</span>
         </button>
         {showCompare && (
-          <div className="mt-4 rounded-lg border border-slate-200 dark:border-slate-600 p-5">
+          <div className="mt-4 rounded-lg border border-slate-200 dark:border-slate-600 p-5 animate-fade-in-down">
             <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-4">{t('compare.heading')}</h2>
             <CompareWheels
               options={wheelOptions}
