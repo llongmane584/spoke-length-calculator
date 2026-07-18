@@ -21,6 +21,7 @@ GitHub pages: https://llongmane584.github.io/spoke-length-calculator/
   - Hope Pro 5 IS6 + Nextie Premium 2936（フロント/リア）
 - **豊富な入力パラメータ**:
   - ERD（有効リム径）
+  - リムオフセット（左右の実効フランジ距離差を縮める方向へ自動適用）
   - 左右ハブフランジのPCD（ピッチ円直径）
   - 左右フランジ間距離
   - スポーク穴径

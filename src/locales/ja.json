@@ -8,6 +8,8 @@
     "presetOption": "選択してください",
     "erd": "ERD (mm)",
     "erdPlaceholder": "有効リム直径",
+    "rimOffset": "リムオフセット (mm)",
+    "rimOffsetPlaceholder": "オフセット量",
     "pcdLeft": "PCD [左] (mm)",
     "pcdRight": "PCD [右] (mm)",
     "pcdLeftPlaceholder": "左側",
@@ -31,6 +33,11 @@
         "diagram": {
           "nippleSeat": "ニップル座面"
         }
+      },
+      "rimOffset": {
+        "title": "リムオフセット",
+        "description": "リム中心面からスポーク穴（ニップル座面）までの左右方向のずれです。\n\n符号なしのオフセット量を入力してください。左右どちらへずらすかは、左右の実効フランジ距離の差が小さくなる方向へ自動的に適用されます。左右のフランジ距離が等しい場合、オフセットは計算に作用しません。\n\n単位: mm",
+        "ariaLabel": "リムオフセットのヘルプ"
       },
       "pcd": {
         "title": "PCD（ピッチ円直径）",
@@ -70,8 +77,10 @@
     "selectRequired": "選択してください",
     "invalidNumber": "数値を入力",
     "rangeErd": "1〜1000mm",
+    "rangeRimOffset": "0〜100mm",
     "rangeStandard": "1〜100mm",
     "rangeSpokeHole": "1.0〜3.0mm",
+    "rimOffsetTooLarge": "実効フランジ距離が0mm以下になります",
     "selectSpokeCount": "24/28/32/36",
     "selectCrossings": "0〜4を選択",
     "calculationUnavailable": "計算不可"

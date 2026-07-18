@@ -4,6 +4,7 @@
   "description": "Front wheel preset for Hope Pro 5 CL hub with Nextie Premium 29x36 rim",
   "inputs": {
     "erd": "581",
+    "rimOffset": "0",
     "pitchCircleLeft": "43",
     "pitchCircleRight": "43",
     "flangeDistanceLeft": "27",

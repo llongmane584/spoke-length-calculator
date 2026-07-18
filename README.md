@@ -21,6 +21,7 @@ Most of the code in this project was created with [Claude Code](https://claude.a
   - Hope Pro 5 IS6 + Nextie Premium 2936 (Front/Rear)
 - **Rich input parameters**:
   - ERD (Effective Rim Diameter)
+  - Rim offset (automatically applied to reduce the effective left/right flange-distance difference)
   - Left and right hub flange PCD (Pitch Circle Diameter)
   - Distance between left and right flanges
   - Spoke hole diameter
