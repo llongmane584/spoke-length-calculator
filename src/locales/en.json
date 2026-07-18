@@ -36,7 +36,7 @@
       },
       "rimOffset": {
         "title": "Rim Offset",
-        "description": "The lateral displacement from the rim center plane to the spoke holes (nipple seats).\n\nEnter an unsigned offset amount. The calculator automatically applies it in the direction that reduces the difference between the effective left and right center-to-flange distances. If both flange distances are equal, the offset does not affect the calculation.\n\nUnit: mm.",
+        "description": "The lateral displacement from the rim center plane to the spoke holes (nipple seats).\n\nEnter an unsigned offset amount. The calculator automatically applies it in the direction that reduces the difference between the effective left and right center-to-flange distances. If both flange distances are equal, the offset does not affect the calculation.\n\nIf the entered offset is greater than the difference between the left and right flange distances, it increases the asymmetry compared with no offset, and a warning appears below the input.\n\nUnit: mm.",
         "ariaLabel": "Help for Rim Offset"
       },
       "pcd": {
@@ -84,6 +84,10 @@
     "selectSpokeCount": "24/28/32/36",
     "selectCrossings": "Select 0-4",
     "calculationUnavailable": "Cannot calculate"
+  },
+  "warnings": {
+    "rimOffsetWorsensAsymmetry": "The offset increases the left/right difference from {{before}} mm to {{after}} mm. Check the hub dimensions and offset amount.",
+    "rimOffsetDirectionIndeterminate": "The flange distances are equal, so the offset direction cannot be determined automatically. This offset is not applied to the calculation."
   },
   "buttons": {
     "calculate": "Calculate",
