@@ -4,6 +4,7 @@ import { X } from 'lucide-react'
 
 export type HelpTopic =
   | 'erd'
+  | 'rimOffset'
   | 'pcd'
   | 'flangeDistance'
   | 'spokeHoleDiameter'
@@ -41,6 +42,29 @@ function ErdDiagram() {
       <text x="160" y="94" textAnchor="middle" fontSize="13" fill={ACCENT} fontWeight="600">ERD</text>
       <circle cx="160" cy="42" r="3" fill={ACCENT} />
       <text x="160" y="32" textAnchor="middle" fontSize="10" fill="currentColor">{t('input.help.erd.diagram.nippleSeat')}</text>
+    </svg>
+  )
+}
+
+function RimOffsetDiagram() {
+  return (
+    <svg viewBox="0 0 320 200" className="w-full max-w-sm h-auto text-slate-700 dark:text-slate-200" aria-hidden="true">
+      <ArrowDefs />
+      {/* hub and axle */}
+      <line x1="45" y1="145" x2="275" y2="145" stroke="currentColor" strokeWidth="3" />
+      <rect x="105" y="132" width="110" height="26" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="105" y1="105" x2="105" y2="170" stroke="currentColor" strokeWidth="3" />
+      <line x1="215" y1="105" x2="215" y2="170" stroke="currentColor" strokeWidth="3" />
+      {/* rim center plane and offset nipple bed */}
+      <path d="M 122 38 Q 160 22 198 38 L 188 72 Q 160 60 132 72 Z" fill="none" stroke="currentColor" strokeWidth="2" />
+      <line x1="160" y1="18" x2="160" y2="176" stroke="currentColor" strokeDasharray="4 3" strokeWidth="1" opacity="0.55" />
+      <line x1="178" y1="34" x2="178" y2="82" stroke={ACCENT} strokeWidth="3" />
+      <circle cx="178" cy="64" r="4" fill={ACCENT} />
+      {/* spokes and offset measurement */}
+      <line x1="105" y1="112" x2="178" y2="64" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="215" y1="112" x2="178" y2="64" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="160" y1="92" x2="178" y2="92" stroke={ACCENT} strokeWidth="1.5" markerStart="url(#hm-arr-start)" markerEnd="url(#hm-arr-end)" />
+      <text x="169" y="108" textAnchor="middle" fontSize="11" fill={ACCENT} fontWeight="600">offset</text>
     </svg>
   )
 }
@@ -178,6 +202,7 @@ function CrossingsDiagram() {
 
 const DIAGRAMS: Record<HelpTopic, () => React.ReactElement> = {
   erd: ErdDiagram,
+  rimOffset: RimOffsetDiagram,
   pcd: PcdDiagram,
   flangeDistance: FlangeDistanceDiagram,
   spokeHoleDiameter: SpokeHoleDiameterDiagram,

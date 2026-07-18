@@ -14,6 +14,7 @@ const presetModules = import.meta.glob('./presets/*.json', { eager: true });
 // Type definitions
 interface Inputs {
   erd: string;
+  rimOffset: string;
   pitchCircleLeft: string;
   pitchCircleRight: string;
   flangeDistanceLeft: string;
@@ -63,6 +64,7 @@ type TouchedFields = Partial<Record<InputField, boolean>>;
 
 interface ParsedInputs {
   erd: number;
+  rimOffset: number;
   pitchCircleLeft: number;
   pitchCircleRight: number;
   flangeDistanceLeft: number;
@@ -80,6 +82,7 @@ interface CalculationState {
 
 const inputFields = [
   'erd',
+  'rimOffset',
   'pitchCircleLeft',
   'pitchCircleRight',
   'flangeDistanceLeft',
@@ -97,6 +100,7 @@ const getIsCompactViewport = () =>
 
 const numericFieldRules: Record<NumericInputField, { min: number; max: number; rangeError: string }> = {
   erd: { min: 1, max: 1000, rangeError: 'validation.rangeErd' },
+  rimOffset: { min: 0, max: 100, rangeError: 'validation.rangeRimOffset' },
   pitchCircleLeft: { min: 1, max: 100, rangeError: 'validation.rangeStandard' },
   pitchCircleRight: { min: 1, max: 100, rangeError: 'validation.rangeStandard' },
   flangeDistanceLeft: { min: 1, max: 100, rangeError: 'validation.rangeStandard' },
@@ -139,7 +143,9 @@ const normalizeInputs = (value: unknown): Inputs | null => {
   const normalized: Partial<Inputs> = {};
 
   for (const field of inputFields) {
-    const normalizedValue = normalizeInputValue(value[field]);
+    const normalizedValue = field === 'rimOffset' && value[field] === undefined
+      ? '0'
+      : normalizeInputValue(value[field]);
 
     if (normalizedValue === null) {
       return null;
@@ -269,11 +275,48 @@ const validateInputs = (inputs: Inputs): { parsed: ParsedInputs | null; fieldErr
     };
   }
 
+  const effectiveFlangeDistances = getEffectiveFlangeDistances(completeParsed);
+
+  if (effectiveFlangeDistances.left <= 0 || effectiveFlangeDistances.right <= 0) {
+    return {
+      parsed: null,
+      fieldErrors: {
+        rimOffset: 'validation.rimOffsetTooLarge',
+      },
+    };
+  }
+
   return { parsed: completeParsed, fieldErrors };
+};
+
+const getEffectiveFlangeDistances = (
+  inputs: Pick<ParsedInputs, 'flangeDistanceLeft' | 'flangeDistanceRight' | 'rimOffset'>,
+): { left: number; right: number } => {
+  const { flangeDistanceLeft, flangeDistanceRight, rimOffset } = inputs;
+
+  if (flangeDistanceLeft > flangeDistanceRight) {
+    return {
+      left: flangeDistanceLeft - rimOffset,
+      right: flangeDistanceRight + rimOffset,
+    };
+  }
+
+  if (flangeDistanceRight > flangeDistanceLeft) {
+    return {
+      left: flangeDistanceLeft + rimOffset,
+      right: flangeDistanceRight - rimOffset,
+    };
+  }
+
+  return {
+    left: flangeDistanceLeft,
+    right: flangeDistanceRight,
+  };
 };
 
 const calculateSpokeResults = (inputs: ParsedInputs): Results | null => {
   const spokesPerSide = inputs.numberOfSpokes / 2;
+  const effectiveFlangeDistances = getEffectiveFlangeDistances(inputs);
 
   if (!Number.isFinite(spokesPerSide) || spokesPerSide <= 0) {
     return null;
@@ -310,8 +353,8 @@ const calculateSpokeResults = (inputs: ParsedInputs): Results | null => {
     return roundedLength;
   };
 
-  const left = calculateLength(inputs.pitchCircleLeft, inputs.flangeDistanceLeft, inputs.crossingsLeft);
-  const right = calculateLength(inputs.pitchCircleRight, inputs.flangeDistanceRight, inputs.crossingsRight);
+  const left = calculateLength(inputs.pitchCircleLeft, effectiveFlangeDistances.left, inputs.crossingsLeft);
+  const right = calculateLength(inputs.pitchCircleRight, effectiveFlangeDistances.right, inputs.crossingsRight);
 
   if (left === null || right === null) {
     return null;
@@ -540,6 +583,7 @@ const SpokeLengthCalculator: React.FC = () => {
   const [isCompactViewport, setIsCompactViewport] = useState(getIsCompactViewport);
   const [inputs, setInputs] = useState<Inputs>({
     erd: '',
+    rimOffset: '0',
     pitchCircleLeft: '',
     pitchCircleRight: '',
     flangeDistanceLeft: '',
@@ -1016,23 +1060,43 @@ const SpokeLengthCalculator: React.FC = () => {
               </div>
             )}
 
-            <div>
-              <div className="flex items-center gap-1 mb-1">
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.erd')}</label>
-                <HelpButton topic="erd" onOpen={setHelpTopic} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.erd')}</label>
+                  <HelpButton topic="erd" onOpen={setHelpTopic} />
+                </div>
+                <NumberInput
+                  id="erd"
+                  value={inputs.erd}
+                  onChange={(value) => handleInputChange('erd', value)}
+                  onBlur={() => markFieldTouched('erd')}
+                  step={1}
+                  min={1}
+                  max={1000}
+                  error={visibleFieldErrors.erd}
+                  placeholder={t('input.erdPlaceholder')}
+                />
+                <FieldError id="erd-error" message={visibleFieldErrors.erd} />
               </div>
-              <NumberInput
-                id="erd"
-                value={inputs.erd}
-                onChange={(value) => handleInputChange('erd', value)}
-                onBlur={() => markFieldTouched('erd')}
-                step={1}
-                min={1}
-                max={1000}
-                error={visibleFieldErrors.erd}
-                placeholder={t('input.erdPlaceholder')}
-              />
-              <FieldError id="erd-error" message={visibleFieldErrors.erd} />
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.rimOffset')}</label>
+                  <HelpButton topic="rimOffset" onOpen={setHelpTopic} />
+                </div>
+                <NumberInput
+                  id="rimOffset"
+                  value={inputs.rimOffset}
+                  onChange={(value) => handleInputChange('rimOffset', value)}
+                  onBlur={() => markFieldTouched('rimOffset')}
+                  step={0.1}
+                  min={0}
+                  max={100}
+                  error={visibleFieldErrors.rimOffset}
+                  placeholder={t('input.rimOffsetPlaceholder')}
+                />
+                <FieldError id="rimOffset-error" message={visibleFieldErrors.rimOffset} />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

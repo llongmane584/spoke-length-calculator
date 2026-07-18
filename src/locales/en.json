@@ -8,6 +8,8 @@
     "presetOption": "Please Select",
     "erd": "ERD (mm)",
     "erdPlaceholder": "Effective Rim Diameter",
+    "rimOffset": "Rim Offset (mm)",
+    "rimOffsetPlaceholder": "Offset amount",
     "pcdLeft": "PCD [L] (mm)",
     "pcdRight": "PCD [R] (mm)",
     "pcdLeftPlaceholder": "Left Side",
@@ -31,6 +33,11 @@
         "diagram": {
           "nippleSeat": "nipple seat"
         }
+      },
+      "rimOffset": {
+        "title": "Rim Offset",
+        "description": "The lateral displacement from the rim center plane to the spoke holes (nipple seats).\n\nEnter an unsigned offset amount. The calculator automatically applies it in the direction that reduces the difference between the effective left and right center-to-flange distances. If both flange distances are equal, the offset does not affect the calculation.\n\nUnit: mm.",
+        "ariaLabel": "Help for Rim Offset"
       },
       "pcd": {
         "title": "PCD (Pitch Circle Diameter)",
@@ -70,8 +77,10 @@
     "selectRequired": "Select one",
     "invalidNumber": "Enter a number",
     "rangeErd": "1-1000mm",
+    "rangeRimOffset": "0-100mm",
     "rangeStandard": "1-100mm",
     "rangeSpokeHole": "1.0-3.0mm",
+    "rimOffsetTooLarge": "Makes an effective flange distance 0mm or less",
     "selectSpokeCount": "24/28/32/36",
     "selectCrossings": "Select 0-4",
     "calculationUnavailable": "Cannot calculate"
