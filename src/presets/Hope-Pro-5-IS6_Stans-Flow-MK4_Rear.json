@@ -1,0 +1,26 @@
+{
+  "displayName": "Hope Pro 5 IS6 + Stans Flow MK4 29in (Rear)",
+  "category": "MTB",
+  "description": "Rear wheel preset for Hope Pro 5 IS6 hub with Stans Flow MK4 29in rim",
+  "inputs": {
+    "erd": "600",
+    "rimOffset": "3.0",
+    "pitchCircleLeft": "57",
+    "pitchCircleRight": "59",
+    "flangeDistanceLeft": "35",
+    "flangeDistanceRight": "22.6",
+    "spokeHoleDiameter": "2.6",
+    "numberOfSpokes": "32",
+    "crossingsLeft": "3",
+    "crossingsRight": "3"
+  },
+  "results": {
+    "left": 290.7,
+    "right": 289.8 
+  },
+  "timestamp": "2026-07-18T13:05:16.902Z",
+  "metadata": {
+    "calculator": "Bicycle Spoke Length Calculator",
+    "version": "1.1"
+  }
+}
