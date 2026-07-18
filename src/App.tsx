@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Save, Trash2, Languages, FileJson, FileUp, Sun, Moon } from 'lucide-react';
+import { Save, Trash2, Languages, FileJson, FileUp, Sun, Moon, TriangleAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from './hooks/useToast';
 import { useTheme } from './hooks/useTheme';
@@ -7,6 +7,7 @@ import { ConfirmDialog } from './components/ConfirmDialog';
 import { HelpButton } from './components/HelpButton';
 import { HelpModal, type HelpTopic } from './components/HelpModal';
 import CompareWheels, { type WheelOption } from './components/CompareWheels';
+import { assessRimOffset, getEffectiveFlangeDistances, type RimOffsetAssessment } from './rimOffset';
 
 // Dynamic import of preset data
 const presetModules = import.meta.glob('./presets/*.json', { eager: true });
@@ -289,29 +290,27 @@ const validateInputs = (inputs: Inputs): { parsed: ParsedInputs | null; fieldErr
   return { parsed: completeParsed, fieldErrors };
 };
 
-const getEffectiveFlangeDistances = (
-  inputs: Pick<ParsedInputs, 'flangeDistanceLeft' | 'flangeDistanceRight' | 'rimOffset'>,
-): { left: number; right: number } => {
-  const { flangeDistanceLeft, flangeDistanceRight, rimOffset } = inputs;
+const getRimOffsetAssessment = (inputs: Inputs): RimOffsetAssessment => {
+  const rimOffset = parseNumericField('rimOffset', inputs.rimOffset);
+  const flangeDistanceLeft = parseNumericField('flangeDistanceLeft', inputs.flangeDistanceLeft);
+  const flangeDistanceRight = parseNumericField('flangeDistanceRight', inputs.flangeDistanceRight);
 
-  if (flangeDistanceLeft > flangeDistanceRight) {
-    return {
-      left: flangeDistanceLeft - rimOffset,
-      right: flangeDistanceRight + rimOffset,
-    };
+  if (
+    rimOffset.value === null
+    || rimOffset.error !== undefined
+    || flangeDistanceLeft.value === null
+    || flangeDistanceLeft.error !== undefined
+    || flangeDistanceRight.value === null
+    || flangeDistanceRight.error !== undefined
+  ) {
+    return { kind: 'none' };
   }
 
-  if (flangeDistanceRight > flangeDistanceLeft) {
-    return {
-      left: flangeDistanceLeft + rimOffset,
-      right: flangeDistanceRight - rimOffset,
-    };
-  }
-
-  return {
-    left: flangeDistanceLeft,
-    right: flangeDistanceRight,
-  };
+  return assessRimOffset({
+    rimOffset: rimOffset.value,
+    flangeDistanceLeft: flangeDistanceLeft.value,
+    flangeDistanceRight: flangeDistanceRight.value,
+  });
 };
 
 const calculateSpokeResults = (inputs: ParsedInputs): Results | null => {
@@ -451,6 +450,17 @@ const FieldError: React.FC<{ id: string; message?: string }> = ({ id, message })
   );
 };
 
+const FieldWarning: React.FC<{ id: string; message: string }> = ({ id, message }) => (
+  <p
+    id={id}
+    aria-live="polite"
+    className="flex min-h-5 items-start gap-1.5 mt-1 text-xs leading-5 text-amber-700 dark:text-amber-300 sm:text-sm"
+  >
+    <TriangleAlert aria-hidden="true" className="shrink-0 mt-0.5 h-4 w-4" />
+    <span>{message}</span>
+  </p>
+);
+
 // Regular number input component
 interface NumberInputProps {
   id: string;
@@ -461,6 +471,7 @@ interface NumberInputProps {
   min?: number;
   max?: number;
   error?: string;
+  describedBy?: string;
   placeholder?: string;
   className?: string;
 }
@@ -474,6 +485,7 @@ const NumberInput: React.FC<NumberInputProps> = ({
   min,
   max,
   error,
+  describedBy,
   placeholder,
   className,
 }) => {
@@ -569,7 +581,7 @@ const NumberInput: React.FC<NumberInputProps> = ({
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       aria-invalid={error !== undefined}
-      aria-describedby={error !== undefined ? `${id}-error` : undefined}
+      aria-describedby={error !== undefined ? `${id}-error` : describedBy}
       className={getControlClassName(error !== undefined, className)}
       placeholder={placeholder}
     />
@@ -612,6 +624,7 @@ const SpokeLengthCalculator: React.FC = () => {
 
   const calculation = useMemo(() => getCalculationState(inputs), [inputs]);
   const currentResults = calculation.results;
+  const rimOffsetAssessment = getRimOffsetAssessment(inputs);
   const visibleFieldErrors = useMemo(() => {
     const errors: Partial<Record<InputField, string>> = {};
 
@@ -625,6 +638,22 @@ const SpokeLengthCalculator: React.FC = () => {
 
     return errors;
   }, [calculation.fieldErrors, inputs, t, touchedFields]);
+  const rimOffsetWarning = visibleFieldErrors.rimOffset === undefined
+    ? (() => {
+      if (rimOffsetAssessment.kind === 'directionIndeterminate') {
+        return t('warnings.rimOffsetDirectionIndeterminate');
+      }
+
+      if (rimOffsetAssessment.kind === 'worsensAsymmetry') {
+        return t('warnings.rimOffsetWorsensAsymmetry', {
+          before: rimOffsetAssessment.originalDifference.toFixed(1),
+          after: rimOffsetAssessment.effectiveDifference.toFixed(1),
+        });
+      }
+
+      return undefined;
+    })()
+    : undefined;
   const hasValidResults = currentResults !== null;
 
   const wheelOptions = useMemo((): WheelOption[] => {
@@ -1093,9 +1122,14 @@ const SpokeLengthCalculator: React.FC = () => {
                   min={0}
                   max={100}
                   error={visibleFieldErrors.rimOffset}
+                  describedBy={rimOffsetWarning !== undefined ? 'rimOffset-warning' : undefined}
                   placeholder={t('input.rimOffsetPlaceholder')}
                 />
-                <FieldError id="rimOffset-error" message={visibleFieldErrors.rimOffset} />
+                {rimOffsetWarning !== undefined ? (
+                  <FieldWarning id="rimOffset-warning" message={rimOffsetWarning} />
+                ) : (
+                  <FieldError id="rimOffset-error" message={visibleFieldErrors.rimOffset} />
+                )}
               </div>
             </div>
 
