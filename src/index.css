@@ -88,6 +88,15 @@
 
   --color-scrim: --alpha(oklch(0.150 0.018 205) / 50%);
 
+  /* 本文の上に浮く要素の面 (スクロール中の結果プレビュー)。結果帯と同じ見え方を
+     狙うが、帯が不透明なシートの上に載るのに対しこちらは本文の上に浮くので、
+     accent-soft をそのまま使うと下の入力欄が透ける。ライトは accent-soft /
+     sunken が元から不透明なのでエイリアスで足り、.dark だけが実値を持つ。 */
+  --color-overlay-accent: var(--color-accent-soft);
+  --color-overlay-accent-line: var(--color-accent-line);
+  --color-overlay: var(--color-sunken);
+  --color-overlay-line: var(--color-line);
+
   /* Inter に CJK グリフは無いのでグリフ単位のフォールバックが働く:
      ラテンと数字は Inter、かな漢字と全角約物は Noto Sans JP。
      これで :lang(ja) 別指定が不要になる。
@@ -163,6 +172,20 @@
   --color-ok-line: oklch(0.430 0.090 152);
 
   --color-scrim: --alpha(oklch(0.150 0.018 205) / 72%);
+
+  /* ダークだけ実値を持つ。accent-soft (accent 14%) をシートの上で合成したときの
+     見えに合わせた不透明色で、L をわずかに上げて page から浮かせてある。
+     ここを透過にすると本文がプレビューの数値と重なって読めなくなる。 */
+  --color-overlay-accent: oklch(0.290 0.045 200);
+  /* #073234 —— accent-ink 7.80:1 / fg-muted 6.07:1 */
+  --color-overlay-accent-line: oklch(0.500 0.090 199);
+  /* #007277 —— page 上で 3.44:1 */
+  --color-overlay: oklch(0.290 0.018 205);
+  /* #212e30 —— fg-muted 6.14:1 / fg-subtle 4.55:1 */
+  /* 暗い地の上では shadow-lg (黒 10%) が効かないので、輪郭は罫線だけが担う。
+     素の line は page 比 2.09:1 で消えてしまう。line-strong は 3.86:1 あり、
+     浮遊チップの輪郭にそのまま使える。 */
+  --color-overlay-line: var(--color-line-strong);
 }
 
 @layer base {
