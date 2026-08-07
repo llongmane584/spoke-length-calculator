@@ -57,3 +57,8 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+        # actions/deploy-pages#413, #434: action のバンドル依存が非推奨の
+        # punycode を参照し DEP0040 警告を出す。当リポジトリ側に原因はない。
+        # 上流修正 (v5.0.0 より新しいリリース) が出たら、この env を削除して再確認する。
+        env:
+          NODE_OPTIONS: '--disable-warning=DEP0040'
