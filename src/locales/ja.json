@@ -142,6 +142,9 @@
     "dark": "ダークモード",
     "toggle": "テーマ切替"
   },
+  "language": {
+    "label": "言語"
+  },
   "dialog": {
     "deleteConfirm": {
       "title": "削除の確認",

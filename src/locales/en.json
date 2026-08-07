@@ -142,6 +142,9 @@
     "dark": "Dark Mode",
     "toggle": "Toggle Theme"
   },
+  "language": {
+    "label": "Language"
+  },
   "dialog": {
     "deleteConfirm": {
       "title": "Confirm Deletion",

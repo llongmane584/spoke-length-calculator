@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Save, Trash2, Languages, FileJson, FileUp, Sun, Moon, TriangleAlert, ChevronDown, X } from 'lucide-react';
+import { Save, Trash2, FileJson, FileUp, Sun, Moon, TriangleAlert, ChevronDown, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from './hooks/useToast';
 import { useTheme } from './hooks/useTheme';
@@ -1103,19 +1103,19 @@ const SpokeLengthCalculator: React.FC = () => {
                 <Moon className="w-5 h-5" aria-hidden="true" />
               )}
             </button>
-            <div className="flex items-center gap-2">
-              <Languages className="w-5 h-5 text-fg-subtle" aria-hidden="true" />
-              <div className="relative">
-                <select
-                  value={i18n.language}
-                  onChange={(e) => handleLanguageChange(e.target.value)}
-                  className={`${nativeSelect} min-h-9 w-auto py-1 pr-8 text-sm`}
-                >
-                  <option value="en">English</option>
-                  <option value="ja">日本語</option>
-                </select>
-                <ChevronDown aria-hidden="true" className={`${selectChevron} right-2.5`} />
-              </div>
+            {/* 選択肢が English / 日本語 と自明なのでアイコンは置かない。
+                そのぶんアクセシブル名は aria-label で与える。 */}
+            <div className="relative">
+              <select
+                value={i18n.language}
+                onChange={(e) => handleLanguageChange(e.target.value)}
+                aria-label={t('language.label')}
+                className={`${nativeSelect} min-h-9 w-auto py-1 pr-8 text-sm`}
+              >
+                <option value="en">English</option>
+                <option value="ja">日本語</option>
+              </select>
+              <ChevronDown aria-hidden="true" className={`${selectChevron} right-2.5`} />
             </div>
           </div>
         </header>
