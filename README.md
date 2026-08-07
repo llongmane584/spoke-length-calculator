@@ -58,6 +58,17 @@ pnpm preview
 pnpm lint
 ```
 
+### Regenerating the OG image
+
+`public/og-image.png` is the social share card (1200×630). It is committed, not built,
+so it only needs regenerating when the card design changes. The source is
+[`og/og-card.html`](og/og-card.html) — its header comment holds the authoritative
+command sequence, which uses the globally installed `playwright-cli` plus the
+zero-dependency static server in [`og/serve.mjs`](og/serve.mjs).
+
+After regenerating, confirm the PNG is exactly 1200×630, under 300 KB, and that the
+text renders in Inter rather than a fallback face.
+
 ## Usage
 
 1. **Enter basic information**

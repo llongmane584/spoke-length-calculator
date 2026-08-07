@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>OG card source</title>
+  <!-- public/og-image.png のソース。配信物ではないので public/ には置かない
+       (置くと dist/ に混ざる)。
+
+       再生成手順 — リポジトリルートで実行する。<ABS> はリポジトリの絶対パスに置き換える:
+
+         node og/serve.mjs                     # 別ターミナルで起動したままにする
+         playwright-cli open "http://127.0.0.1:8787/og/og-card.html"
+         playwright-cli resize 1320 760
+         playwright-cli eval "() => document.fonts.ready.then(() => document.fonts.check('700 84px Inter'))"
+         # ↑ true が返らなければ中断する。スクリーンショットは撮らない
+         playwright-cli screenshot "#card" --filename="<ABS>/public/og-image.png"
+         playwright-cli close
+
+       playwright-cli は file: を塞いでいるので HTTP 配信が要る。vite の dev サーバーは
+       public/ を base 直下に出すため ../public/calculator.svg が 404 になり代用できない
+       (だから og/serve.mjs がある)。
+
+       --filename は必ず絶対パス。相対だと gitignore 済みの .playwright-cli/ に落ちて
+       何もコミットされない。resize の 1320x760 はカードが切れないための余裕で、
+       要素スクショなので余白は写らない。
+
+       出力後は 1200x630 / 300KB 未満であることと、実際に PNG を開いて
+       ラテン文字が Inter (Arial ではない) で出ていることを目視で確認する。 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- display=swap ではなく block。未ロードのまま描画されると文字が「消える」ので
+       フォント取得の失敗が目で分かる。swap だと Arial でそれらしく描かれた PNG が
+       できてしまい、間違いに気づかないまま配信することになる。 -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=block" rel="stylesheet" />
+  <style>
+    /* 色は src/index.css のライトテーマ値を写したもの。ここはアプリの CSS ではなく
+       Tailwind も通らないので、セマンティックトークンではなく生の hex で書く。
+         #ffffff  --color-surface      #f6fbfc  --color-page
+         #e9f5f6  --color-accent-soft  #0a2225  --color-fg
+         #4a5f62  --color-fg-muted     #006a72  --color-accent */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #d5e3e5;
+      display: flex;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    /* 背景は縦一方向のグラデーションに限定する。斜めや放射状にすると
+       PNG の行フィルタが効かなくなり、1200x630 でもファイルサイズが跳ね上がる。 */
+    /* 本文は縦中央に寄せ、URL だけ下端に固定する。space-between だと 3 ブロックの
+       間に均等な空白ができて中央が間延びする。 */
+    #card {
+      position: relative;
+      width: 1200px;
+      height: 630px;
+      padding: 76px 88px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 48px;
+      background: linear-gradient(180deg, #ffffff 0%, #f6fbfc 58%, #e9f5f6 100%);
+      font-family: "Inter", sans-serif;
+      color: #0a2225;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    /* 下端のアクセント帯。装飾のみなので、万一クロップされても情報は失われない。 */
+    #card::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 10px;
+      background: #006a72;
+    }
+
+    .lockup {
+      display: flex;
+      align-items: center;
+      gap: 36px;
+    }
+
+    .lockup img {
+      width: 160px;
+      height: 162px;
+      display: block;
+    }
+
+    .title {
+      font-size: 84px;
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+    }
+
+    .sub {
+      font-size: 36px;
+      font-weight: 400;
+      line-height: 1.3;
+      color: #4a5f62;
+    }
+
+    .detail {
+      margin-top: 14px;
+      font-size: 26px;
+      font-weight: 400;
+      line-height: 1.3;
+      color: #4a5f62;
+      opacity: 0.85;
+    }
+
+    .url {
+      position: absolute;
+      left: 88px;
+      bottom: 76px;
+      font-size: 26px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      color: #006a72;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="card">
+    <div class="lockup">
+      <!-- file:// から file:// の <img> は Chromium で読める (塞がれるのは fetch/XHR)。
+           空白で出た場合は public/icons/icon-512.png に差し替える。同じ図案。 -->
+      <img src="../public/calculator.svg" alt="" />
+      <div class="title">Spoke Length<br />Calculator</div>
+    </div>
+    <div>
+      <div class="sub">Calculate bicycle spoke lengths for wheel building</div>
+      <div class="detail">ERD &middot; Rim offset &middot; Hub PCD &middot; Flange distance &middot; Crossings</div>
+    </div>
+    <div class="url">llongmane584.github.io/spoke-length-calculator</div>
+  </div>
+</body>
+
+</html>

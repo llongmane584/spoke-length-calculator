@@ -10,6 +10,10 @@ on:
       - 'docs/**'
       - 'claude/**'
       - 'agents/**'
+      # OGP カードのソース。dist/ には入らない。画像そのものを更新したときは
+      # public/og-image.png も一緒に変わるので、デプロイはちゃんと走る
+      # (paths-ignore は変更パスが全てマッチしたときだけスキップする)。
+      - 'og/**'
 
 permissions:
   contents: read
