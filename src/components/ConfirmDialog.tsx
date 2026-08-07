@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { btnSecondary, btnDanger } from '../styles'
 
 interface ConfirmDialogProps {
   isOpen: boolean
@@ -64,7 +65,7 @@ export function ConfirmDialog({ isOpen, onConfirm, onCancel, title, message }: C
     >
       <div
         ref={dialogRef}
-        className="bg-surface border border-line rounded-lg shadow-xl p-6 max-w-md w-full mx-4"
+        className="bg-surface border border-line rounded-xl shadow-lg p-6 max-w-md w-full mx-4"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -81,13 +82,13 @@ export function ConfirmDialog({ isOpen, onConfirm, onCancel, title, message }: C
           <button
             ref={cancelButtonRef}
             onClick={onCancel}
-            className="px-4 py-2 rounded-lg border border-line-strong text-fg hover:bg-sunken transition-colors"
+            className={btnSecondary}
           >
             {t('dialog.cancel')}
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 rounded-lg bg-danger text-on-danger hover:brightness-110 transition-all"
+            className={btnDanger}
           >
             {t('dialog.confirm')}
           </button>

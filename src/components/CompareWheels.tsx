@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ChevronDown } from 'lucide-react';
 import { compareWheels, type WheelSpec } from '../spokeCompare';
+import { nativeSelect, selectChevron } from '../styles';
 
 export interface WheelOption {
   id: string;
@@ -16,9 +18,6 @@ interface Props {
   onChangeA: (id: string) => void;
   onChangeB: (id: string) => void;
 }
-
-const selectClass =
-  'w-full px-3 py-2 border rounded-md bg-surface text-fg border-line-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus transition-colors';
 
 const CompareWheels: React.FC<Props> = ({ options, selectedA, selectedB, onChangeA, onChangeB }) => {
   const { t } = useTranslation();
@@ -39,31 +38,36 @@ const CompareWheels: React.FC<Props> = ({ options, selectedA, selectedB, onChang
     onChange: (id: string) => void,
     label: string,
   ) => (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       <label className="text-sm font-medium text-fg-muted">
         {label}
       </label>
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className={selectClass}
-      >
-        <option value="">{t('compare.placeholder')}</option>
-        {presets.length > 0 && (
-          <optgroup label={t('compare.groupPresets')}>
-            {presets.map(o => (
-              <option key={o.id} value={o.id}>{o.label}</option>
-            ))}
-          </optgroup>
-        )}
-        {saved.length > 0 && (
-          <optgroup label={t('compare.groupSaved')}>
-            {saved.map(o => (
-              <option key={o.id} value={o.id}>{o.label}</option>
-            ))}
-          </optgroup>
-        )}
-      </select>
+      {/* optgroup が必要なのでネイティブ select のまま。ポップアップの見た目は
+          index.css の base 層にある color-scheme がテーマに追従させる。 */}
+      <div className="relative">
+        <select
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          className={nativeSelect}
+        >
+          <option value="">{t('compare.placeholder')}</option>
+          {presets.length > 0 && (
+            <optgroup label={t('compare.groupPresets')}>
+              {presets.map(o => (
+                <option key={o.id} value={o.id}>{o.label}</option>
+              ))}
+            </optgroup>
+          )}
+          {saved.length > 0 && (
+            <optgroup label={t('compare.groupSaved')}>
+              {saved.map(o => (
+                <option key={o.id} value={o.id}>{o.label}</option>
+              ))}
+            </optgroup>
+          )}
+        </select>
+        <ChevronDown aria-hidden="true" className={selectChevron} />
+      </div>
     </div>
   );
 

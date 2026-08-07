@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
+import { btnGhost } from '../styles'
 
 export type HelpTopic =
   | 'erd'
@@ -258,7 +259,7 @@ export function HelpModal({ topic, onClose }: HelpModalProps) {
     >
       <div
         ref={dialogRef}
-        className="bg-surface border border-line rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        className="bg-surface border border-line rounded-xl shadow-lg max-w-lg w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -273,7 +274,7 @@ export function HelpModal({ topic, onClose }: HelpModalProps) {
             ref={closeButtonRef}
             onClick={onClose}
             aria-label={t('buttons.close')}
-            className="-mt-1 -mr-2 p-2 text-fg-muted hover:text-fg rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            className={`${btnGhost} -mt-1 -mr-2`}
           >
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
