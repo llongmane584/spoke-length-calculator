@@ -36,7 +36,7 @@ Most of the code in this project was created with [Claude Code](https://claude.a
 
 - **React 19** + **TypeScript**: UI framework
 - **Vite**: Fast development server and build tool
-- **Tailwind CSS**: Utility-first CSS framework
+- **Tailwind CSS v4**: Utility-first CSS framework, configured CSS-first in `src/index.css`
 - **Lucide React**: Icon library
 
 ## Setup
@@ -65,8 +65,8 @@ pnpm lint
    - Input various dimensions for rim and hub
    - Select number of spokes and lacing pattern
 
-2. **Execute calculation**
-   - Click "Calculate" button to display spoke lengths for both sides
+2. **Read the result**
+   - Spoke lengths for both sides update live as you type; there is no Calculate button
 
 3. **Save results**
    - Save calculation results with custom names
@@ -84,27 +84,44 @@ pnpm lint
 ├── src/
 │   ├── App.tsx                    # Main application component
 │   ├── main.tsx                   # Entry point
-│   ├── index.css                  # Global styles
+│   ├── index.css                  # Tailwind v4 entry + design tokens
+│   ├── styles.ts                  # Shared button / select class strings
 │   ├── i18n.ts                    # Internationalization configuration
+│   ├── rimOffset.ts               # Rim offset logic
+│   ├── rimOffset.test.ts          # Rim offset unit tests
+│   ├── spokeCompare.ts            # Wheel comparison logic
 │   ├── vite-env.d.ts              # Vite environment types
 │   ├── assets/                    # Static assets
 │   │   └── react.svg
 │   ├── components/                # Reusable components
+│   │   ├── CompareWheels.tsx      # Wheel comparison panel
+│   │   ├── ConfirmDialog.tsx      # Confirmation dialog
+│   │   ├── HelpButton.tsx         # Inline help trigger
+│   │   ├── HelpModal.tsx          # Help modal with SVG diagrams
+│   │   ├── SegmentedControl.tsx   # Segmented radio group
 │   │   └── Toast.tsx              # Toast notification component
 │   ├── contexts/                  # React contexts
+│   │   ├── ThemeContext.tsx       # Theme context implementation
+│   │   ├── themeContextValue.ts
 │   │   ├── ToastContext.tsx       # Toast context implementation
 │   │   └── ToastContextDefinition.ts
 │   ├── hooks/                     # Custom React hooks
+│   │   ├── useTheme.ts            # Theme hook
 │   │   └── useToast.ts            # Toast hook
 │   ├── locales/                   # Translation files
 │   │   ├── en.json                # English translations
 │   │   └── ja.json                # Japanese translations
-│   └── presets/                   # Preset data
+│   └── presets/                   # Preset data (6 files)
+│       ├── Hope-Pro-5-CL_Nextie-Premium-2936_Front.json
+│       ├── Hope-Pro-5-CL_Nextie-Premium-2936_Rear.json
 │       ├── Hope-Pro-5-IS6_Nextie-Premium-2936_Front.json
-│       └── Hope-Pro-5-IS6_Nextie-Premium-2936_Rear.json
+│       ├── Hope-Pro-5-IS6_Nextie-Premium-2936_Rear.json
+│       ├── Hope-Pro-5-IS6_Stans-Flow-MK4_Front.json
+│       └── Hope-Pro-5-IS6_Stans-Flow-MK4_Rear.json
 ├── public/                        # Static files
 │   └── calculator.svg
 ├── dist/                          # Build output
+├── AGENTS.md                      # AI assistant instructions
 ├── CLAUDE.md                      # AI assistant instructions
 ├── README.md                      # English documentation
 ├── README_ja.md                   # Japanese documentation
@@ -114,8 +131,6 @@ pnpm lint
 ├── tsconfig.json                  # TypeScript configuration
 ├── tsconfig.app.json              # App-specific TypeScript config
 ├── tsconfig.node.json             # Node-specific TypeScript config
-├── tailwind.config.js             # Tailwind CSS configuration
-├── postcss.config.cjs             # PostCSS configuration
 └── eslint.config.js               # ESLint configuration
 ```
 

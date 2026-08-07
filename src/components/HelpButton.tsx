@@ -15,7 +15,7 @@ export function HelpButton({ topic, onOpen }: HelpButtonProps) {
       type="button"
       onClick={() => onOpen(topic)}
       aria-label={t(`input.help.${topic}.ariaLabel`)}
-      className="inline-flex items-center justify-center p-2 -m-2 text-slate-400 hover:text-blue-600 dark:text-slate-500 dark:hover:text-blue-400 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+      className="inline-flex items-center justify-center p-2 -m-2 text-fg-subtle hover:text-accent-ink rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus transition-colors"
     >
       <HelpCircle className="w-4 h-4" aria-hidden="true" />
     </button>

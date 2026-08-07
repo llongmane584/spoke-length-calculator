@@ -21,10 +21,10 @@
     "spokeHoleDiameter": "Spoke Hole Diameter (mm)",
     "spokeHolePlaceholder": "Spoke Hole Diameter",
     "numberOfSpokes": "Number of Spokes",
-    "selectOption": "Please Select",
     "crossingsLeft": "Crossings [L]",
     "crossingsRight": "Crossings [R]",
     "radialLacing": "0 (Radial Lacing)",
+    "crossingsRadialHint": "0 = radial lacing",
     "group": {
       "rim": "Rim",
       "hub": "Hub",
@@ -141,6 +141,9 @@
     "light": "Light Mode",
     "dark": "Dark Mode",
     "toggle": "Toggle Theme"
+  },
+  "language": {
+    "label": "Language"
   },
   "dialog": {
     "deleteConfirm": {

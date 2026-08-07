@@ -8,10 +8,16 @@
   <link rel="apple-touch-icon" href="%BASE_URL%icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Inter はラテンと数字、Noto Sans JP は CJK を担当する。1 リクエストにまとめる。
+       Inter は可変フォント (400..700) なのでウェイト分のファイルは増えない。 -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f8fafc" />
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f172a" />
+  <!-- --color-page と一致させる (zinc-50 / zinc-950)。ずれるとモバイルの
+       ブラウザクロームだけ別の色になる。 -->
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafafa" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#09090b" />
   <meta name="application-name" content="Spoke Length Calculator" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />

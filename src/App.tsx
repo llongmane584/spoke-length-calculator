@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Save, Trash2, Languages, FileJson, FileUp, Sun, Moon, TriangleAlert } from 'lucide-react';
+import { Save, Trash2, FileJson, FileUp, Sun, Moon, TriangleAlert, ChevronDown, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from './hooks/useToast';
 import { useTheme } from './hooks/useTheme';
@@ -7,6 +7,8 @@ import { ConfirmDialog } from './components/ConfirmDialog';
 import { HelpButton } from './components/HelpButton';
 import { HelpModal, type HelpTopic } from './components/HelpModal';
 import CompareWheels, { type WheelOption } from './components/CompareWheels';
+import { SegmentedControl, type SegmentedOption } from './components/SegmentedControl';
+import { btnPrimary, btnSecondary, btnGhost, nativeSelect, selectChevron } from './styles';
 import { assessRimOffset, getEffectiveFlangeDistances, type RimOffsetAssessment } from './rimOffset';
 
 // Dynamic import of preset data
@@ -94,7 +96,10 @@ const inputFields = [
   'crossingsRight',
 ] as const satisfies readonly InputField[];
 
-const COMPACT_VIEWPORT_QUERY = '(max-width: 639px)';
+// Tailwind の `sm:` 直下を指す。v4 のブレークポイントは rem (--breakpoint-sm: 40rem)
+// なので px で書くとルートフォントサイズを変えたときに CSS と JS がずれる —
+// CSS はコンパイルレイアウトなのに JS は長い翻訳文字列を選ぶ、という食い違いになる。
+const COMPACT_VIEWPORT_QUERY = '(max-width: 39.9375rem)';
 
 const getIsCompactViewport = () =>
   typeof window !== 'undefined' && window.matchMedia(COMPACT_VIEWPORT_QUERY).matches;
@@ -424,10 +429,10 @@ const normalizeSavedCalculation = (value: unknown): SavedCalculation | null => {
 
 const getControlClassName = (hasError: boolean, className?: string): string => (
   [
-    'w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:border-transparent transition-colors',
+    'w-full px-3 py-2 border rounded-md bg-surface text-fg tabular-nums placeholder:text-fg-subtle transition-colors focus-visible:outline-2 focus-visible:outline-offset-2',
     hasError
-      ? 'border-red-500 dark:border-red-500 bg-red-50/40 dark:bg-red-950/20 focus:ring-red-500'
-      : 'border-slate-300 dark:border-slate-600 focus:ring-blue-500',
+      ? 'border-danger-line bg-danger-soft focus-visible:outline-danger'
+      : 'border-line-strong focus-visible:outline-focus',
     className || '',
   ].join(' ')
 );
@@ -441,7 +446,7 @@ const FieldError: React.FC<{ id: string; message?: string }> = ({ id, message })
       aria-hidden={!hasMessage}
       aria-live="polite"
       className={[
-        'mt-1 h-5 overflow-hidden whitespace-nowrap text-xs leading-5 text-red-600 dark:text-red-400 sm:text-sm',
+        'mt-1 h-5 overflow-hidden whitespace-nowrap text-xs leading-5 text-danger-ink sm:text-sm',
         hasMessage ? '' : 'invisible',
       ].join(' ')}
     >
@@ -454,12 +459,37 @@ const FieldWarning: React.FC<{ id: string; message: string }> = ({ id, message }
   <p
     id={id}
     aria-live="polite"
-    className="flex min-h-5 items-start gap-1.5 mt-1 text-xs leading-5 text-amber-700 dark:text-amber-300 sm:text-sm"
+    className="flex min-h-5 items-start gap-1.5 mt-1 text-xs leading-5 text-warn-ink sm:text-sm"
   >
     <TriangleAlert aria-hidden="true" className="shrink-0 mt-0.5 h-4 w-4" />
     <span>{message}</span>
   </p>
 );
+
+const spokeCountSegments: SegmentedOption[] = spokeCountOptions.map(value => ({ value, label: value }));
+
+// セグメントには数字だけを描画する。375px では 5 分割で 1 セグメント約 60px しか
+// なく、"0 (ラジアル組)" / "0 (Radial Lacing)" は収まらないため。
+// 意味は 0 セグメントの aria-label（支援技術向け）と、下の常設キャプション
+// （視覚的）の 2 経路で補う。
+const useCrossingSegments = (): SegmentedOption[] => {
+  const { t } = useTranslation();
+  return useMemo(
+    () => crossingOptions.map(value => (
+      value === '0'
+        ? { value, label: value, ariaLabel: t('input.radialLacing') }
+        : { value, label: value }
+    )),
+    [t],
+  );
+};
+
+// 選択状態に関係なく常に描画する。条件付きにするとレイアウトシフトが起きる
+// （FieldError が h-5 を予約しているのと同じ規律）。
+const RadialHint: React.FC = () => {
+  const { t } = useTranslation();
+  return <p className="mt-1 text-xs text-fg-subtle">{t('input.crossingsRadialHint')}</p>;
+};
 
 // Groups related input fields under a label, separated by a hairline rule.
 // The rule lives on the wrapper rather than on the fieldset itself: a bordered
@@ -471,9 +501,9 @@ const FieldGroup: React.FC<{
   withRule?: boolean;
   children: React.ReactNode;
 }> = ({ label, withRule = true, children }) => (
-  <div className={withRule ? 'border-t border-slate-200 dark:border-slate-700 pt-6' : undefined}>
+  <div className={withRule ? 'border-t border-line pt-6' : undefined}>
     <fieldset className="min-w-0">
-      <legend className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+      <legend className="mb-3 text-sm font-semibold text-fg">
         {label}
       </legend>
       <div className="space-y-4">{children}</div>
@@ -612,6 +642,7 @@ const SpokeLengthCalculator: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { showToast } = useToast();
   const { theme, toggleTheme } = useTheme();
+  const crossingSegments = useCrossingSegments();
   const [isCompactViewport, setIsCompactViewport] = useState(getIsCompactViewport);
   const [inputs, setInputs] = useState<Inputs>({
     erd: '',
@@ -1049,63 +1080,72 @@ const SpokeLengthCalculator: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 md:p-8 dark:bg-slate-900 transition-colors">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
+    <div className="min-h-screen bg-page text-fg transition-colors">
+      {/* max-w-3xl は 798074c (#27) が外した幅制限を意図的に戻したもの。#27 が問題視
+          したのは何も整理しない装飾的なシートだったが、下のシートは既存の FieldGroup
+          セマンティクスと 1:1 で対応する機能的な区切り。旧 max-w-4xl より狭くし、
+          モバイルは p-4 のままなので表示領域は失われない。 */}
+      <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+        <header className="mb-8 flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl font-semibold tracking-tight text-fg sm:text-3xl">
             {titleText}
-            <span className="block sm:inline text-base sm:text-lg font-normal text-slate-600 dark:text-slate-400"></span>
           </h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-            title={t('theme.toggle')}
-          >
-            {theme === 'dark' ? (
-              <Sun className="w-5 h-5 text-slate-600 dark:text-slate-300" />
-            ) : (
-              <Moon className="w-5 h-5 text-slate-600 dark:text-slate-300" />
-            )}
-          </button>
-          <div className="flex items-center gap-2">
-            <Languages className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-            <select
-              value={i18n.language}
-              onChange={(e) => handleLanguageChange(e.target.value)}
-              className="px-3 py-1 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              className={btnGhost}
+              title={t('theme.toggle')}
+              aria-label={t('theme.toggle')}
             >
-              <option value="en">English</option>
-              <option value="ja">日本語</option>
-            </select>
+              {theme === 'dark' ? (
+                <Sun className="w-5 h-5" aria-hidden="true" />
+              ) : (
+                <Moon className="w-5 h-5" aria-hidden="true" />
+              )}
+            </button>
+            {/* 選択肢が English / 日本語 と自明なのでアイコンは置かない。
+                そのぶんアクセシブル名は aria-label で与える。 */}
+            <div className="relative">
+              <select
+                value={i18n.language}
+                onChange={(e) => handleLanguageChange(e.target.value)}
+                aria-label={t('language.label')}
+                className={`${nativeSelect} min-h-9 w-auto py-1 pr-8 text-sm`}
+              >
+                <option value="en">English</option>
+                <option value="ja">日本語</option>
+              </select>
+              <ChevronDown aria-hidden="true" className={`${selectChevron} right-2.5`} />
+            </div>
           </div>
-        </div>
-      </div>
+        </header>
 
-      {/* Single column vertical layout */}
-      <div className="flex flex-col gap-10">
-        {/* Input section */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600 pb-2">{t('input.heading')}</h2>
+        {/* 入力と結果を 1 枚のシートに収め、ハイラインで区切る */}
+        <div className="overflow-hidden rounded-xl border border-line bg-surface">
+          {/* Input section */}
+          <div className="space-y-6 p-5 sm:p-6">
+            <h2 className="text-xl font-semibold text-fg border-b border-line pb-2">{t('input.heading')}</h2>
 
           <div className="space-y-6">
             {/* Preset selection - only show if presets exist */}
             {presetOptions.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.preset')}</label>
-                <select
-                  value={selectedPreset}
-                  onChange={(e) => loadPreset(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">{t('input.presetOption')}</option>
-                  {presetOptions.map((preset) => (
-                    <option key={preset.id} value={preset.id}>
-                      {preset.name}
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-sm font-medium text-fg-muted mb-1.5">{t('input.preset')}</label>
+                <div className="relative">
+                  <select
+                    value={selectedPreset}
+                    onChange={(e) => loadPreset(e.target.value)}
+                    className={nativeSelect}
+                  >
+                    <option value="">{t('input.presetOption')}</option>
+                    {presetOptions.map((preset) => (
+                      <option key={preset.id} value={preset.id}>
+                        {preset.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown aria-hidden="true" className={selectChevron} />
+                </div>
               </div>
             )}
 
@@ -1114,7 +1154,7 @@ const SpokeLengthCalculator: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.erd')}</label>
+                    <label className="block text-sm font-medium text-fg-muted">{t('input.erd')}</label>
                     <HelpButton topic="erd" onOpen={setHelpTopic} />
                   </div>
                   <NumberInput
@@ -1132,7 +1172,7 @@ const SpokeLengthCalculator: React.FC = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.rimOffset')}</label>
+                    <label className="block text-sm font-medium text-fg-muted">{t('input.rimOffset')}</label>
                     <HelpButton topic="rimOffset" onOpen={setHelpTopic} />
                   </div>
                   <NumberInput
@@ -1160,7 +1200,7 @@ const SpokeLengthCalculator: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
+                    <label className="block text-sm font-medium text-fg-muted">
                       <span className="md:hidden">{t('input.pcdLeft')}</span>
                       <span className="hidden md:block">{t('input.pcdLeft')}</span>
                     </label>
@@ -1181,7 +1221,7 @@ const SpokeLengthCalculator: React.FC = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
+                    <label className="block text-sm font-medium text-fg-muted">
                       <span className="md:hidden">{t('input.pcdRight')}</span>
                       <span className="hidden md:block">{t('input.pcdRight')}</span>
                     </label>
@@ -1205,7 +1245,7 @@ const SpokeLengthCalculator: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.flangeDistanceLeft')}</label>
+                    <label className="block text-sm font-medium text-fg-muted">{t('input.flangeDistanceLeft')}</label>
                     <HelpButton topic="flangeDistance" onOpen={setHelpTopic} />
                   </div>
                   <NumberInput
@@ -1223,7 +1263,7 @@ const SpokeLengthCalculator: React.FC = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.flangeDistanceRight')}</label>
+                    <label className="block text-sm font-medium text-fg-muted">{t('input.flangeDistanceRight')}</label>
                     <HelpButton topic="flangeDistance" onOpen={setHelpTopic} />
                   </div>
                   <NumberInput
@@ -1243,7 +1283,7 @@ const SpokeLengthCalculator: React.FC = () => {
 
               <div>
                 <div className="flex items-center gap-1 mb-1">
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.spokeHoleDiameter')}</label>
+                  <label className="block text-sm font-medium text-fg-muted">{t('input.spokeHoleDiameter')}</label>
                   <HelpButton topic="spokeHoleDiameter" onOpen={setHelpTopic} />
                 </div>
                 <NumberInput
@@ -1263,189 +1303,175 @@ const SpokeLengthCalculator: React.FC = () => {
 
             <FieldGroup label={t('input.group.lacing')}>
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.numberOfSpokes')}</label>
-                <select
-                  id="numberOfSpokes"
+                {/* label ではなく span + aria-labelledby。radiogroup は単一の
+                    フォームコントロールではないので label/for では結びつかない。
+                    元の <label> は htmlFor を持っておらず既に未関連付けだったので、
+                    これは退行ではなく a11y 上の改善。 */}
+                <span id="numberOfSpokes-label" className="block text-sm font-medium text-fg-muted mb-1">
+                  {t('input.numberOfSpokes')}
+                </span>
+                <SegmentedControl
+                  name="numberOfSpokes"
+                  labelledBy="numberOfSpokes-label"
                   value={inputs.numberOfSpokes}
-                  onChange={(e) => handleInputChange('numberOfSpokes', e.target.value)}
+                  options={spokeCountSegments}
+                  onChange={(value) => handleInputChange('numberOfSpokes', value)}
                   onBlur={() => markFieldTouched('numberOfSpokes')}
-                  aria-invalid={visibleFieldErrors.numberOfSpokes !== undefined}
-                  aria-describedby={visibleFieldErrors.numberOfSpokes !== undefined ? 'numberOfSpokes-error' : undefined}
-                  className={getControlClassName(visibleFieldErrors.numberOfSpokes !== undefined)}
-                >
-                  <option value="">{t('input.selectOption')}</option>
-                  <option value="24">24</option>
-                  <option value="28">28</option>
-                  <option value="32">32</option>
-                  <option value="36">36</option>
-                </select>
+                  invalid={visibleFieldErrors.numberOfSpokes !== undefined}
+                  describedBy={visibleFieldErrors.numberOfSpokes !== undefined ? 'numberOfSpokes-error' : undefined}
+                />
                 <FieldError id="numberOfSpokes-error" message={visibleFieldErrors.numberOfSpokes} />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.crossingsLeft')}</label>
+                    <span id="crossingsLeft-label" className="block text-sm font-medium text-fg-muted">{t('input.crossingsLeft')}</span>
                     <HelpButton topic="crossings" onOpen={setHelpTopic} />
                   </div>
-                  <select
-                    id="crossingsLeft"
+                  <SegmentedControl
+                    name="crossingsLeft"
+                    labelledBy="crossingsLeft-label"
                     value={inputs.crossingsLeft}
-                    onChange={(e) => handleInputChange('crossingsLeft', e.target.value)}
+                    options={crossingSegments}
+                    onChange={(value) => handleInputChange('crossingsLeft', value)}
                     onBlur={() => markFieldTouched('crossingsLeft')}
-                    aria-invalid={visibleFieldErrors.crossingsLeft !== undefined}
-                    aria-describedby={visibleFieldErrors.crossingsLeft !== undefined ? 'crossingsLeft-error' : undefined}
-                    className={getControlClassName(visibleFieldErrors.crossingsLeft !== undefined)}
-                  >
-                    <option value="">{t('input.selectOption')}</option>
-                    <option value="0">{t('input.radialLacing')}</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                  </select>
+                    invalid={visibleFieldErrors.crossingsLeft !== undefined}
+                    describedBy={visibleFieldErrors.crossingsLeft !== undefined ? 'crossingsLeft-error' : undefined}
+                  />
+                  <RadialHint />
                   <FieldError id="crossingsLeft-error" message={visibleFieldErrors.crossingsLeft} />
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.crossingsRight')}</label>
+                    <span id="crossingsRight-label" className="block text-sm font-medium text-fg-muted">{t('input.crossingsRight')}</span>
                     <HelpButton topic="crossings" onOpen={setHelpTopic} />
                   </div>
-                  <select
-                    id="crossingsRight"
+                  <SegmentedControl
+                    name="crossingsRight"
+                    labelledBy="crossingsRight-label"
                     value={inputs.crossingsRight}
-                    onChange={(e) => handleInputChange('crossingsRight', e.target.value)}
+                    options={crossingSegments}
+                    onChange={(value) => handleInputChange('crossingsRight', value)}
                     onBlur={() => markFieldTouched('crossingsRight')}
-                    aria-invalid={visibleFieldErrors.crossingsRight !== undefined}
-                    aria-describedby={visibleFieldErrors.crossingsRight !== undefined ? 'crossingsRight-error' : undefined}
-                    className={getControlClassName(visibleFieldErrors.crossingsRight !== undefined)}
-                  >
-                    <option value="">{t('input.selectOption')}</option>
-                    <option value="0">{t('input.radialLacing')}</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                  </select>
+                    invalid={visibleFieldErrors.crossingsRight !== undefined}
+                    describedBy={visibleFieldErrors.crossingsRight !== undefined ? 'crossingsRight-error' : undefined}
+                  />
+                  <RadialHint />
                   <FieldError id="crossingsRight-error" message={visibleFieldErrors.crossingsRight} />
                 </div>
               </div>
             </FieldGroup>
 
-            {/* Closing rule for the input section */}
-            <div aria-hidden="true" className="border-t border-slate-200 dark:border-slate-700" />
           </div>
         </div>
 
-        {/* Results and save section */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600 pb-2">{t('results.heading')}</h2>
-          <div
-            className={[
-              'rounded-lg border p-5 transition-colors sm:p-6',
-              currentResults !== null
-                ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800'
-                : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-600',
-            ].join(' ')}
-          >
-            <div className="grid min-h-24 w-full grid-cols-2 items-center gap-3 text-center sm:min-h-20 sm:gap-4">
-              {currentResults !== null ? (
-                <>
-                  <div>
-                    <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300 sm:text-lg">{resultsLeftText}</h3>
-                    <p className="text-2xl font-bold leading-tight text-blue-800 dark:text-blue-400 sm:text-3xl">
-                      {currentResults.left.toFixed(1)} mm
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300 sm:text-lg">{resultsRightText}</h3>
-                    <p className="text-2xl font-bold leading-tight text-blue-800 dark:text-blue-400 sm:text-3xl">
-                      {currentResults.right.toFixed(1)} mm
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <p className="col-span-2 text-sm text-slate-500 dark:text-slate-400 sm:text-base">
-                  {t('results.placeholder')}
-                </p>
-              )}
-            </div>
+        {/* 結果はシート内の帯。角丸を持たせず、上のハイラインで区切る */}
+        <div
+          className={[
+            'border-t p-5 transition-colors sm:p-6',
+            currentResults !== null
+              ? 'bg-accent-soft border-accent-line'
+              : 'bg-sunken border-line',
+          ].join(' ')}
+        >
+          <h2 className="mb-4 text-sm font-medium text-fg-muted">{t('results.heading')}</h2>
+          <div className="grid min-h-24 w-full grid-cols-2 items-center gap-3 text-center sm:min-h-20 sm:gap-4">
+            {currentResults !== null ? (
+              <>
+                <div>
+                  <h3 className="text-sm font-medium text-fg-muted sm:text-base">{resultsLeftText}</h3>
+                  <p className="text-2xl font-semibold leading-tight tabular-nums tracking-tight text-accent-ink sm:text-3xl">
+                    {currentResults.left.toFixed(1)} mm
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-fg-muted sm:text-base">{resultsRightText}</h3>
+                  <p className="text-2xl font-semibold leading-tight tabular-nums tracking-tight text-accent-ink sm:text-3xl">
+                    {currentResults.right.toFixed(1)} mm
+                  </p>
+                </div>
+              </>
+            ) : (
+              <p className="col-span-2 text-sm text-fg-subtle sm:text-base">
+                {t('results.placeholder')}
+              </p>
+            )}
           </div>
+        </div>
 
-          {/* Save and export */}
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('results.calculationName')}</label>
-              <input
-                type="text"
-                value={calculationName}
-                onChange={(e) => setCalculationName(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder={calculationNamePlaceholder}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={saveCalculation}
-                disabled={!hasValidResults}
-                className="bg-blue-700 dark:bg-blue-800 hover:bg-blue-800 dark:hover:bg-blue-900 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed dark:disabled:bg-slate-700 dark:disabled:text-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
-              >
-                <Save className="w-4 h-4" />
-                {t('buttons.save')}
-              </button>
-              <button
-                onClick={exportToJSON}
-                disabled={!hasValidResults}
-                className="bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-800 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed dark:disabled:bg-slate-700 dark:disabled:text-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
-              >
-                <FileJson className="w-4 h-4" />
-                <span className="sm:hidden">{t('buttons.jsonShort')}</span>
-                <span className="hidden sm:inline">{t('buttons.jsonDisplay')}</span>
-              </button>
-            </div>
-            {/* Load JSON file */}
-            <div className="mt-3">
-              <label className="block">
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={loadFromJSON}
-                  className="hidden"
-                />
-                <span className="w-full bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-800 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer">
-                  <FileUp className="w-4 h-4" />
-                  {t('buttons.loadJson')}
-                </span>
-              </label>
-            </div>
+        {/* Save and export */}
+        <div className="space-y-4 border-t border-line p-5 sm:p-6">
+          <div>
+            <label className="block text-sm font-medium text-fg-muted mb-1.5">{t('results.calculationName')}</label>
+            <input
+              type="text"
+              value={calculationName}
+              onChange={(e) => setCalculationName(e.target.value)}
+              className="w-full min-h-11 px-3 py-2 border border-line-strong rounded-md bg-surface text-fg placeholder:text-fg-subtle transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              placeholder={calculationNamePlaceholder}
+            />
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={saveCalculation}
+              disabled={!hasValidResults}
+              className={btnPrimary}
+            >
+              <Save className="w-4 h-4" aria-hidden="true" />
+              {t('buttons.save')}
+            </button>
+            <button
+              onClick={exportToJSON}
+              disabled={!hasValidResults}
+              className={btnSecondary}
+            >
+              <FileJson className="w-4 h-4" aria-hidden="true" />
+              <span className="sm:hidden">{t('buttons.jsonShort')}</span>
+              <span className="hidden sm:inline">{t('buttons.jsonDisplay')}</span>
+            </button>
+          </div>
+          {/* Load JSON file */}
+          <label className="block">
+            <input
+              type="file"
+              accept=".json"
+              onChange={loadFromJSON}
+              className="hidden"
+            />
+            <span className={`${btnSecondary} w-full cursor-pointer`}>
+              <FileUp className="w-4 h-4" aria-hidden="true" />
+              {t('buttons.loadJson')}
+            </span>
+          </label>
 
           {/* List of saved calculations */}
           {savedCalculations.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-3">{t('results.savedCalculations')}</h3>
+            <div className="pt-2">
+              <h3 className="text-base font-semibold text-fg mb-3">{t('results.savedCalculations')}</h3>
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {savedCalculations.map((calc) => (
-                  <div key={calc.id} className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 flex items-center justify-between">
+                  <div key={calc.id} className="border border-line bg-surface rounded-lg p-3 flex items-center justify-between">
                     <div className="flex-1">
-                      <p className="font-medium text-slate-700 dark:text-slate-300">{calc.name}</p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">{calc.timestamp}</p>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                      <p className="font-medium text-fg">{calc.name}</p>
+                      <p className="text-xs tabular-nums text-fg-subtle">{calc.timestamp}</p>
+                      <p className="text-sm tabular-nums text-fg-muted">
                         {resultsLeftText}: {calc.results.left !== null ? calc.results.left.toFixed(1) : '-'}mm / {resultsRightText}: {calc.results.right !== null ? calc.results.right.toFixed(1) : '-'}mm
                       </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-1">
                       <button
                         onClick={() => loadCalculation(calc)}
-                        className="text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 text-sm font-medium"
+                        className={`${btnGhost} text-sm text-accent-ink hover:text-accent`}
                       >
                         {t('buttons.load')}
                       </button>
                       <button
                         onClick={() => deleteCalculation(calc.id)}
-                        className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                        aria-label={t('dialog.confirm')}
+                        className={`${btnGhost} text-danger-ink hover:text-danger`}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" aria-hidden="true" />
                       </button>
                     </div>
                   </div>
@@ -1456,65 +1482,63 @@ const SpokeLengthCalculator: React.FC = () => {
         </div>
       </div>
 
-      {/* Wheel compare section */}
-      <div ref={compareSectionRef} className="mt-10">
-        <button
-          onClick={() => setShowCompare(prev => !prev)}
-          className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300 font-medium transition-colors"
-        >
-          <span>{t('compare.toggle')}</span>
-          <span className="text-slate-400 dark:text-slate-500">{showCompare ? '▲' : '▼'}</span>
-        </button>
-        {showCompare && (
-          <div className="mt-4 rounded-lg border border-slate-200 dark:border-slate-600 p-5 animate-fade-in-down">
-            <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-4">{t('compare.heading')}</h2>
-            <CompareWheels
-              options={wheelOptions}
-              selectedA={compareA}
-              selectedB={compareB}
-              onChangeA={setCompareA}
-              onChangeB={setCompareB}
+        {/* Wheel compare section */}
+        <div ref={compareSectionRef} className="mt-8">
+          <button
+            onClick={() => setShowCompare(prev => !prev)}
+            aria-expanded={showCompare}
+            aria-controls="compare-panel"
+            className="w-full min-h-11 flex items-center justify-between px-4 py-3 rounded-lg border border-line bg-surface hover:bg-sunken text-fg font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            <span>{t('compare.toggle')}</span>
+            <ChevronDown
+              aria-hidden="true"
+              className={`h-4 w-4 text-fg-subtle transition-transform ${showCompare ? 'rotate-180' : ''}`}
             />
-          </div>
-        )}
+          </button>
+          {showCompare && (
+            <div id="compare-panel" className="mt-4 rounded-xl border border-line bg-surface p-5 sm:p-6 animate-fade-in-down">
+              <h2 className="text-lg font-semibold text-fg mb-4">{t('compare.heading')}</h2>
+              <CompareWheels
+                options={wheelOptions}
+                selectedA={compareA}
+                selectedB={compareB}
+                onChangeA={setCompareA}
+                onChangeB={setCompareB}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* JSON data display modal */}
       {showJsonOutput && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 bg-scrim flex items-center justify-center z-50 p-4">
+          <div className="bg-surface border border-line rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">{t('results.jsonOutput')}</h3>
+              <h3 className="text-lg font-semibold text-fg">{t('results.jsonOutput')}</h3>
               <button
                 onClick={() => setShowJsonOutput(false)}
-                className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xl leading-none"
+                aria-label={t('buttons.close')}
+                className={btnGhost}
               >
-                ✕
+                <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
             <textarea
               value={jsonData}
               readOnly
-              className="w-full flex-1 min-h-64 p-3 border border-slate-300 dark:border-slate-600 rounded-md text-sm font-mono bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 resize-none mb-4"
+              className="w-full flex-1 min-h-64 p-3 border border-line-strong rounded-md text-sm font-mono bg-sunken text-fg resize-none mb-4"
             />
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <button
-                onClick={copyToClipboard}
-                className="bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-800 text-white py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
-              >
+              <button onClick={copyToClipboard} className={`${btnSecondary} w-full sm:w-auto`}>
                 {t('buttons.copyToClipboard')}
               </button>
-              <button
-                onClick={downloadJSON}
-                className="bg-blue-700 dark:bg-blue-800 hover:bg-blue-800 dark:hover:bg-blue-900 text-white py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
-              >
-                <FileJson className="w-4 h-4" />
+              <button onClick={downloadJSON} className={`${btnPrimary} w-full sm:w-auto`}>
+                <FileJson className="w-4 h-4" aria-hidden="true" />
                 {t('buttons.downloadJson')}
               </button>
-              <button
-                onClick={() => setShowJsonOutput(false)}
-                className="bg-slate-500 dark:bg-slate-600 hover:bg-slate-600 dark:hover:bg-slate-700 text-white py-2 px-4 rounded-md transition-colors duration-200 w-full sm:w-auto justify-center"
-              >
+              <button onClick={() => setShowJsonOutput(false)} className={`${btnSecondary} w-full sm:w-auto`}>
                 {t('buttons.close')}
               </button>
             </div>
