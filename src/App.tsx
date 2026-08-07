@@ -733,7 +733,9 @@ const SpokeLengthCalculator: React.FC = () => {
     return [...presetItems, ...savedItems];
   }, [presetOptions, savedCalculations]);
 
-  const titleText = t(isCompactViewport ? 'titleShort' : 'title');
+  // タイトルは幅に関係なくフルで出す。375px でも折り返して収まり、
+  // ヘッダーは flex-col になるので h1 が単独行を占める。
+  const titleText = t('title');
   const resultsLeftText = t(isCompactViewport ? 'results.leftShort' : 'results.left');
   const resultsRightText = t(isCompactViewport ? 'results.rightShort' : 'results.right');
   const calculationNamePlaceholder = t(
