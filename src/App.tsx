@@ -1550,33 +1550,46 @@ const SpokeLengthCalculator: React.FC = () => {
       {/* スクロール中の結果プレビュー。結果帯の複製なのでスクリーンリーダーには渡さない
           (aria-hidden) —— 結果帯そのものが常に DOM にあり、二重読み上げは害でしかない。
           pointer-events-none は下のフィールドのタップを塞がないため。
-          z-40 —— トーストとモーダル (z-50) の下に敷き、スクリム表示時は自然に沈む。 */}
-      {showResultPreview && (
+          z-40 —— トーストとモーダル (z-50) の下に敷き、スクリム表示時は自然に沈む。
+
+          条件付きマウントではなく常設し、opacity / translate の遷移で出し入れする。
+          アンマウントでは消えるほうが一瞬で終わり、出入りが非対称になるため。
+          visibility も遷移対象に入れてある —— visible が絡む遷移では最後まで
+          visible が保たれるので、フェードアウトを最後まで見せたうえで
+          非表示時はヒットテストからも外れる。
+          translate であって transform ではない: Tailwind v4 の translate-* は
+          transform ではなく translate プロパティを吐くので、transform を並べても
+          何も動かない。 */}
+      <div
+        aria-hidden="true"
+        className={[
+          'pointer-events-none fixed inset-x-0 top-3 z-40 flex justify-center px-4',
+          'transition-[opacity,translate,visibility] duration-200 ease-out motion-reduce:transition-none',
+          showResultPreview
+            ? 'visible translate-y-0 opacity-100'
+            : 'invisible -translate-y-2 opacity-0',
+        ].join(' ')}
+      >
         <div
-          aria-hidden="true"
-          className="pointer-events-none fixed inset-x-0 top-3 z-40 flex animate-fade-in-down justify-center px-4"
+          className={[
+            'flex max-w-full items-center gap-4 rounded-full border px-4 py-2 shadow-lg transition-colors sm:gap-6',
+            currentResults !== null
+              ? 'bg-accent-soft border-accent-line'
+              : 'bg-sunken border-line',
+          ].join(' ')}
         >
-          <div
-            className={[
-              'flex max-w-full items-center gap-4 rounded-full border px-4 py-2 shadow-lg transition-colors sm:gap-6',
-              currentResults !== null
-                ? 'bg-accent-soft border-accent-line'
-                : 'bg-sunken border-line',
-            ].join(' ')}
-          >
-            {/* 幅を取れないのでラベルはビューポートに関係なく短縮形。
-                値が無いときは「—」を置いてピルの幅と位置を保つ */}
-            <ResultPreviewValue
-              label={t('results.leftShort')}
-              value={currentResults?.left}
-            />
-            <ResultPreviewValue
-              label={t('results.rightShort')}
-              value={currentResults?.right}
-            />
-          </div>
+          {/* 幅を取れないのでラベルはビューポートに関係なく短縮形。
+              値が無いときは「—」を置いてピルの幅と位置を保つ */}
+          <ResultPreviewValue
+            label={t('results.leftShort')}
+            value={currentResults?.left}
+          />
+          <ResultPreviewValue
+            label={t('results.rightShort')}
+            value={currentResults?.right}
+          />
         </div>
-      )}
+      </div>
 
       {/* JSON data display modal */}
       {showJsonOutput && (
