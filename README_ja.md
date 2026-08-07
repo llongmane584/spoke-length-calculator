@@ -36,7 +36,7 @@ GitHub pages: https://llongmane584.github.io/spoke-length-calculator/
 
 - **React 19** + **TypeScript**: UIフレームワーク
 - **Vite**: 高速な開発サーバーとビルドツール
-- **Tailwind CSS**: ユーティリティファーストのCSSフレームワーク
+- **Tailwind CSS v4**: ユーティリティファーストのCSSフレームワーク。設定は `src/index.css` に CSS-first で置く
 - **Lucide React**: アイコンライブラリ
 
 ## セットアップ
@@ -65,8 +65,8 @@ pnpm lint
    - リムとハブの各種寸法を入力
    - スポーク本数と組み方を選択
 
-2. **計算実行**
-   - 「計算」ボタンをクリックすると、左右それぞれのスポーク長が表示されます
+2. **計算結果の確認**
+   - 入力すると左右それぞれのスポーク長が即座に更新されます（計算ボタンはありません）
 
 3. **結果の保存**
    - 計算結果に名前を付けて保存できます
@@ -84,39 +84,54 @@ pnpm lint
 ├── src/
 │   ├── App.tsx                    # メインアプリケーションコンポーネント
 │   ├── main.tsx                   # エントリーポイント
-│   ├── index.css                  # グローバルスタイル
-│   ├── i18n.ts                    # 国際化設定
-│   ├── vite-env.d.ts              # Vite環境変数型定義
+│   ├── index.css                  # Tailwind v4 エントリ + デザイントークン
+│   ├── styles.ts                  # ボタン / select の共通クラス文字列
+│   ├── i18n.ts                    # 多言語化設定
+│   ├── rimOffset.ts               # リムオフセットのロジック
+│   ├── rimOffset.test.ts          # リムオフセットの単体テスト
+│   ├── spokeCompare.ts            # ホイール比較のロジック
+│   ├── vite-env.d.ts              # Vite 環境型定義
 │   ├── assets/                    # 静的アセット
 │   │   └── react.svg
-│   ├── components/                # 再利用可能コンポーネント
+│   ├── components/                # 再利用可能なコンポーネント
+│   │   ├── CompareWheels.tsx      # ホイール比較パネル
+│   │   ├── ConfirmDialog.tsx      # 確認ダイアログ
+│   │   ├── HelpButton.tsx         # インラインヘルプの起動ボタン
+│   │   ├── HelpModal.tsx          # SVG 図解つきヘルプモーダル
+│   │   ├── SegmentedControl.tsx   # セグメントコントロール
 │   │   └── Toast.tsx              # トースト通知コンポーネント
-│   ├── contexts/                  # React Context
-│   │   ├── ToastContext.tsx       # トーストコンテキスト実装
+│   ├── contexts/                  # React コンテキスト
+│   │   ├── ThemeContext.tsx       # テーマコンテキストの実装
+│   │   ├── themeContextValue.ts
+│   │   ├── ToastContext.tsx       # トーストコンテキストの実装
 │   │   └── ToastContextDefinition.ts
-│   ├── hooks/                     # カスタムReactフック
+│   ├── hooks/                     # カスタムフック
+│   │   ├── useTheme.ts            # テーマフック
 │   │   └── useToast.ts            # トーストフック
 │   ├── locales/                   # 翻訳ファイル
 │   │   ├── en.json                # 英語翻訳
 │   │   └── ja.json                # 日本語翻訳
-│   └── presets/                   # プリセットデータ
+│   └── presets/                   # プリセットデータ (6 ファイル)
+│       ├── Hope-Pro-5-CL_Nextie-Premium-2936_Front.json
+│       ├── Hope-Pro-5-CL_Nextie-Premium-2936_Rear.json
 │       ├── Hope-Pro-5-IS6_Nextie-Premium-2936_Front.json
-│       └── Hope-Pro-5-IS6_Nextie-Premium-2936_Rear.json
+│       ├── Hope-Pro-5-IS6_Nextie-Premium-2936_Rear.json
+│       ├── Hope-Pro-5-IS6_Stans-Flow-MK4_Front.json
+│       └── Hope-Pro-5-IS6_Stans-Flow-MK4_Rear.json
 ├── public/                        # 静的ファイル
 │   └── calculator.svg
 ├── dist/                          # ビルド出力
-├── CLAUDE.md                      # AI assistant instructions
-├── README.md                      # 英語版ドキュメント
-├── README_ja.md                   # 日本語版ドキュメント
+├── AGENTS.md                      # AI アシスタント向け指示
+├── CLAUDE.md                      # AI アシスタント向け指示
+├── README.md                      # 英語ドキュメント
+├── README_ja.md                   # 日本語ドキュメント
 ├── package.json                   # 依存関係と設定
-├── pnpm-lock.yaml                 # 依存関係ロックファイル
-├── vite.config.ts                 # Vite設定
-├── tsconfig.json                  # TypeScript設定
-├── tsconfig.app.json              # アプリ固有TypeScript設定
-├── tsconfig.node.json             # Node固有TypeScript設定
-├── tailwind.config.js             # Tailwind CSS設定
-├── postcss.config.cjs             # PostCSS設定
-└── eslint.config.js               # ESLint設定
+├── pnpm-lock.yaml                 # ロックファイル
+├── vite.config.ts                 # Vite 設定
+├── tsconfig.json                  # TypeScript 設定
+├── tsconfig.app.json              # アプリ用 TypeScript 設定
+├── tsconfig.node.json             # Node 用 TypeScript 設定
+└── eslint.config.js               # ESLint 設定
 ```
 
 ## 開発上の注意
