@@ -3,6 +3,7 @@ import { Save, Trash2, FileJson, FileUp, Sun, Moon, TriangleAlert, ChevronDown, 
 import { useTranslation } from 'react-i18next';
 import { useToast } from './hooks/useToast';
 import { useTheme } from './hooks/useTheme';
+import { useIsVisible } from './hooks/useIsVisible';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { HelpButton } from './components/HelpButton';
 import { HelpModal, type HelpTopic } from './components/HelpModal';
@@ -466,6 +467,23 @@ const FieldWarning: React.FC<{ id: string; message: string }> = ({ id, message }
   </p>
 );
 
+// スクロール中プレビューの 1 セル。計算できない間は「—」を出す。
+// ピルごと消すのではなく値だけを置き換えるので、入力を打ち直している最中に
+// プレビューが出たり消えたりして視線が飛ばない。
+const ResultPreviewValue: React.FC<{ label: string; value?: number }> = ({ label, value }) => (
+  <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+    <span className="text-xs font-medium text-fg-muted">{label}</span>
+    <span
+      className={[
+        'text-base font-semibold tabular-nums tracking-tight sm:text-lg',
+        value !== undefined ? 'text-accent-ink' : 'text-fg-subtle',
+      ].join(' ')}
+    >
+      {value !== undefined ? `${value.toFixed(1)} mm` : '— mm'}
+    </span>
+  </div>
+);
+
 const spokeCountSegments: SegmentedOption[] = spokeCountOptions.map(value => ({ value, label: value }));
 
 // セグメントには数字だけを描画する。375px では 5 分割で 1 セグメント約 60px しか
@@ -669,6 +687,8 @@ const SpokeLengthCalculator: React.FC = () => {
   const [touchedFields, setTouchedFields] = useState<TouchedFields>({});
   const savedCalculationsLoadedRef = useRef(false);
   const compareSectionRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
   const [showCompare, setShowCompare] = useState(false);
   const [compareA, setCompareA] = useState('');
   const [compareB, setCompareB] = useState('');
@@ -706,6 +726,16 @@ const SpokeLengthCalculator: React.FC = () => {
     })()
     : undefined;
   const hasValidResults = currentResults !== null;
+
+  // 入力フォームが縦に長く、上のフィールドを触っている間は結果帯が画面外に出る。
+  // その間だけ左右スポーク長を画面上部に浮かせる。「出さない」条件は 2 つ:
+  //   - 結果帯が見えている  … 同じ数値の二重表示になる
+  //   - ヘッダーが見えている … まだスクロールしていない。タイトルを覆ってしまう
+  // 比較パネルの開閉は条件に入れない。閉じずに上へスクロールしたときだけ
+  // プレビューが出ないのは、紛らわしさを避ける利より不具合に見える害が勝る。
+  const isHeaderVisible = useIsVisible(headerRef);
+  const areResultsVisible = useIsVisible(resultsRef);
+  const showResultPreview = !isHeaderVisible && !areResultsVisible;
 
   const wheelOptions = useMemo((): WheelOption[] => {
     const presetItems: WheelOption[] = presetOptions.map(p => ({
@@ -1088,7 +1118,10 @@ const SpokeLengthCalculator: React.FC = () => {
           セマンティクスと 1:1 で対応する機能的な区切り。旧 max-w-4xl より狭くし、
           モバイルは p-4 のままなので表示領域は失われない。 */}
       <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
-        <header className="mb-8 flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-center sm:justify-between">
+        <header
+          ref={headerRef}
+          className="mb-8 flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-center sm:justify-between"
+        >
           <h1 className="text-2xl font-semibold tracking-tight text-fg sm:text-3xl">
             {titleText}
           </h1>
@@ -1370,6 +1403,7 @@ const SpokeLengthCalculator: React.FC = () => {
 
         {/* 結果はシート内の帯。角丸を持たせず、上のハイラインで区切る */}
         <div
+          ref={resultsRef}
           className={[
             'border-t p-5 transition-colors sm:p-6',
             currentResults !== null
@@ -1512,6 +1546,37 @@ const SpokeLengthCalculator: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* スクロール中の結果プレビュー。結果帯の複製なのでスクリーンリーダーには渡さない
+          (aria-hidden) —— 結果帯そのものが常に DOM にあり、二重読み上げは害でしかない。
+          pointer-events-none は下のフィールドのタップを塞がないため。
+          z-40 —— トーストとモーダル (z-50) の下に敷き、スクリム表示時は自然に沈む。 */}
+      {showResultPreview && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-x-0 top-3 z-40 flex animate-fade-in-down justify-center px-4"
+        >
+          <div
+            className={[
+              'flex max-w-full items-center gap-4 rounded-full border px-4 py-2 shadow-lg transition-colors sm:gap-6',
+              currentResults !== null
+                ? 'bg-accent-soft border-accent-line'
+                : 'bg-sunken border-line',
+            ].join(' ')}
+          >
+            {/* 幅を取れないのでラベルはビューポートに関係なく短縮形。
+                値が無いときは「—」を置いてピルの幅と位置を保つ */}
+            <ResultPreviewValue
+              label={t('results.leftShort')}
+              value={currentResults?.left}
+            />
+            <ResultPreviewValue
+              label={t('results.rightShort')}
+              value={currentResults?.right}
+            />
+          </div>
+        </div>
+      )}
 
       {/* JSON data display modal */}
       {showJsonOutput && (
