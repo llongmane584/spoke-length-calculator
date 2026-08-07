@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Save, Trash2, Languages, FileJson, FileUp, Sun, Moon, TriangleAlert } from 'lucide-react';
+import { Save, Trash2, Languages, FileJson, FileUp, Sun, Moon, TriangleAlert, ChevronDown, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from './hooks/useToast';
 import { useTheme } from './hooks/useTheme';
@@ -8,6 +8,7 @@ import { HelpButton } from './components/HelpButton';
 import { HelpModal, type HelpTopic } from './components/HelpModal';
 import CompareWheels, { type WheelOption } from './components/CompareWheels';
 import { SegmentedControl, type SegmentedOption } from './components/SegmentedControl';
+import { btnPrimary, btnSecondary, btnGhost, nativeSelect, selectChevron } from './styles';
 import { assessRimOffset, getEffectiveFlangeDistances, type RimOffsetAssessment } from './rimOffset';
 
 // Dynamic import of preset data
@@ -1079,63 +1080,72 @@ const SpokeLengthCalculator: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-page text-fg transition-colors">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl sm:text-3xl font-bold text-fg">
+    <div className="min-h-screen bg-page text-fg transition-colors">
+      {/* max-w-3xl は 798074c (#27) が外した幅制限を意図的に戻したもの。#27 が問題視
+          したのは何も整理しない装飾的なシートだったが、下のシートは既存の FieldGroup
+          セマンティクスと 1:1 で対応する機能的な区切り。旧 max-w-4xl より狭くし、
+          モバイルは p-4 のままなので表示領域は失われない。 */}
+      <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+        <header className="mb-8 flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl font-semibold tracking-tight text-fg sm:text-3xl">
             {titleText}
-            <span className="block sm:inline text-base sm:text-lg font-normal text-fg-muted"></span>
           </h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg border border-line-strong hover:bg-sunken transition-colors"
-            title={t('theme.toggle')}
-          >
-            {theme === 'dark' ? (
-              <Sun className="w-5 h-5 text-fg-muted" />
-            ) : (
-              <Moon className="w-5 h-5 text-fg-muted" />
-            )}
-          </button>
-          <div className="flex items-center gap-2">
-            <Languages className="w-5 h-5 text-fg-muted" />
-            <select
-              value={i18n.language}
-              onChange={(e) => handleLanguageChange(e.target.value)}
-              className="px-3 py-1 border border-line-strong rounded-md text-sm bg-surface text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              className={btnGhost}
+              title={t('theme.toggle')}
+              aria-label={t('theme.toggle')}
             >
-              <option value="en">English</option>
-              <option value="ja">日本語</option>
-            </select>
+              {theme === 'dark' ? (
+                <Sun className="w-5 h-5" aria-hidden="true" />
+              ) : (
+                <Moon className="w-5 h-5" aria-hidden="true" />
+              )}
+            </button>
+            <div className="flex items-center gap-2">
+              <Languages className="w-5 h-5 text-fg-subtle" aria-hidden="true" />
+              <div className="relative">
+                <select
+                  value={i18n.language}
+                  onChange={(e) => handleLanguageChange(e.target.value)}
+                  className={`${nativeSelect} min-h-9 w-auto py-1 pr-8 text-sm`}
+                >
+                  <option value="en">English</option>
+                  <option value="ja">日本語</option>
+                </select>
+                <ChevronDown aria-hidden="true" className={`${selectChevron} right-2.5`} />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </header>
 
-      {/* Single column vertical layout */}
-      <div className="flex flex-col gap-10">
-        {/* Input section */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-fg border-b border-line pb-2">{t('input.heading')}</h2>
+        {/* 入力と結果を 1 枚のシートに収め、ハイラインで区切る */}
+        <div className="overflow-hidden rounded-xl border border-line bg-surface">
+          {/* Input section */}
+          <div className="space-y-6 p-5 sm:p-6">
+            <h2 className="text-xl font-semibold text-fg border-b border-line pb-2">{t('input.heading')}</h2>
 
           <div className="space-y-6">
             {/* Preset selection - only show if presets exist */}
             {presetOptions.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-fg-muted mb-1">{t('input.preset')}</label>
-                <select
-                  value={selectedPreset}
-                  onChange={(e) => loadPreset(e.target.value)}
-                  className="w-full px-3 py-2 border border-line-strong rounded-md bg-surface text-fg placeholder:text-fg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                >
-                  <option value="">{t('input.presetOption')}</option>
-                  {presetOptions.map((preset) => (
-                    <option key={preset.id} value={preset.id}>
-                      {preset.name}
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-sm font-medium text-fg-muted mb-1.5">{t('input.preset')}</label>
+                <div className="relative">
+                  <select
+                    value={selectedPreset}
+                    onChange={(e) => loadPreset(e.target.value)}
+                    className={nativeSelect}
+                  >
+                    <option value="">{t('input.presetOption')}</option>
+                    {presetOptions.map((preset) => (
+                      <option key={preset.id} value={preset.id}>
+                        {preset.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown aria-hidden="true" className={selectChevron} />
+                </div>
               </div>
             )}
 
@@ -1353,98 +1363,92 @@ const SpokeLengthCalculator: React.FC = () => {
               </div>
             </FieldGroup>
 
-            {/* Closing rule for the input section */}
-            <div aria-hidden="true" className="border-t border-line" />
           </div>
         </div>
 
-        {/* Results and save section */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-fg border-b border-line pb-2">{t('results.heading')}</h2>
-          <div
-            className={[
-              'rounded-lg border p-5 transition-colors sm:p-6',
-              currentResults !== null
-                ? 'bg-accent-soft border-accent-line'
-                : 'bg-sunken border-line',
-            ].join(' ')}
-          >
-            <div className="grid min-h-24 w-full grid-cols-2 items-center gap-3 text-center sm:min-h-20 sm:gap-4">
-              {currentResults !== null ? (
-                <>
-                  <div>
-                    <h3 className="text-base font-semibold text-fg-muted sm:text-lg">{resultsLeftText}</h3>
-                    <p className="text-2xl font-semibold leading-tight tabular-nums tracking-tight text-accent-ink sm:text-3xl">
-                      {currentResults.left.toFixed(1)} mm
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-fg-muted sm:text-lg">{resultsRightText}</h3>
-                    <p className="text-2xl font-semibold leading-tight tabular-nums tracking-tight text-accent-ink sm:text-3xl">
-                      {currentResults.right.toFixed(1)} mm
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <p className="col-span-2 text-sm text-fg-subtle sm:text-base">
-                  {t('results.placeholder')}
-                </p>
-              )}
-            </div>
+        {/* 結果はシート内の帯。角丸を持たせず、上のハイラインで区切る */}
+        <div
+          className={[
+            'border-t p-5 transition-colors sm:p-6',
+            currentResults !== null
+              ? 'bg-accent-soft border-accent-line'
+              : 'bg-sunken border-line',
+          ].join(' ')}
+        >
+          <h2 className="mb-4 text-sm font-medium text-fg-muted">{t('results.heading')}</h2>
+          <div className="grid min-h-24 w-full grid-cols-2 items-center gap-3 text-center sm:min-h-20 sm:gap-4">
+            {currentResults !== null ? (
+              <>
+                <div>
+                  <h3 className="text-sm font-medium text-fg-muted sm:text-base">{resultsLeftText}</h3>
+                  <p className="text-2xl font-semibold leading-tight tabular-nums tracking-tight text-accent-ink sm:text-3xl">
+                    {currentResults.left.toFixed(1)} mm
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-fg-muted sm:text-base">{resultsRightText}</h3>
+                  <p className="text-2xl font-semibold leading-tight tabular-nums tracking-tight text-accent-ink sm:text-3xl">
+                    {currentResults.right.toFixed(1)} mm
+                  </p>
+                </div>
+              </>
+            ) : (
+              <p className="col-span-2 text-sm text-fg-subtle sm:text-base">
+                {t('results.placeholder')}
+              </p>
+            )}
           </div>
+        </div>
 
-          {/* Save and export */}
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-fg-muted mb-1">{t('results.calculationName')}</label>
-              <input
-                type="text"
-                value={calculationName}
-                onChange={(e) => setCalculationName(e.target.value)}
-                className="w-full px-3 py-2 border border-line-strong rounded-md bg-surface text-fg placeholder:text-fg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                placeholder={calculationNamePlaceholder}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={saveCalculation}
-                disabled={!hasValidResults}
-                className="bg-accent hover:bg-accent-hover disabled:bg-sunken disabled:text-fg-subtle disabled:cursor-not-allowed text-on-accent font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
-              >
-                <Save className="w-4 h-4" />
-                {t('buttons.save')}
-              </button>
-              <button
-                onClick={exportToJSON}
-                disabled={!hasValidResults}
-                className="border border-line-strong bg-surface text-fg hover:bg-sunken disabled:bg-sunken disabled:text-fg-subtle disabled:cursor-not-allowed font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
-              >
-                <FileJson className="w-4 h-4" />
-                <span className="sm:hidden">{t('buttons.jsonShort')}</span>
-                <span className="hidden sm:inline">{t('buttons.jsonDisplay')}</span>
-              </button>
-            </div>
-            {/* Load JSON file */}
-            <div className="mt-3">
-              <label className="block">
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={loadFromJSON}
-                  className="hidden"
-                />
-                <span className="w-full border border-line-strong bg-surface text-fg hover:bg-sunken font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer">
-                  <FileUp className="w-4 h-4" />
-                  {t('buttons.loadJson')}
-                </span>
-              </label>
-            </div>
+        {/* Save and export */}
+        <div className="space-y-4 border-t border-line p-5 sm:p-6">
+          <div>
+            <label className="block text-sm font-medium text-fg-muted mb-1.5">{t('results.calculationName')}</label>
+            <input
+              type="text"
+              value={calculationName}
+              onChange={(e) => setCalculationName(e.target.value)}
+              className="w-full min-h-11 px-3 py-2 border border-line-strong rounded-md bg-surface text-fg placeholder:text-fg-subtle transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              placeholder={calculationNamePlaceholder}
+            />
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={saveCalculation}
+              disabled={!hasValidResults}
+              className={btnPrimary}
+            >
+              <Save className="w-4 h-4" aria-hidden="true" />
+              {t('buttons.save')}
+            </button>
+            <button
+              onClick={exportToJSON}
+              disabled={!hasValidResults}
+              className={btnSecondary}
+            >
+              <FileJson className="w-4 h-4" aria-hidden="true" />
+              <span className="sm:hidden">{t('buttons.jsonShort')}</span>
+              <span className="hidden sm:inline">{t('buttons.jsonDisplay')}</span>
+            </button>
+          </div>
+          {/* Load JSON file */}
+          <label className="block">
+            <input
+              type="file"
+              accept=".json"
+              onChange={loadFromJSON}
+              className="hidden"
+            />
+            <span className={`${btnSecondary} w-full cursor-pointer`}>
+              <FileUp className="w-4 h-4" aria-hidden="true" />
+              {t('buttons.loadJson')}
+            </span>
+          </label>
 
           {/* List of saved calculations */}
           {savedCalculations.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold text-fg mb-3">{t('results.savedCalculations')}</h3>
+            <div className="pt-2">
+              <h3 className="text-base font-semibold text-fg mb-3">{t('results.savedCalculations')}</h3>
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {savedCalculations.map((calc) => (
                   <div key={calc.id} className="border border-line bg-surface rounded-lg p-3 flex items-center justify-between">
@@ -1455,18 +1459,19 @@ const SpokeLengthCalculator: React.FC = () => {
                         {resultsLeftText}: {calc.results.left !== null ? calc.results.left.toFixed(1) : '-'}mm / {resultsRightText}: {calc.results.right !== null ? calc.results.right.toFixed(1) : '-'}mm
                       </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-1">
                       <button
                         onClick={() => loadCalculation(calc)}
-                        className="text-accent-ink hover:text-accent text-sm font-medium"
+                        className={`${btnGhost} text-sm text-accent-ink hover:text-accent`}
                       >
                         {t('buttons.load')}
                       </button>
                       <button
                         onClick={() => deleteCalculation(calc.id)}
-                        className="text-danger-ink hover:text-danger"
+                        aria-label={t('dialog.confirm')}
+                        className={`${btnGhost} text-danger-ink hover:text-danger`}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" aria-hidden="true" />
                       </button>
                     </div>
                   </div>
@@ -1477,40 +1482,47 @@ const SpokeLengthCalculator: React.FC = () => {
         </div>
       </div>
 
-      {/* Wheel compare section */}
-      <div ref={compareSectionRef} className="mt-10">
-        <button
-          onClick={() => setShowCompare(prev => !prev)}
-          className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-line bg-surface hover:bg-sunken text-fg font-medium transition-colors"
-        >
-          <span>{t('compare.toggle')}</span>
-          <span className="text-fg-subtle">{showCompare ? '▲' : '▼'}</span>
-        </button>
-        {showCompare && (
-          <div className="mt-4 rounded-lg border border-line bg-surface p-5 animate-fade-in-down">
-            <h2 className="text-lg font-semibold text-fg mb-4">{t('compare.heading')}</h2>
-            <CompareWheels
-              options={wheelOptions}
-              selectedA={compareA}
-              selectedB={compareB}
-              onChangeA={setCompareA}
-              onChangeB={setCompareB}
+        {/* Wheel compare section */}
+        <div ref={compareSectionRef} className="mt-8">
+          <button
+            onClick={() => setShowCompare(prev => !prev)}
+            aria-expanded={showCompare}
+            aria-controls="compare-panel"
+            className="w-full min-h-11 flex items-center justify-between px-4 py-3 rounded-lg border border-line bg-surface hover:bg-sunken text-fg font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            <span>{t('compare.toggle')}</span>
+            <ChevronDown
+              aria-hidden="true"
+              className={`h-4 w-4 text-fg-subtle transition-transform ${showCompare ? 'rotate-180' : ''}`}
             />
-          </div>
-        )}
+          </button>
+          {showCompare && (
+            <div id="compare-panel" className="mt-4 rounded-xl border border-line bg-surface p-5 sm:p-6 animate-fade-in-down">
+              <h2 className="text-lg font-semibold text-fg mb-4">{t('compare.heading')}</h2>
+              <CompareWheels
+                options={wheelOptions}
+                selectedA={compareA}
+                selectedB={compareB}
+                onChangeA={setCompareA}
+                onChangeB={setCompareB}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* JSON data display modal */}
       {showJsonOutput && (
         <div className="fixed inset-0 bg-scrim flex items-center justify-center z-50 p-4">
-          <div className="bg-surface border border-line rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-surface border border-line rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-fg">{t('results.jsonOutput')}</h3>
               <button
                 onClick={() => setShowJsonOutput(false)}
-                className="text-fg-muted hover:text-fg text-xl leading-none"
+                aria-label={t('buttons.close')}
+                className={btnGhost}
               >
-                ✕
+                <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
             <textarea
@@ -1519,23 +1531,14 @@ const SpokeLengthCalculator: React.FC = () => {
               className="w-full flex-1 min-h-64 p-3 border border-line-strong rounded-md text-sm font-mono bg-sunken text-fg resize-none mb-4"
             />
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <button
-                onClick={copyToClipboard}
-                className="border border-line-strong bg-surface text-fg hover:bg-sunken py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
-              >
+              <button onClick={copyToClipboard} className={`${btnSecondary} w-full sm:w-auto`}>
                 {t('buttons.copyToClipboard')}
               </button>
-              <button
-                onClick={downloadJSON}
-                className="bg-accent hover:bg-accent-hover text-on-accent py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
-              >
-                <FileJson className="w-4 h-4" />
+              <button onClick={downloadJSON} className={`${btnPrimary} w-full sm:w-auto`}>
+                <FileJson className="w-4 h-4" aria-hidden="true" />
                 {t('buttons.downloadJson')}
               </button>
-              <button
-                onClick={() => setShowJsonOutput(false)}
-                className="border border-line-strong bg-surface text-fg hover:bg-sunken py-2 px-4 rounded-md transition-colors duration-200 w-full sm:w-auto justify-center"
-              >
+              <button onClick={() => setShowJsonOutput(false)} className={`${btnSecondary} w-full sm:w-auto`}>
                 {t('buttons.close')}
               </button>
             </div>
