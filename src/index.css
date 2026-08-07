@@ -1,6 +1,55 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss" source(none);
+@source "../index.html";
+@source "./**/*.{ts,tsx}";
+
+/* Tailwind CSS v4 — 設定は JS ではなくこのファイルに置く (CSS-first)。
+   `source(none)` + 明示 @source にしているのは自動検出を避けるため:
+   - このリポジトリは git worktree で運用することがあり、その場合 `.git` は
+     ディレクトリではなくファイルになる。v4 のスキャナはルート探索に `.git` を
+     使うので、そこに依存したくない。
+   - 自動検出だと .claude 配下の Markdown や README まで走査し、クラス名に見える
+     文字列から使われないユーティリティが混入する。
+   なお @import はファイル先頭でなければならない (v4 のパーサは直前のコメントを
+   取り込んで Invalid declaration になる)。 */
+
+/* v3 の darkMode: 'class' と同義。index.html のプリハイドレーションスクリプトが
+   <html> に付ける .dark に一致する。:where() で詳細度 0 に保つ。 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --animate-fade-in-down: fade-in-down 0.2s ease-out;
+
+  @keyframes fade-in-down {
+    0% {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@layer base {
+
+  /* v4 の preflight は button の cursor を default にする。v3 の挙動に戻す。 */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  /* ネイティブ select のポップアップ・スクロールバー・ファイルピッカーを
+     テーマに追従させる。appearance-none ではポップアップまでは変えられない。 */
+  :root {
+    color-scheme: light;
+  }
+
+  .dark {
+    color-scheme: dark;
+  }
+}
 
 html:lang(ja) {
   font-family: 'Noto Sans JP', sans-serif;

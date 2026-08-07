@@ -53,11 +53,11 @@ const Toast: React.FC<ToastProps> = ({ toast, onRemove }) => {
     <div
       className={`flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg transition-all duration-300 transform translate-x-0 ${getStyles()}`}
     >
-      <div className="flex-shrink-0">{getIcon()}</div>
+      <div className="shrink-0">{getIcon()}</div>
       <p className="flex-1 text-sm font-medium">{toast.message}</p>
       <button
         onClick={() => onRemove(toast.id)}
-        className="flex-shrink-0 hover:opacity-70 transition-opacity"
+        className="shrink-0 hover:opacity-70 transition-opacity"
       >
         <X className="w-4 h-4" />
       </button>

@@ -274,7 +274,7 @@ export function HelpModal({ topic, onClose }: HelpModalProps) {
             ref={closeButtonRef}
             onClick={onClose}
             aria-label={t('buttons.close')}
-            className="-mt-1 -mr-2 p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="-mt-1 -mr-2 p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
           >
             <X className="w-5 h-5" aria-hidden="true" />
           </button>

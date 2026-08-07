@@ -94,7 +94,10 @@ const inputFields = [
   'crossingsRight',
 ] as const satisfies readonly InputField[];
 
-const COMPACT_VIEWPORT_QUERY = '(max-width: 639px)';
+// Tailwind の `sm:` 直下を指す。v4 のブレークポイントは rem (--breakpoint-sm: 40rem)
+// なので px で書くとルートフォントサイズを変えたときに CSS と JS がずれる —
+// CSS はコンパイルレイアウトなのに JS は長い翻訳文字列を選ぶ、という食い違いになる。
+const COMPACT_VIEWPORT_QUERY = '(max-width: 39.9375rem)';
 
 const getIsCompactViewport = () =>
   typeof window !== 'undefined' && window.matchMedia(COMPACT_VIEWPORT_QUERY).matches;
