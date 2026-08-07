@@ -7,6 +7,7 @@ import { ConfirmDialog } from './components/ConfirmDialog';
 import { HelpButton } from './components/HelpButton';
 import { HelpModal, type HelpTopic } from './components/HelpModal';
 import CompareWheels, { type WheelOption } from './components/CompareWheels';
+import { SegmentedControl, type SegmentedOption } from './components/SegmentedControl';
 import { assessRimOffset, getEffectiveFlangeDistances, type RimOffsetAssessment } from './rimOffset';
 
 // Dynamic import of preset data
@@ -464,6 +465,31 @@ const FieldWarning: React.FC<{ id: string; message: string }> = ({ id, message }
   </p>
 );
 
+const spokeCountSegments: SegmentedOption[] = spokeCountOptions.map(value => ({ value, label: value }));
+
+// セグメントには数字だけを描画する。375px では 5 分割で 1 セグメント約 60px しか
+// なく、"0 (ラジアル組)" / "0 (Radial Lacing)" は収まらないため。
+// 意味は 0 セグメントの aria-label（支援技術向け）と、下の常設キャプション
+// （視覚的）の 2 経路で補う。
+const useCrossingSegments = (): SegmentedOption[] => {
+  const { t } = useTranslation();
+  return useMemo(
+    () => crossingOptions.map(value => (
+      value === '0'
+        ? { value, label: value, ariaLabel: t('input.radialLacing') }
+        : { value, label: value }
+    )),
+    [t],
+  );
+};
+
+// 選択状態に関係なく常に描画する。条件付きにするとレイアウトシフトが起きる
+// （FieldError が h-5 を予約しているのと同じ規律）。
+const RadialHint: React.FC = () => {
+  const { t } = useTranslation();
+  return <p className="mt-1 text-xs text-fg-subtle">{t('input.crossingsRadialHint')}</p>;
+};
+
 // Groups related input fields under a label, separated by a hairline rule.
 // The rule lives on the wrapper rather than on the fieldset itself: a bordered
 // fieldset gets a notch cut out of its top border where the legend sits.
@@ -615,6 +641,7 @@ const SpokeLengthCalculator: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { showToast } = useToast();
   const { theme, toggleTheme } = useTheme();
+  const crossingSegments = useCrossingSegments();
   const [isCompactViewport, setIsCompactViewport] = useState(getIsCompactViewport);
   const [inputs, setInputs] = useState<Inputs>({
     erd: '',
@@ -1266,70 +1293,61 @@ const SpokeLengthCalculator: React.FC = () => {
 
             <FieldGroup label={t('input.group.lacing')}>
               <div>
-                <label className="block text-sm font-medium text-fg-muted mb-1">{t('input.numberOfSpokes')}</label>
-                <select
-                  id="numberOfSpokes"
+                {/* label ではなく span + aria-labelledby。radiogroup は単一の
+                    フォームコントロールではないので label/for では結びつかない。
+                    元の <label> は htmlFor を持っておらず既に未関連付けだったので、
+                    これは退行ではなく a11y 上の改善。 */}
+                <span id="numberOfSpokes-label" className="block text-sm font-medium text-fg-muted mb-1">
+                  {t('input.numberOfSpokes')}
+                </span>
+                <SegmentedControl
+                  name="numberOfSpokes"
+                  labelledBy="numberOfSpokes-label"
                   value={inputs.numberOfSpokes}
-                  onChange={(e) => handleInputChange('numberOfSpokes', e.target.value)}
+                  options={spokeCountSegments}
+                  onChange={(value) => handleInputChange('numberOfSpokes', value)}
                   onBlur={() => markFieldTouched('numberOfSpokes')}
-                  aria-invalid={visibleFieldErrors.numberOfSpokes !== undefined}
-                  aria-describedby={visibleFieldErrors.numberOfSpokes !== undefined ? 'numberOfSpokes-error' : undefined}
-                  className={getControlClassName(visibleFieldErrors.numberOfSpokes !== undefined)}
-                >
-                  <option value="">{t('input.selectOption')}</option>
-                  <option value="24">24</option>
-                  <option value="28">28</option>
-                  <option value="32">32</option>
-                  <option value="36">36</option>
-                </select>
+                  invalid={visibleFieldErrors.numberOfSpokes !== undefined}
+                  describedBy={visibleFieldErrors.numberOfSpokes !== undefined ? 'numberOfSpokes-error' : undefined}
+                />
                 <FieldError id="numberOfSpokes-error" message={visibleFieldErrors.numberOfSpokes} />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-fg-muted">{t('input.crossingsLeft')}</label>
+                    <span id="crossingsLeft-label" className="block text-sm font-medium text-fg-muted">{t('input.crossingsLeft')}</span>
                     <HelpButton topic="crossings" onOpen={setHelpTopic} />
                   </div>
-                  <select
-                    id="crossingsLeft"
+                  <SegmentedControl
+                    name="crossingsLeft"
+                    labelledBy="crossingsLeft-label"
                     value={inputs.crossingsLeft}
-                    onChange={(e) => handleInputChange('crossingsLeft', e.target.value)}
+                    options={crossingSegments}
+                    onChange={(value) => handleInputChange('crossingsLeft', value)}
                     onBlur={() => markFieldTouched('crossingsLeft')}
-                    aria-invalid={visibleFieldErrors.crossingsLeft !== undefined}
-                    aria-describedby={visibleFieldErrors.crossingsLeft !== undefined ? 'crossingsLeft-error' : undefined}
-                    className={getControlClassName(visibleFieldErrors.crossingsLeft !== undefined)}
-                  >
-                    <option value="">{t('input.selectOption')}</option>
-                    <option value="0">{t('input.radialLacing')}</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                  </select>
+                    invalid={visibleFieldErrors.crossingsLeft !== undefined}
+                    describedBy={visibleFieldErrors.crossingsLeft !== undefined ? 'crossingsLeft-error' : undefined}
+                  />
+                  <RadialHint />
                   <FieldError id="crossingsLeft-error" message={visibleFieldErrors.crossingsLeft} />
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-fg-muted">{t('input.crossingsRight')}</label>
+                    <span id="crossingsRight-label" className="block text-sm font-medium text-fg-muted">{t('input.crossingsRight')}</span>
                     <HelpButton topic="crossings" onOpen={setHelpTopic} />
                   </div>
-                  <select
-                    id="crossingsRight"
+                  <SegmentedControl
+                    name="crossingsRight"
+                    labelledBy="crossingsRight-label"
                     value={inputs.crossingsRight}
-                    onChange={(e) => handleInputChange('crossingsRight', e.target.value)}
+                    options={crossingSegments}
+                    onChange={(value) => handleInputChange('crossingsRight', value)}
                     onBlur={() => markFieldTouched('crossingsRight')}
-                    aria-invalid={visibleFieldErrors.crossingsRight !== undefined}
-                    aria-describedby={visibleFieldErrors.crossingsRight !== undefined ? 'crossingsRight-error' : undefined}
-                    className={getControlClassName(visibleFieldErrors.crossingsRight !== undefined)}
-                  >
-                    <option value="">{t('input.selectOption')}</option>
-                    <option value="0">{t('input.radialLacing')}</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                  </select>
+                    invalid={visibleFieldErrors.crossingsRight !== undefined}
+                    describedBy={visibleFieldErrors.crossingsRight !== undefined ? 'crossingsRight-error' : undefined}
+                  />
+                  <RadialHint />
                   <FieldError id="crossingsRight-error" message={visibleFieldErrors.crossingsRight} />
                 </div>
               </div>

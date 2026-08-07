@@ -21,10 +21,10 @@
     "spokeHoleDiameter": "スポーク穴直径 (mm)",
     "spokeHolePlaceholder": "スポーク穴直径",
     "numberOfSpokes": "スポーク本数",
-    "selectOption": "選択してください",
     "crossingsLeft": "クロス [左]",
     "crossingsRight": "クロス [右]",
     "radialLacing": "0 (ラジアル組)",
+    "crossingsRadialHint": "0 = ラジアル組",
     "group": {
       "rim": "リム",
       "hub": "ハブ",
