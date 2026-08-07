@@ -18,7 +18,7 @@ interface Props {
 }
 
 const selectClass =
-  'w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors';
+  'w-full px-3 py-2 border rounded-md bg-surface text-fg border-line-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus transition-colors';
 
 const CompareWheels: React.FC<Props> = ({ options, selectedA, selectedB, onChangeA, onChangeB }) => {
   const { t } = useTranslation();
@@ -40,7 +40,7 @@ const CompareWheels: React.FC<Props> = ({ options, selectedA, selectedB, onChang
     label: string,
   ) => (
     <div className="flex flex-col gap-1">
-      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+      <label className="text-sm font-medium text-fg-muted">
         {label}
       </label>
       <select
@@ -75,38 +75,38 @@ const CompareWheels: React.FC<Props> = ({ options, selectedA, selectedB, onChang
       </div>
 
       {result === null ? (
-        <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">
+        <p className="text-sm text-fg-subtle text-center py-4">
           {t('compare.selectBoth')}
         </p>
       ) : (
-        <div className="rounded-lg border bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800 p-5 space-y-4">
+        <div className="rounded-lg border bg-accent-soft border-accent-line p-5 space-y-4">
           <div className="grid grid-cols-3 gap-3 text-center">
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{t('compare.totalNeeded')}</p>
-              <p className="text-xl font-bold text-blue-800 dark:text-blue-400">{result.totalNeeded}</p>
+              <p className="text-xs text-fg-subtle">{t('compare.totalNeeded')}</p>
+              <p className="text-xl font-semibold tabular-nums text-accent-ink">{result.totalNeeded}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{t('compare.reuseCount')}</p>
-              <p className="text-xl font-bold text-blue-800 dark:text-blue-400">{result.reuseCount}</p>
+              <p className="text-xs text-fg-subtle">{t('compare.reuseCount')}</p>
+              <p className="text-xl font-semibold tabular-nums text-accent-ink">{result.reuseCount}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{t('compare.leftoverCount')}</p>
-              <p className="text-xl font-bold text-slate-600 dark:text-slate-300">{result.leftoverCount}</p>
+              <p className="text-xs text-fg-subtle">{t('compare.leftoverCount')}</p>
+              <p className="text-xl font-semibold tabular-nums text-fg-muted">{result.leftoverCount}</p>
             </div>
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            <p className="text-sm font-semibold text-fg mb-2">
               {t('compare.buyHeading')}
             </p>
             {result.buyItems.length === 0 ? (
-              <p className="text-sm text-green-700 dark:text-green-400">{t('compare.noBuy')}</p>
+              <p className="text-sm text-ok-ink">{t('compare.noBuy')}</p>
             ) : (
               <ul className="space-y-1">
                 {result.buyItems.map((item, i) => (
-                  <li key={i} className="text-sm text-slate-800 dark:text-slate-200">
+                  <li key={i} className="text-sm tabular-nums text-fg">
                     {t('compare.buyItem', { length: item.length.toFixed(1), count: item.count })}
-                    <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">
+                    <span className="text-xs text-fg-subtle ml-1">
                       ({item.side === 'left' ? t('compare.sideLeft') : t('compare.sideRight')})
                     </span>
                   </li>
@@ -116,14 +116,14 @@ const CompareWheels: React.FC<Props> = ({ options, selectedA, selectedB, onChang
           </div>
 
           {result.reuseCount === 0 && result.buyItems.length > 0 && (
-            <p className="text-sm text-amber-700 dark:text-amber-400">{t('compare.allNew')}</p>
+            <p className="text-sm text-warn-ink">{t('compare.allNew')}</p>
           )}
 
           {result.combinable && result.buyItems.length > 0 && (
-            <p className="text-sm text-blue-700 dark:text-blue-400">{t('compare.combinable')}</p>
+            <p className="text-sm text-accent-ink">{t('compare.combinable')}</p>
           )}
 
-          <p className="text-xs text-slate-400 dark:text-slate-500">{t('compare.note')}</p>
+          <p className="text-xs text-fg-subtle">{t('compare.note')}</p>
         </div>
       )}
     </div>

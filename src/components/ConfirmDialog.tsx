@@ -59,35 +59,35 @@ export function ConfirmDialog({ isOpen, onConfirm, onCancel, title, message }: C
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-scrim"
       onClick={onCancel}
     >
       <div
         ref={dialogRef}
-        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4"
+        className="bg-surface border border-line rounded-lg shadow-xl p-6 max-w-md w-full mx-4"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="dialog-title"
         aria-describedby="dialog-message"
       >
-        <h2 id="dialog-title" className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-4">
+        <h2 id="dialog-title" className="text-xl font-semibold text-fg mb-4">
           {title}
         </h2>
-        <p id="dialog-message" className="text-slate-600 dark:text-slate-300 mb-6">
+        <p id="dialog-message" className="text-fg-muted mb-6">
           {message}
         </p>
         <div className="flex justify-end gap-3">
           <button
             ref={cancelButtonRef}
             onClick={onCancel}
-            className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            className="px-4 py-2 rounded-lg border border-line-strong text-fg hover:bg-sunken transition-colors"
           >
             {t('dialog.cancel')}
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 rounded-lg bg-red-600 dark:bg-red-700 text-white hover:bg-red-700 dark:hover:bg-red-800 transition-colors"
+            className="px-4 py-2 rounded-lg bg-danger text-on-danger hover:brightness-110 transition-all"
           >
             {t('dialog.confirm')}
           </button>

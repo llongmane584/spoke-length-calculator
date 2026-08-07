@@ -427,10 +427,10 @@ const normalizeSavedCalculation = (value: unknown): SavedCalculation | null => {
 
 const getControlClassName = (hasError: boolean, className?: string): string => (
   [
-    'w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:border-transparent transition-colors',
+    'w-full px-3 py-2 border rounded-md bg-surface text-fg tabular-nums placeholder:text-fg-subtle transition-colors focus-visible:outline-2 focus-visible:outline-offset-2',
     hasError
-      ? 'border-red-500 dark:border-red-500 bg-red-50/40 dark:bg-red-950/20 focus:ring-red-500'
-      : 'border-slate-300 dark:border-slate-600 focus:ring-blue-500',
+      ? 'border-danger-line bg-danger-soft focus-visible:outline-danger'
+      : 'border-line-strong focus-visible:outline-focus',
     className || '',
   ].join(' ')
 );
@@ -444,7 +444,7 @@ const FieldError: React.FC<{ id: string; message?: string }> = ({ id, message })
       aria-hidden={!hasMessage}
       aria-live="polite"
       className={[
-        'mt-1 h-5 overflow-hidden whitespace-nowrap text-xs leading-5 text-red-600 dark:text-red-400 sm:text-sm',
+        'mt-1 h-5 overflow-hidden whitespace-nowrap text-xs leading-5 text-danger-ink sm:text-sm',
         hasMessage ? '' : 'invisible',
       ].join(' ')}
     >
@@ -457,7 +457,7 @@ const FieldWarning: React.FC<{ id: string; message: string }> = ({ id, message }
   <p
     id={id}
     aria-live="polite"
-    className="flex min-h-5 items-start gap-1.5 mt-1 text-xs leading-5 text-amber-700 dark:text-amber-300 sm:text-sm"
+    className="flex min-h-5 items-start gap-1.5 mt-1 text-xs leading-5 text-warn-ink sm:text-sm"
   >
     <TriangleAlert aria-hidden="true" className="shrink-0 mt-0.5 h-4 w-4" />
     <span>{message}</span>
@@ -474,9 +474,9 @@ const FieldGroup: React.FC<{
   withRule?: boolean;
   children: React.ReactNode;
 }> = ({ label, withRule = true, children }) => (
-  <div className={withRule ? 'border-t border-slate-200 dark:border-slate-700 pt-6' : undefined}>
+  <div className={withRule ? 'border-t border-line pt-6' : undefined}>
     <fieldset className="min-w-0">
-      <legend className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+      <legend className="mb-3 text-sm font-semibold text-fg">
         {label}
       </legend>
       <div className="space-y-4">{children}</div>
@@ -1052,32 +1052,32 @@ const SpokeLengthCalculator: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 md:p-8 dark:bg-slate-900 transition-colors">
+    <div className="min-h-screen p-4 sm:p-6 md:p-8 bg-page text-fg transition-colors">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
+          <h1 className="text-2xl sm:text-3xl font-bold text-fg">
             {titleText}
-            <span className="block sm:inline text-base sm:text-lg font-normal text-slate-600 dark:text-slate-400"></span>
+            <span className="block sm:inline text-base sm:text-lg font-normal text-fg-muted"></span>
           </h1>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            className="p-2 rounded-lg border border-line-strong hover:bg-sunken transition-colors"
             title={t('theme.toggle')}
           >
             {theme === 'dark' ? (
-              <Sun className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+              <Sun className="w-5 h-5 text-fg-muted" />
             ) : (
-              <Moon className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+              <Moon className="w-5 h-5 text-fg-muted" />
             )}
           </button>
           <div className="flex items-center gap-2">
-            <Languages className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+            <Languages className="w-5 h-5 text-fg-muted" />
             <select
               value={i18n.language}
               onChange={(e) => handleLanguageChange(e.target.value)}
-              className="px-3 py-1 border border-slate-300 dark:border-slate-600 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-1 border border-line-strong rounded-md text-sm bg-surface text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             >
               <option value="en">English</option>
               <option value="ja">日本語</option>
@@ -1090,17 +1090,17 @@ const SpokeLengthCalculator: React.FC = () => {
       <div className="flex flex-col gap-10">
         {/* Input section */}
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600 pb-2">{t('input.heading')}</h2>
+          <h2 className="text-xl font-semibold text-fg border-b border-line pb-2">{t('input.heading')}</h2>
 
           <div className="space-y-6">
             {/* Preset selection - only show if presets exist */}
             {presetOptions.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.preset')}</label>
+                <label className="block text-sm font-medium text-fg-muted mb-1">{t('input.preset')}</label>
                 <select
                   value={selectedPreset}
                   onChange={(e) => loadPreset(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-line-strong rounded-md bg-surface text-fg placeholder:text-fg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                 >
                   <option value="">{t('input.presetOption')}</option>
                   {presetOptions.map((preset) => (
@@ -1117,7 +1117,7 @@ const SpokeLengthCalculator: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.erd')}</label>
+                    <label className="block text-sm font-medium text-fg-muted">{t('input.erd')}</label>
                     <HelpButton topic="erd" onOpen={setHelpTopic} />
                   </div>
                   <NumberInput
@@ -1135,7 +1135,7 @@ const SpokeLengthCalculator: React.FC = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.rimOffset')}</label>
+                    <label className="block text-sm font-medium text-fg-muted">{t('input.rimOffset')}</label>
                     <HelpButton topic="rimOffset" onOpen={setHelpTopic} />
                   </div>
                   <NumberInput
@@ -1163,7 +1163,7 @@ const SpokeLengthCalculator: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
+                    <label className="block text-sm font-medium text-fg-muted">
                       <span className="md:hidden">{t('input.pcdLeft')}</span>
                       <span className="hidden md:block">{t('input.pcdLeft')}</span>
                     </label>
@@ -1184,7 +1184,7 @@ const SpokeLengthCalculator: React.FC = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
+                    <label className="block text-sm font-medium text-fg-muted">
                       <span className="md:hidden">{t('input.pcdRight')}</span>
                       <span className="hidden md:block">{t('input.pcdRight')}</span>
                     </label>
@@ -1208,7 +1208,7 @@ const SpokeLengthCalculator: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.flangeDistanceLeft')}</label>
+                    <label className="block text-sm font-medium text-fg-muted">{t('input.flangeDistanceLeft')}</label>
                     <HelpButton topic="flangeDistance" onOpen={setHelpTopic} />
                   </div>
                   <NumberInput
@@ -1226,7 +1226,7 @@ const SpokeLengthCalculator: React.FC = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.flangeDistanceRight')}</label>
+                    <label className="block text-sm font-medium text-fg-muted">{t('input.flangeDistanceRight')}</label>
                     <HelpButton topic="flangeDistance" onOpen={setHelpTopic} />
                   </div>
                   <NumberInput
@@ -1246,7 +1246,7 @@ const SpokeLengthCalculator: React.FC = () => {
 
               <div>
                 <div className="flex items-center gap-1 mb-1">
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.spokeHoleDiameter')}</label>
+                  <label className="block text-sm font-medium text-fg-muted">{t('input.spokeHoleDiameter')}</label>
                   <HelpButton topic="spokeHoleDiameter" onOpen={setHelpTopic} />
                 </div>
                 <NumberInput
@@ -1266,7 +1266,7 @@ const SpokeLengthCalculator: React.FC = () => {
 
             <FieldGroup label={t('input.group.lacing')}>
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.numberOfSpokes')}</label>
+                <label className="block text-sm font-medium text-fg-muted mb-1">{t('input.numberOfSpokes')}</label>
                 <select
                   id="numberOfSpokes"
                   value={inputs.numberOfSpokes}
@@ -1288,7 +1288,7 @@ const SpokeLengthCalculator: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.crossingsLeft')}</label>
+                    <label className="block text-sm font-medium text-fg-muted">{t('input.crossingsLeft')}</label>
                     <HelpButton topic="crossings" onOpen={setHelpTopic} />
                   </div>
                   <select
@@ -1311,7 +1311,7 @@ const SpokeLengthCalculator: React.FC = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.crossingsRight')}</label>
+                    <label className="block text-sm font-medium text-fg-muted">{t('input.crossingsRight')}</label>
                     <HelpButton topic="crossings" onOpen={setHelpTopic} />
                   </div>
                   <select
@@ -1336,39 +1336,39 @@ const SpokeLengthCalculator: React.FC = () => {
             </FieldGroup>
 
             {/* Closing rule for the input section */}
-            <div aria-hidden="true" className="border-t border-slate-200 dark:border-slate-700" />
+            <div aria-hidden="true" className="border-t border-line" />
           </div>
         </div>
 
         {/* Results and save section */}
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600 pb-2">{t('results.heading')}</h2>
+          <h2 className="text-xl font-semibold text-fg border-b border-line pb-2">{t('results.heading')}</h2>
           <div
             className={[
               'rounded-lg border p-5 transition-colors sm:p-6',
               currentResults !== null
-                ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800'
-                : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-600',
+                ? 'bg-accent-soft border-accent-line'
+                : 'bg-sunken border-line',
             ].join(' ')}
           >
             <div className="grid min-h-24 w-full grid-cols-2 items-center gap-3 text-center sm:min-h-20 sm:gap-4">
               {currentResults !== null ? (
                 <>
                   <div>
-                    <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300 sm:text-lg">{resultsLeftText}</h3>
-                    <p className="text-2xl font-bold leading-tight text-blue-800 dark:text-blue-400 sm:text-3xl">
+                    <h3 className="text-base font-semibold text-fg-muted sm:text-lg">{resultsLeftText}</h3>
+                    <p className="text-2xl font-semibold leading-tight tabular-nums tracking-tight text-accent-ink sm:text-3xl">
                       {currentResults.left.toFixed(1)} mm
                     </p>
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300 sm:text-lg">{resultsRightText}</h3>
-                    <p className="text-2xl font-bold leading-tight text-blue-800 dark:text-blue-400 sm:text-3xl">
+                    <h3 className="text-base font-semibold text-fg-muted sm:text-lg">{resultsRightText}</h3>
+                    <p className="text-2xl font-semibold leading-tight tabular-nums tracking-tight text-accent-ink sm:text-3xl">
                       {currentResults.right.toFixed(1)} mm
                     </p>
                   </div>
                 </>
               ) : (
-                <p className="col-span-2 text-sm text-slate-500 dark:text-slate-400 sm:text-base">
+                <p className="col-span-2 text-sm text-fg-subtle sm:text-base">
                   {t('results.placeholder')}
                 </p>
               )}
@@ -1378,12 +1378,12 @@ const SpokeLengthCalculator: React.FC = () => {
           {/* Save and export */}
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('results.calculationName')}</label>
+              <label className="block text-sm font-medium text-fg-muted mb-1">{t('results.calculationName')}</label>
               <input
                 type="text"
                 value={calculationName}
                 onChange={(e) => setCalculationName(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-line-strong rounded-md bg-surface text-fg placeholder:text-fg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                 placeholder={calculationNamePlaceholder}
               />
             </div>
@@ -1391,7 +1391,7 @@ const SpokeLengthCalculator: React.FC = () => {
               <button
                 onClick={saveCalculation}
                 disabled={!hasValidResults}
-                className="bg-blue-700 dark:bg-blue-800 hover:bg-blue-800 dark:hover:bg-blue-900 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed dark:disabled:bg-slate-700 dark:disabled:text-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
+                className="bg-accent hover:bg-accent-hover disabled:bg-sunken disabled:text-fg-subtle disabled:cursor-not-allowed text-on-accent font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
               >
                 <Save className="w-4 h-4" />
                 {t('buttons.save')}
@@ -1399,7 +1399,7 @@ const SpokeLengthCalculator: React.FC = () => {
               <button
                 onClick={exportToJSON}
                 disabled={!hasValidResults}
-                className="bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-800 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed dark:disabled:bg-slate-700 dark:disabled:text-slate-400 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
+                className="border border-line-strong bg-surface text-fg hover:bg-sunken disabled:bg-sunken disabled:text-fg-subtle disabled:cursor-not-allowed font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
               >
                 <FileJson className="w-4 h-4" />
                 <span className="sm:hidden">{t('buttons.jsonShort')}</span>
@@ -1415,7 +1415,7 @@ const SpokeLengthCalculator: React.FC = () => {
                   onChange={loadFromJSON}
                   className="hidden"
                 />
-                <span className="w-full bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-800 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer">
+                <span className="w-full border border-line-strong bg-surface text-fg hover:bg-sunken font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer">
                   <FileUp className="w-4 h-4" />
                   {t('buttons.loadJson')}
                 </span>
@@ -1426,27 +1426,27 @@ const SpokeLengthCalculator: React.FC = () => {
           {/* List of saved calculations */}
           {savedCalculations.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-3">{t('results.savedCalculations')}</h3>
+              <h3 className="text-lg font-semibold text-fg mb-3">{t('results.savedCalculations')}</h3>
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {savedCalculations.map((calc) => (
-                  <div key={calc.id} className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 flex items-center justify-between">
+                  <div key={calc.id} className="border border-line bg-surface rounded-lg p-3 flex items-center justify-between">
                     <div className="flex-1">
-                      <p className="font-medium text-slate-700 dark:text-slate-300">{calc.name}</p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">{calc.timestamp}</p>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                      <p className="font-medium text-fg">{calc.name}</p>
+                      <p className="text-xs tabular-nums text-fg-subtle">{calc.timestamp}</p>
+                      <p className="text-sm tabular-nums text-fg-muted">
                         {resultsLeftText}: {calc.results.left !== null ? calc.results.left.toFixed(1) : '-'}mm / {resultsRightText}: {calc.results.right !== null ? calc.results.right.toFixed(1) : '-'}mm
                       </p>
                     </div>
                     <div className="flex gap-2">
                       <button
                         onClick={() => loadCalculation(calc)}
-                        className="text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 text-sm font-medium"
+                        className="text-accent-ink hover:text-accent text-sm font-medium"
                       >
                         {t('buttons.load')}
                       </button>
                       <button
                         onClick={() => deleteCalculation(calc.id)}
-                        className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                        className="text-danger-ink hover:text-danger"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -1463,14 +1463,14 @@ const SpokeLengthCalculator: React.FC = () => {
       <div ref={compareSectionRef} className="mt-10">
         <button
           onClick={() => setShowCompare(prev => !prev)}
-          className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300 font-medium transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-line bg-surface hover:bg-sunken text-fg font-medium transition-colors"
         >
           <span>{t('compare.toggle')}</span>
-          <span className="text-slate-400 dark:text-slate-500">{showCompare ? '▲' : '▼'}</span>
+          <span className="text-fg-subtle">{showCompare ? '▲' : '▼'}</span>
         </button>
         {showCompare && (
-          <div className="mt-4 rounded-lg border border-slate-200 dark:border-slate-600 p-5 animate-fade-in-down">
-            <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-4">{t('compare.heading')}</h2>
+          <div className="mt-4 rounded-lg border border-line bg-surface p-5 animate-fade-in-down">
+            <h2 className="text-lg font-semibold text-fg mb-4">{t('compare.heading')}</h2>
             <CompareWheels
               options={wheelOptions}
               selectedA={compareA}
@@ -1484,13 +1484,13 @@ const SpokeLengthCalculator: React.FC = () => {
 
       {/* JSON data display modal */}
       {showJsonOutput && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 bg-scrim flex items-center justify-center z-50 p-4">
+          <div className="bg-surface border border-line rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">{t('results.jsonOutput')}</h3>
+              <h3 className="text-lg font-semibold text-fg">{t('results.jsonOutput')}</h3>
               <button
                 onClick={() => setShowJsonOutput(false)}
-                className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xl leading-none"
+                className="text-fg-muted hover:text-fg text-xl leading-none"
               >
                 ✕
               </button>
@@ -1498,25 +1498,25 @@ const SpokeLengthCalculator: React.FC = () => {
             <textarea
               value={jsonData}
               readOnly
-              className="w-full flex-1 min-h-64 p-3 border border-slate-300 dark:border-slate-600 rounded-md text-sm font-mono bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 resize-none mb-4"
+              className="w-full flex-1 min-h-64 p-3 border border-line-strong rounded-md text-sm font-mono bg-sunken text-fg resize-none mb-4"
             />
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 onClick={copyToClipboard}
-                className="bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-800 text-white py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
+                className="border border-line-strong bg-surface text-fg hover:bg-sunken py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
               >
                 {t('buttons.copyToClipboard')}
               </button>
               <button
                 onClick={downloadJSON}
-                className="bg-blue-700 dark:bg-blue-800 hover:bg-blue-800 dark:hover:bg-blue-900 text-white py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
+                className="bg-accent hover:bg-accent-hover text-on-accent py-2 px-4 rounded-md transition-colors duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
               >
                 <FileJson className="w-4 h-4" />
                 {t('buttons.downloadJson')}
               </button>
               <button
                 onClick={() => setShowJsonOutput(false)}
-                className="bg-slate-500 dark:bg-slate-600 hover:bg-slate-600 dark:hover:bg-slate-700 text-white py-2 px-4 rounded-md transition-colors duration-200 w-full sm:w-auto justify-center"
+                className="border border-line-strong bg-surface text-fg hover:bg-sunken py-2 px-4 rounded-md transition-colors duration-200 w-full sm:w-auto justify-center"
               >
                 {t('buttons.close')}
               </button>

@@ -36,16 +36,18 @@ const Toast: React.FC<ToastProps> = ({ toast, onRemove }) => {
     }
   };
 
+  // success がアクセントの blue ではなく ok (emerald) ロールなのは意図的。
+  // blue を「アクセント」専用に残すのが単一アクセント設計の要点。
   const getStyles = () => {
     switch (toast.type) {
       case 'success':
-        return 'bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-100';
+        return 'bg-ok-soft border-ok-line text-ok-ink';
       case 'error':
-        return 'bg-red-50 dark:bg-red-900 border-red-200 dark:border-red-700 text-red-800 dark:text-red-100';
+        return 'bg-danger-soft border-danger-line text-danger-ink';
       case 'warning':
-        return 'bg-yellow-50 dark:bg-yellow-900 border-yellow-200 dark:border-yellow-700 text-yellow-800 dark:text-yellow-100';
+        return 'bg-warn-soft border-warn-line text-warn-ink';
       case 'info':
-        return 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-100';
+        return 'bg-sunken border-line text-fg';
     }
   };
 
