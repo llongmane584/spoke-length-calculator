@@ -1567,7 +1567,12 @@ const SpokeLengthCalculator: React.FC = () => {
           非表示時はヒットテストからも外れる。
           translate であって transform ではない: Tailwind v4 の translate-* は
           transform ではなく translate プロパティを吐くので、transform を並べても
-          何も動かない。 */}
+          何も動かない。
+
+          色は結果帯と同じ accent-soft / sunken ではなく overlay 系トークンを使う。
+          帯は不透明なシートに敷かれた面だがこれは本文の上に浮くので、ダークの
+          accent-soft (accent 14%) だと下の入力欄が透けて数値と衝突する (#52)。
+          overlay 系はライトでは帯と同値のエイリアスなので見た目は変わらない。 */}
       <div
         aria-hidden="true"
         className={[
@@ -1582,8 +1587,8 @@ const SpokeLengthCalculator: React.FC = () => {
           className={[
             'flex max-w-full items-center gap-4 rounded-full border px-4 py-2 shadow-lg transition-colors sm:gap-6',
             currentResults !== null
-              ? 'bg-accent-soft border-accent-line'
-              : 'bg-sunken border-line',
+              ? 'bg-overlay-accent border-overlay-accent-line'
+              : 'bg-overlay border-overlay-line',
           ].join(' ')}
         >
           {/* 幅を取れないのでラベルはビューポートに関係なく短縮形。
