@@ -84,18 +84,21 @@ const CompareWheels: React.FC<Props> = ({ options, selectedA, selectedB, onChang
         </p>
       ) : (
         <div className="rounded-lg border bg-accent-soft border-accent-line p-5 space-y-4">
+          {/* キャプションの行数は言語と語長でばらつく (日本語は 1〜3 行)。
+              各セルを縦フレックスにし mt-auto で数字を下端へ送ることで、
+              キャプションが何行でも 3 つの数字が同じ高さに揃う。 */}
           <div className="grid grid-cols-3 gap-3 text-center">
-            <div>
+            <div className="flex flex-col">
               <p className="text-xs text-fg-subtle">{t('compare.totalNeeded')}</p>
-              <p className="text-xl font-semibold tabular-nums text-accent-ink">{result.totalNeeded}</p>
+              <p className="mt-auto pt-1 text-xl font-semibold tabular-nums text-accent-ink">{result.totalNeeded}</p>
             </div>
-            <div>
+            <div className="flex flex-col">
               <p className="text-xs text-fg-subtle">{t('compare.reuseCount')}</p>
-              <p className="text-xl font-semibold tabular-nums text-accent-ink">{result.reuseCount}</p>
+              <p className="mt-auto pt-1 text-xl font-semibold tabular-nums text-accent-ink">{result.reuseCount}</p>
             </div>
-            <div>
+            <div className="flex flex-col">
               <p className="text-xs text-fg-subtle">{t('compare.leftoverCount')}</p>
-              <p className="text-xl font-semibold tabular-nums text-fg-muted">{result.leftoverCount}</p>
+              <p className="mt-auto pt-1 text-xl font-semibold tabular-nums text-fg-muted">{result.leftoverCount}</p>
             </div>
           </div>
 
