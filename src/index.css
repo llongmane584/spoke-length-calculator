@@ -21,43 +21,72 @@
    下の .dark 上書きが無言で効かなくなる。素の @theme なら utility は
    var(--color-*) を参照するので、.dark で変数を差し替えるだけで一斉に切り替わる。
 
-   グレーは slate ではなく zinc。slate は青みがかっていて blue のアクセントを
-   濁らせるため。v4 の既定パレットは OKLCH なので var(--color-zinc-50) は
-   そのまま oklch に解決される。 */
+   配色は petrol (#44)。ニュートラルは色相 205 の青緑、アクセントは 203 の
+   深いペトロール。Tailwind の既定ランプに一致する色相が無いので
+   var(--color-zinc-*) のような参照は使えず oklch() リテラルで書く。
+   OKLCH が正で、行末の hex は目視用の参考値。
+
+   値はライト・ダーク両モードで本文 4.5:1 / 部品境界 3:1 / フォーカス 3:1 /
+   on-accent 4.5:1 を全ペアで満たすように選んである。個別の根拠は各所のコメント。 */
 @theme {
-  --color-page: var(--color-zinc-50);
+  --color-page: oklch(0.985 0.006 205);
+  /* #f6fbfc */
   --color-surface: #ffffff;
-  --color-sunken: var(--color-zinc-100);
-  --color-line: var(--color-zinc-200);
-  --color-line-strong: var(--color-zinc-300);
+  --color-sunken: oklch(0.966 0.012 205);
+  /* #ebf6f8 */
+  --color-line: oklch(0.918 0.020 205);
+  /* #d5e8ea */
+  /* line-strong は装飾罫線ではなく入力部品の境界 (getControlClassName /
+     nativeSelect / SegmentedControl)。WCAG 1.4.11 が 3:1 を要求するのでこの濃さに
+     なっている (3.27:1)。旧値 zinc-300 は 1.48:1 しかなかった。
+     「枠が濃い」という理由で薄く戻さないこと。 */
+  --color-line-strong: oklch(0.645 0.020 205);
+  /* #809193 */
 
-  --color-fg: var(--color-zinc-900);
-  --color-fg-muted: var(--color-zinc-600);
-  --color-fg-subtle: var(--color-zinc-500);
+  --color-fg: oklch(0.235 0.030 205);
+  /* #0a2225 */
+  --color-fg-muted: oklch(0.470 0.026 205);
+  /* #4a5f62 */
+  /* placeholder とタイムスタンプが載るので本文基準が要る。沈んだ面の上で 4.96:1。
+     旧値はライト/ダーク同値 (zinc-500) で、ダークの sunken 上では 3.08:1 だった。
+     ここは 2 モードで別の値を持つ。 */
+  --color-fg-subtle: oklch(0.520 0.024 205);
+  /* #596d6f */
 
-  --color-accent: var(--color-blue-600);
-  --color-accent-hover: var(--color-blue-700);
+  --color-accent: oklch(0.470 0.095 203);
+  /* #006a72 */
+  --color-accent-hover: oklch(0.415 0.098 203);
   --color-on-accent: #ffffff;
-  --color-accent-ink: var(--color-blue-700);
-  --color-accent-soft: var(--color-blue-50);
-  --color-accent-line: var(--color-blue-200);
-  --color-focus: var(--color-blue-600);
+  /* accent 上で 6.39:1 */
+  --color-accent-ink: oklch(0.440 0.098 203);
+  /* #00616a */
+  --color-accent-soft: oklch(0.965 0.020 203);
+  --color-accent-line: oklch(0.870 0.070 203);
+  --color-focus: var(--color-accent-ink);
 
-  --color-danger: var(--color-red-600);
-  --color-danger-ink: var(--color-red-600);
-  --color-danger-soft: var(--color-red-50);
-  --color-danger-line: var(--color-red-500);
+  --color-danger: oklch(0.545 0.215 27);
+  /* #d0121c */
+  --color-danger-hover: oklch(0.485 0.205 27);
+  --color-danger-ink: var(--color-danger);
+  --color-danger-soft: oklch(0.962 0.026 27);
+  /* danger-line だけは装飾枠ではなくエラー時の入力枠を兼ねる
+     (getControlClassName)。境界なので 3:1 が要り、ink と同値にしてある (5.54:1)。
+     warn-line / ok-line は装飾パネルの枠専用なので薄くてよい。 */
+  --color-danger-line: var(--color-danger-ink);
   --color-on-danger: #ffffff;
 
-  --color-warn-ink: var(--color-amber-700);
-  --color-warn-soft: var(--color-amber-50);
-  --color-warn-line: var(--color-amber-300);
+  --color-warn-ink: oklch(0.530 0.140 68);
+  --color-warn-soft: oklch(0.962 0.026 68);
+  --color-warn-line: oklch(0.855 0.070 68);
 
-  --color-ok-ink: var(--color-emerald-700);
-  --color-ok-soft: var(--color-emerald-50);
-  --color-ok-line: var(--color-emerald-200);
+  /* ok の色相を emerald (165) から 150 へ振った。アクセントが青緑 (203) なので
+     既定のままだと近すぎる。色相を離すだけでは不十分なので、ok / warn の
+     メッセージにはアイコンを添えてある (1.4.1: 色だけを情報伝達手段にしない)。 */
+  --color-ok-ink: oklch(0.505 0.115 150);
+  --color-ok-soft: oklch(0.962 0.026 150);
+  --color-ok-line: oklch(0.855 0.070 150);
 
-  --color-scrim: --alpha(var(--color-zinc-950) / 50%);
+  --color-scrim: --alpha(oklch(0.150 0.018 205) / 50%);
 
   /* Inter に CJK グリフは無いのでグリフ単位のフォールバックが働く:
      ラテンと数字は Inter、かな漢字と全角約物は Noto Sans JP。
@@ -83,43 +112,57 @@
 }
 
 .dark {
-  --color-page: var(--color-zinc-950);
-  --color-surface: var(--color-zinc-900);
-  --color-sunken: var(--color-zinc-800);
-  /* zinc-800 だと surface (zinc-900) との差が小さすぎて罫線が消える。
-     1 枚のシートをハイラインで区切る構成なので、ここが見えないと骨格が成立しない。 */
-  --color-line: var(--color-zinc-700);
-  --color-line-strong: var(--color-zinc-600);
+  --color-page: oklch(0.150 0.018 205);
+  /* #030d0f */
+  --color-surface: oklch(0.205 0.018 205);
+  /* #0d1a1b */
+  --color-sunken: oklch(0.268 0.018 205);
+  /* #1c292a */
+  /* surface との明度差が小さすぎると罫線が消える。1 枚のシートをハイラインで
+     区切る構成なので、ここが見えないと骨格が成立しない。 */
+  --color-line: oklch(0.368 0.024 205);
+  /* #304345 */
+  /* ライトと同じ理由で 3:1 が要る (3.49:1)。旧値 zinc-600 は 2.29:1 だった。 */
+  --color-line-strong: oklch(0.535 0.024 205);
+  /* #5d7274 */
 
-  --color-fg: var(--color-zinc-100);
-  --color-fg-muted: var(--color-zinc-400);
-  --color-fg-subtle: var(--color-zinc-500);
+  --color-fg: oklch(0.962 0.011 205);
+  /* #eaf5f6 */
+  --color-fg-muted: oklch(0.740 0.020 205);
+  /* #9dafb1 */
+  /* ライトの 0.520 とは別の値。沈んだ面の上で 4.89:1。 */
+  --color-fg-subtle: oklch(0.660 0.020 205);
+  /* #859698 */
 
-  /* on-accent が zinc-950 なのは白だと blue-500 上でコントラスト比 3.7:1 と
-     AA に届かないため。zinc-950 なら 6.5:1。 */
-  --color-accent: var(--color-blue-500);
-  --color-accent-hover: var(--color-blue-400);
-  --color-on-accent: var(--color-zinc-950);
-  --color-accent-ink: var(--color-blue-400);
-  --color-accent-soft: --alpha(var(--color-blue-500) / 12%);
-  --color-accent-line: var(--color-blue-900);
-  --color-focus: var(--color-blue-400);
+  /* on-accent が地の色なのは、明るいペトロールの上では白より濃い色のほうが
+     コントラストを稼げるため (8.72:1)。 */
+  --color-accent: oklch(0.735 0.105 199);
+  /* #45bdc2 */
+  --color-accent-hover: oklch(0.800 0.095 198);
+  --color-on-accent: var(--color-page);
+  --color-accent-ink: oklch(0.805 0.095 197);
+  /* #6dd2d4 */
+  --color-accent-soft: --alpha(oklch(0.735 0.105 199) / 14%);
+  --color-accent-line: oklch(0.430 0.090 199);
+  --color-focus: var(--color-accent-ink);
 
-  --color-danger: var(--color-red-500);
-  --color-danger-ink: var(--color-red-400);
-  --color-danger-soft: --alpha(var(--color-red-500) / 12%);
-  --color-danger-line: var(--color-red-500);
-  --color-on-danger: var(--color-zinc-950);
+  --color-danger: oklch(0.740 0.155 25);
+  /* #fe7f78 */
+  --color-danger-hover: oklch(0.800 0.140 25);
+  --color-danger-ink: var(--color-danger);
+  --color-danger-soft: --alpha(oklch(0.620 0.180 25) / 14%);
+  --color-danger-line: var(--color-danger-ink);
+  --color-on-danger: var(--color-page);
 
-  --color-warn-ink: var(--color-amber-300);
-  --color-warn-soft: --alpha(var(--color-amber-500) / 12%);
-  --color-warn-line: var(--color-amber-700);
+  --color-warn-ink: oklch(0.835 0.140 84);
+  --color-warn-soft: --alpha(oklch(0.620 0.180 84) / 14%);
+  --color-warn-line: oklch(0.430 0.090 84);
 
-  --color-ok-ink: var(--color-emerald-400);
-  --color-ok-soft: --alpha(var(--color-emerald-500) / 12%);
-  --color-ok-line: var(--color-emerald-800);
+  --color-ok-ink: oklch(0.800 0.130 152);
+  --color-ok-soft: --alpha(oklch(0.620 0.180 152) / 14%);
+  --color-ok-line: oklch(0.430 0.090 152);
 
-  --color-scrim: --alpha(var(--color-zinc-950) / 72%);
+  --color-scrim: --alpha(oklch(0.150 0.018 205) / 72%);
 }
 
 @layer base {

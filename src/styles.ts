@@ -24,7 +24,7 @@ export const btnGhost =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus';
 
 /** 破壊的動作。 */
-export const btnDanger = `${btnBase} bg-danger text-on-danger hover:brightness-110`;
+export const btnDanger = `${btnBase} bg-danger text-on-danger hover:bg-danger-hover`;
 
 // appearance-none はドロップダウンのポップアップまでは変えられない。
 // ポップアップ側は index.css の base 層にある color-scheme が担当する。

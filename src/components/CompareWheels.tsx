@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, CircleCheck, TriangleAlert } from 'lucide-react';
 import { compareWheels, type WheelSpec } from '../spokeCompare';
 import { nativeSelect, selectChevron } from '../styles';
 
@@ -106,8 +106,14 @@ const CompareWheels: React.FC<Props> = ({ options, selectedA, selectedB, onChang
             <p className="text-sm font-semibold text-fg mb-2">
               {t('compare.buyHeading')}
             </p>
+            {/* 以下 2 つのアイコンは装飾ではなく 1.4.1 の担保。ok / warn は
+                アクセントと色相を離してあるが、色だけで状態を伝えてはいけない。
+                組み方は App.tsx の FieldWarning に合わせている。 */}
             {result.buyItems.length === 0 ? (
-              <p className="text-sm text-ok-ink">{t('compare.noBuy')}</p>
+              <p className="flex items-start gap-1.5 text-sm text-ok-ink">
+                <CircleCheck aria-hidden="true" className="shrink-0 mt-0.5 h-4 w-4" />
+                <span>{t('compare.noBuy')}</span>
+              </p>
             ) : (
               <ul className="space-y-1">
                 {result.buyItems.map((item, i) => (
@@ -123,7 +129,10 @@ const CompareWheels: React.FC<Props> = ({ options, selectedA, selectedB, onChang
           </div>
 
           {result.reuseCount === 0 && result.buyItems.length > 0 && (
-            <p className="text-sm text-warn-ink">{t('compare.allNew')}</p>
+            <p className="flex items-start gap-1.5 text-sm text-warn-ink">
+              <TriangleAlert aria-hidden="true" className="shrink-0 mt-0.5 h-4 w-4" />
+              <span>{t('compare.allNew')}</span>
+            </p>
           )}
 
           {result.combinable && result.buyItems.length > 0 && (
