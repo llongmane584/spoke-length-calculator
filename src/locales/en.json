@@ -25,6 +25,11 @@
     "crossingsLeft": "Crossings [L]",
     "crossingsRight": "Crossings [R]",
     "radialLacing": "0 (Radial Lacing)",
+    "group": {
+      "rim": "Rim",
+      "hub": "Hub",
+      "lacing": "Lacing"
+    },
     "help": {
       "erd": {
         "title": "ERD (Effective Rim Diameter)",
