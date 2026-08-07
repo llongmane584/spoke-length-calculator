@@ -461,6 +461,26 @@ const FieldWarning: React.FC<{ id: string; message: string }> = ({ id, message }
   </p>
 );
 
+// Groups related input fields under a label, separated by a hairline rule.
+// The rule lives on the wrapper rather than on the fieldset itself: a bordered
+// fieldset gets a notch cut out of its top border where the legend sits.
+// `min-w-0` neutralises the fieldset UA default `min-inline-size: min-content`,
+// so a long unwrappable label can never push the form wider than its container.
+const FieldGroup: React.FC<{
+  label: string;
+  withRule?: boolean;
+  children: React.ReactNode;
+}> = ({ label, withRule = true, children }) => (
+  <div className={withRule ? 'border-t border-slate-200 dark:border-slate-700 pt-6' : undefined}>
+    <fieldset className="min-w-0">
+      <legend className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+        {label}
+      </legend>
+      <div className="space-y-4">{children}</div>
+    </fieldset>
+  </div>
+);
+
 // Regular number input component
 interface NumberInputProps {
   id: string;
@@ -1069,7 +1089,7 @@ const SpokeLengthCalculator: React.FC = () => {
         <div className="space-y-6">
           <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600 pb-2">{t('input.heading')}</h2>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             {/* Preset selection - only show if presets exist */}
             {presetOptions.length > 0 && (
               <div>
@@ -1089,221 +1109,231 @@ const SpokeLengthCalculator: React.FC = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.erd')}</label>
-                  <HelpButton topic="erd" onOpen={setHelpTopic} />
+            {/* Without the preset block above, this rule would double up with the h2 border */}
+            <FieldGroup label={t('input.group.rim')} withRule={presetOptions.length > 0}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.erd')}</label>
+                    <HelpButton topic="erd" onOpen={setHelpTopic} />
+                  </div>
+                  <NumberInput
+                    id="erd"
+                    value={inputs.erd}
+                    onChange={(value) => handleInputChange('erd', value)}
+                    onBlur={() => markFieldTouched('erd')}
+                    step={1}
+                    min={1}
+                    max={1000}
+                    error={visibleFieldErrors.erd}
+                    placeholder={t('input.erdPlaceholder')}
+                  />
+                  <FieldError id="erd-error" message={visibleFieldErrors.erd} />
                 </div>
-                <NumberInput
-                  id="erd"
-                  value={inputs.erd}
-                  onChange={(value) => handleInputChange('erd', value)}
-                  onBlur={() => markFieldTouched('erd')}
-                  step={1}
-                  min={1}
-                  max={1000}
-                  error={visibleFieldErrors.erd}
-                  placeholder={t('input.erdPlaceholder')}
-                />
-                <FieldError id="erd-error" message={visibleFieldErrors.erd} />
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.rimOffset')}</label>
+                    <HelpButton topic="rimOffset" onOpen={setHelpTopic} />
+                  </div>
+                  <NumberInput
+                    id="rimOffset"
+                    value={inputs.rimOffset}
+                    onChange={(value) => handleInputChange('rimOffset', value)}
+                    onBlur={() => markFieldTouched('rimOffset')}
+                    step={0.1}
+                    min={0}
+                    max={100}
+                    error={visibleFieldErrors.rimOffset}
+                    describedBy={rimOffsetWarning !== undefined ? 'rimOffset-warning' : undefined}
+                    placeholder={t('input.rimOffsetPlaceholder')}
+                  />
+                  {rimOffsetWarning !== undefined ? (
+                    <FieldWarning id="rimOffset-warning" message={rimOffsetWarning} />
+                  ) : (
+                    <FieldError id="rimOffset-error" message={visibleFieldErrors.rimOffset} />
+                  )}
+                </div>
               </div>
+            </FieldGroup>
+
+            <FieldGroup label={t('input.group.hub')}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
+                      <span className="md:hidden">{t('input.pcdLeft')}</span>
+                      <span className="hidden md:block">{t('input.pcdLeft')}</span>
+                    </label>
+                    <HelpButton topic="pcd" onOpen={setHelpTopic} />
+                  </div>
+                  <NumberInput
+                    id="pitchCircleLeft"
+                    value={inputs.pitchCircleLeft}
+                    onChange={(value) => handleInputChange('pitchCircleLeft', value)}
+                    onBlur={() => markFieldTouched('pitchCircleLeft')}
+                    step={1}
+                    min={1}
+                    max={100}
+                    error={visibleFieldErrors.pitchCircleLeft}
+                    placeholder={t('input.flangeLeftPlaceholder')}
+                  />
+                  <FieldError id="pitchCircleLeft-error" message={visibleFieldErrors.pitchCircleLeft} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
+                      <span className="md:hidden">{t('input.pcdRight')}</span>
+                      <span className="hidden md:block">{t('input.pcdRight')}</span>
+                    </label>
+                    <HelpButton topic="pcd" onOpen={setHelpTopic} />
+                  </div>
+                  <NumberInput
+                    id="pitchCircleRight"
+                    value={inputs.pitchCircleRight}
+                    onChange={(value) => handleInputChange('pitchCircleRight', value)}
+                    onBlur={() => markFieldTouched('pitchCircleRight')}
+                    step={1}
+                    min={1}
+                    max={100}
+                    error={visibleFieldErrors.pitchCircleRight}
+                    placeholder={t('input.flangeRightPlaceholder')}
+                  />
+                  <FieldError id="pitchCircleRight-error" message={visibleFieldErrors.pitchCircleRight} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.flangeDistanceLeft')}</label>
+                    <HelpButton topic="flangeDistance" onOpen={setHelpTopic} />
+                  </div>
+                  <NumberInput
+                    id="flangeDistanceLeft"
+                    value={inputs.flangeDistanceLeft}
+                    onChange={(value) => handleInputChange('flangeDistanceLeft', value)}
+                    onBlur={() => markFieldTouched('flangeDistanceLeft')}
+                    step={1}
+                    min={1}
+                    max={100}
+                    error={visibleFieldErrors.flangeDistanceLeft}
+                    placeholder={t('input.flangeLeftPlaceholder')}
+                  />
+                  <FieldError id="flangeDistanceLeft-error" message={visibleFieldErrors.flangeDistanceLeft} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.flangeDistanceRight')}</label>
+                    <HelpButton topic="flangeDistance" onOpen={setHelpTopic} />
+                  </div>
+                  <NumberInput
+                    id="flangeDistanceRight"
+                    value={inputs.flangeDistanceRight}
+                    onChange={(value) => handleInputChange('flangeDistanceRight', value)}
+                    onBlur={() => markFieldTouched('flangeDistanceRight')}
+                    step={1}
+                    min={1}
+                    max={100}
+                    error={visibleFieldErrors.flangeDistanceRight}
+                    placeholder={t('input.flangeRightPlaceholder')}
+                  />
+                  <FieldError id="flangeDistanceRight-error" message={visibleFieldErrors.flangeDistanceRight} />
+                </div>
+              </div>
+
               <div>
                 <div className="flex items-center gap-1 mb-1">
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.rimOffset')}</label>
-                  <HelpButton topic="rimOffset" onOpen={setHelpTopic} />
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.spokeHoleDiameter')}</label>
+                  <HelpButton topic="spokeHoleDiameter" onOpen={setHelpTopic} />
                 </div>
                 <NumberInput
-                  id="rimOffset"
-                  value={inputs.rimOffset}
-                  onChange={(value) => handleInputChange('rimOffset', value)}
-                  onBlur={() => markFieldTouched('rimOffset')}
+                  id="spokeHoleDiameter"
+                  value={inputs.spokeHoleDiameter}
+                  onChange={(value) => handleInputChange('spokeHoleDiameter', value)}
+                  onBlur={() => markFieldTouched('spokeHoleDiameter')}
                   step={0.1}
-                  min={0}
-                  max={100}
-                  error={visibleFieldErrors.rimOffset}
-                  describedBy={rimOffsetWarning !== undefined ? 'rimOffset-warning' : undefined}
-                  placeholder={t('input.rimOffsetPlaceholder')}
+                  min={1.0}
+                  max={3.0}
+                  error={visibleFieldErrors.spokeHoleDiameter}
+                  placeholder={t('input.spokeHolePlaceholder')}
                 />
-                {rimOffsetWarning !== undefined ? (
-                  <FieldWarning id="rimOffset-warning" message={rimOffsetWarning} />
-                ) : (
-                  <FieldError id="rimOffset-error" message={visibleFieldErrors.rimOffset} />
-                )}
+                <FieldError id="spokeHoleDiameter-error" message={visibleFieldErrors.spokeHoleDiameter} />
               </div>
-            </div>
+            </FieldGroup>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <FieldGroup label={t('input.group.lacing')}>
               <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
-                    <span className="md:hidden">{t('input.pcdLeft')}</span>
-                    <span className="hidden md:block">{t('input.pcdLeft')}</span>
-                  </label>
-                  <HelpButton topic="pcd" onOpen={setHelpTopic} />
-                </div>
-                <NumberInput
-                  id="pitchCircleLeft"
-                  value={inputs.pitchCircleLeft}
-                  onChange={(value) => handleInputChange('pitchCircleLeft', value)}
-                  onBlur={() => markFieldTouched('pitchCircleLeft')}
-                  step={1}
-                  min={1}
-                  max={100}
-                  error={visibleFieldErrors.pitchCircleLeft}
-                  placeholder={t('input.flangeLeftPlaceholder')}
-                />
-                <FieldError id="pitchCircleLeft-error" message={visibleFieldErrors.pitchCircleLeft} />
-              </div>
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
-                    <span className="md:hidden">{t('input.pcdRight')}</span>
-                    <span className="hidden md:block">{t('input.pcdRight')}</span>
-                  </label>
-                  <HelpButton topic="pcd" onOpen={setHelpTopic} />
-                </div>
-                <NumberInput
-                  id="pitchCircleRight"
-                  value={inputs.pitchCircleRight}
-                  onChange={(value) => handleInputChange('pitchCircleRight', value)}
-                  onBlur={() => markFieldTouched('pitchCircleRight')}
-                  step={1}
-                  min={1}
-                  max={100}
-                  error={visibleFieldErrors.pitchCircleRight}
-                  placeholder={t('input.flangeRightPlaceholder')}
-                />
-                <FieldError id="pitchCircleRight-error" message={visibleFieldErrors.pitchCircleRight} />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.flangeDistanceLeft')}</label>
-                  <HelpButton topic="flangeDistance" onOpen={setHelpTopic} />
-                </div>
-                <NumberInput
-                  id="flangeDistanceLeft"
-                  value={inputs.flangeDistanceLeft}
-                  onChange={(value) => handleInputChange('flangeDistanceLeft', value)}
-                  onBlur={() => markFieldTouched('flangeDistanceLeft')}
-                  step={1}
-                  min={1}
-                  max={100}
-                  error={visibleFieldErrors.flangeDistanceLeft}
-                  placeholder={t('input.flangeLeftPlaceholder')}
-                />
-                <FieldError id="flangeDistanceLeft-error" message={visibleFieldErrors.flangeDistanceLeft} />
-              </div>
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.flangeDistanceRight')}</label>
-                  <HelpButton topic="flangeDistance" onOpen={setHelpTopic} />
-                </div>
-                <NumberInput
-                  id="flangeDistanceRight"
-                  value={inputs.flangeDistanceRight}
-                  onChange={(value) => handleInputChange('flangeDistanceRight', value)}
-                  onBlur={() => markFieldTouched('flangeDistanceRight')}
-                  step={1}
-                  min={1}
-                  max={100}
-                  error={visibleFieldErrors.flangeDistanceRight}
-                  placeholder={t('input.flangeRightPlaceholder')}
-                />
-                <FieldError id="flangeDistanceRight-error" message={visibleFieldErrors.flangeDistanceRight} />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-1 mb-1">
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.spokeHoleDiameter')}</label>
-                <HelpButton topic="spokeHoleDiameter" onOpen={setHelpTopic} />
-              </div>
-              <NumberInput
-                id="spokeHoleDiameter"
-                value={inputs.spokeHoleDiameter}
-                onChange={(value) => handleInputChange('spokeHoleDiameter', value)}
-                onBlur={() => markFieldTouched('spokeHoleDiameter')}
-                step={0.1}
-                min={1.0}
-                max={3.0}
-                error={visibleFieldErrors.spokeHoleDiameter}
-                placeholder={t('input.spokeHolePlaceholder')}
-              />
-              <FieldError id="spokeHoleDiameter-error" message={visibleFieldErrors.spokeHoleDiameter} />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.numberOfSpokes')}</label>
-              <select
-                id="numberOfSpokes"
-                value={inputs.numberOfSpokes}
-                onChange={(e) => handleInputChange('numberOfSpokes', e.target.value)}
-                onBlur={() => markFieldTouched('numberOfSpokes')}
-                aria-invalid={visibleFieldErrors.numberOfSpokes !== undefined}
-                aria-describedby={visibleFieldErrors.numberOfSpokes !== undefined ? 'numberOfSpokes-error' : undefined}
-                className={getControlClassName(visibleFieldErrors.numberOfSpokes !== undefined)}
-              >
-                <option value="">{t('input.selectOption')}</option>
-                <option value="24">24</option>
-                <option value="28">28</option>
-                <option value="32">32</option>
-                <option value="36">36</option>
-              </select>
-              <FieldError id="numberOfSpokes-error" message={visibleFieldErrors.numberOfSpokes} />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.crossingsLeft')}</label>
-                  <HelpButton topic="crossings" onOpen={setHelpTopic} />
-                </div>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('input.numberOfSpokes')}</label>
                 <select
-                  id="crossingsLeft"
-                  value={inputs.crossingsLeft}
-                  onChange={(e) => handleInputChange('crossingsLeft', e.target.value)}
-                  onBlur={() => markFieldTouched('crossingsLeft')}
-                  aria-invalid={visibleFieldErrors.crossingsLeft !== undefined}
-                  aria-describedby={visibleFieldErrors.crossingsLeft !== undefined ? 'crossingsLeft-error' : undefined}
-                  className={getControlClassName(visibleFieldErrors.crossingsLeft !== undefined)}
+                  id="numberOfSpokes"
+                  value={inputs.numberOfSpokes}
+                  onChange={(e) => handleInputChange('numberOfSpokes', e.target.value)}
+                  onBlur={() => markFieldTouched('numberOfSpokes')}
+                  aria-invalid={visibleFieldErrors.numberOfSpokes !== undefined}
+                  aria-describedby={visibleFieldErrors.numberOfSpokes !== undefined ? 'numberOfSpokes-error' : undefined}
+                  className={getControlClassName(visibleFieldErrors.numberOfSpokes !== undefined)}
                 >
                   <option value="">{t('input.selectOption')}</option>
-                  <option value="0">{t('input.radialLacing')}</option>
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
+                  <option value="24">24</option>
+                  <option value="28">28</option>
+                  <option value="32">32</option>
+                  <option value="36">36</option>
                 </select>
-                <FieldError id="crossingsLeft-error" message={visibleFieldErrors.crossingsLeft} />
+                <FieldError id="numberOfSpokes-error" message={visibleFieldErrors.numberOfSpokes} />
               </div>
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.crossingsRight')}</label>
-                  <HelpButton topic="crossings" onOpen={setHelpTopic} />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.crossingsLeft')}</label>
+                    <HelpButton topic="crossings" onOpen={setHelpTopic} />
+                  </div>
+                  <select
+                    id="crossingsLeft"
+                    value={inputs.crossingsLeft}
+                    onChange={(e) => handleInputChange('crossingsLeft', e.target.value)}
+                    onBlur={() => markFieldTouched('crossingsLeft')}
+                    aria-invalid={visibleFieldErrors.crossingsLeft !== undefined}
+                    aria-describedby={visibleFieldErrors.crossingsLeft !== undefined ? 'crossingsLeft-error' : undefined}
+                    className={getControlClassName(visibleFieldErrors.crossingsLeft !== undefined)}
+                  >
+                    <option value="">{t('input.selectOption')}</option>
+                    <option value="0">{t('input.radialLacing')}</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                  </select>
+                  <FieldError id="crossingsLeft-error" message={visibleFieldErrors.crossingsLeft} />
                 </div>
-                <select
-                  id="crossingsRight"
-                  value={inputs.crossingsRight}
-                  onChange={(e) => handleInputChange('crossingsRight', e.target.value)}
-                  onBlur={() => markFieldTouched('crossingsRight')}
-                  aria-invalid={visibleFieldErrors.crossingsRight !== undefined}
-                  aria-describedby={visibleFieldErrors.crossingsRight !== undefined ? 'crossingsRight-error' : undefined}
-                  className={getControlClassName(visibleFieldErrors.crossingsRight !== undefined)}
-                >
-                  <option value="">{t('input.selectOption')}</option>
-                  <option value="0">{t('input.radialLacing')}</option>
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                </select>
-                <FieldError id="crossingsRight-error" message={visibleFieldErrors.crossingsRight} />
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">{t('input.crossingsRight')}</label>
+                    <HelpButton topic="crossings" onOpen={setHelpTopic} />
+                  </div>
+                  <select
+                    id="crossingsRight"
+                    value={inputs.crossingsRight}
+                    onChange={(e) => handleInputChange('crossingsRight', e.target.value)}
+                    onBlur={() => markFieldTouched('crossingsRight')}
+                    aria-invalid={visibleFieldErrors.crossingsRight !== undefined}
+                    aria-describedby={visibleFieldErrors.crossingsRight !== undefined ? 'crossingsRight-error' : undefined}
+                    className={getControlClassName(visibleFieldErrors.crossingsRight !== undefined)}
+                  >
+                    <option value="">{t('input.selectOption')}</option>
+                    <option value="0">{t('input.radialLacing')}</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                  </select>
+                  <FieldError id="crossingsRight-error" message={visibleFieldErrors.crossingsRight} />
+                </div>
               </div>
-            </div>
+            </FieldGroup>
+
+            {/* Closing rule for the input section */}
+            <div aria-hidden="true" className="border-t border-slate-200 dark:border-slate-700" />
           </div>
         </div>
 

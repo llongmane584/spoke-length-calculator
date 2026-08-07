@@ -25,6 +25,11 @@
     "crossingsLeft": "クロス [左]",
     "crossingsRight": "クロス [右]",
     "radialLacing": "0 (ラジアル組)",
+    "group": {
+      "rim": "リム",
+      "hub": "ハブ",
+      "lacing": "組み方"
+    },
     "help": {
       "erd": {
         "title": "ERD（有効リム径）",
