@@ -688,7 +688,7 @@ const SpokeLengthCalculator: React.FC = () => {
   const savedCalculationsLoadedRef = useRef(false);
   const compareSectionRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
-  const resultsRef = useRef<HTMLDivElement>(null);
+  const resultValuesRef = useRef<HTMLDivElement>(null);
   const [showCompare, setShowCompare] = useState(false);
   const [compareA, setCompareA] = useState('');
   const [compareB, setCompareB] = useState('');
@@ -729,13 +729,17 @@ const SpokeLengthCalculator: React.FC = () => {
 
   // 入力フォームが縦に長く、上のフィールドを触っている間は結果帯が画面外に出る。
   // その間だけ左右スポーク長を画面上部に浮かせる。「出さない」条件は 2 つ:
-  //   - 結果帯が見えている  … 同じ数値の二重表示になる
+  //   - 数値が見えている    … 同じ数値の二重表示になる
   //   - ヘッダーが見えている … まだスクロールしていない。タイトルを覆ってしまう
   // 比較パネルの開閉は条件に入れない。閉じずに上へスクロールしたときだけ
   // プレビューが出ないのは、紛らわしさを避ける利より不具合に見える害が勝る。
+  //
+  // 見るのは帯ではなく数値のグリッド、しかも全体が入るまで (0.99)。帯の上端が
+  // 少し覗いただけで引っ込めると、見出しと余白しか出ていない状態でプレビューが
+  // 消え、数値がどこにも無い瞬間ができる。
   const isHeaderVisible = useIsVisible(headerRef);
-  const areResultsVisible = useIsVisible(resultsRef);
-  const showResultPreview = !isHeaderVisible && !areResultsVisible;
+  const areResultValuesVisible = useIsVisible(resultValuesRef, 0.99);
+  const showResultPreview = !isHeaderVisible && !areResultValuesVisible;
 
   const wheelOptions = useMemo((): WheelOption[] => {
     const presetItems: WheelOption[] = presetOptions.map(p => ({
@@ -1403,7 +1407,6 @@ const SpokeLengthCalculator: React.FC = () => {
 
         {/* 結果はシート内の帯。角丸を持たせず、上のハイラインで区切る */}
         <div
-          ref={resultsRef}
           className={[
             'border-t p-5 transition-colors sm:p-6',
             currentResults !== null
@@ -1412,7 +1415,12 @@ const SpokeLengthCalculator: React.FC = () => {
           ].join(' ')}
         >
           <h2 className="mb-4 text-sm font-medium text-fg-muted">{t('results.heading')}</h2>
-          <div className="grid min-h-24 w-full grid-cols-2 items-center gap-3 text-center sm:min-h-20 sm:gap-4">
+          {/* プレビューの出し入れはこのグリッド (数値そのもの) を見て決める。
+              帯全体だと見出しが覗いた時点で「見えた」ことになってしまう */}
+          <div
+            ref={resultValuesRef}
+            className="grid min-h-24 w-full grid-cols-2 items-center gap-3 text-center sm:min-h-20 sm:gap-4"
+          >
             {currentResults !== null ? (
               <>
                 <div>
