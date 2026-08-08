@@ -541,25 +541,31 @@ const ResultPreviewBar: React.FC<{
         '--preview-shift': `${(1 - progress) * 16}px`,
       } as React.CSSProperties}
       className={[
-        'pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 sm:px-6',
+        'pointer-events-none fixed inset-x-0 bottom-0 z-40',
         'opacity-[var(--preview-opacity)] translate-y-[var(--preview-shift)]',
         'transition-[opacity,translate,visibility] duration-100 ease-linear',
         'motion-reduce:translate-none motion-reduce:transition-none',
         progress === 0 ? 'invisible' : 'visible',
       ].join(' ')}
     >
-      <div
-        className={[
-          'w-full max-w-3xl border-x border-t px-5 py-3 transition-colors sm:px-6',
-          'pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]',
-          results !== null
-            ? 'bg-overlay-accent border-overlay-accent-line'
-            : 'bg-overlay border-overlay-line',
-        ].join(' ')}
-      >
-        <div className="grid grid-cols-2 items-center gap-3 text-center sm:gap-4">
-          <ResultPreviewValue label={leftLabel} value={results?.left} />
-          <ResultPreviewValue label={rightLabel} value={results?.right} />
+      {/* メインコンテンツ列 (src/App.tsx:1191 の mx-auto w-full max-w-3xl px-4 sm:px-6)
+          と同一のクラスで幅を揃える。max-w-3xl と px を別の要素に分けると、
+          768px 幅の内側にさらに padding が乗る分だけシートより広くなってしまう
+          (#61: 876px 前後でカードがシート幅をはみ出した) */}
+      <div className="mx-auto w-full max-w-3xl px-4 sm:px-6">
+        <div
+          className={[
+            'border-x border-t px-5 py-3 transition-colors sm:px-6',
+            'pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]',
+            results !== null
+              ? 'bg-overlay-accent border-overlay-accent-line'
+              : 'bg-overlay border-overlay-line',
+          ].join(' ')}
+        >
+          <div className="grid grid-cols-2 items-center gap-3 text-center sm:gap-4">
+            <ResultPreviewValue label={leftLabel} value={results?.left} />
+            <ResultPreviewValue label={rightLabel} value={results?.right} />
+          </div>
         </div>
       </div>
     </div>
