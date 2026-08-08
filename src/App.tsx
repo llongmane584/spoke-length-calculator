@@ -1764,7 +1764,7 @@ const SpokeLengthCalculator: React.FC = () => {
               onClick={() => setShowCompare(prev => !prev)}
               aria-expanded={showCompare}
               aria-controls="compare-panel"
-              className={`w-full min-h-11 flex items-center justify-between gap-3 px-5 sm:px-6 py-4 text-left text-lg font-semibold text-fg hover:bg-sunken transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${showCompare ? 'rounded-t-xl' : 'rounded-xl'}`}
+              className={`w-full min-h-11 flex items-center justify-between gap-3 px-5 sm:px-6 py-4 text-left text-lg font-semibold text-fg hover:bg-sunken transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${showCompare ? 'rounded-t-xl border-b border-line' : 'rounded-xl'}`}
             >
               <span>{t('compare.toggle')}</span>
               <ChevronDown
@@ -1773,8 +1773,11 @@ const SpokeLengthCalculator: React.FC = () => {
               />
             </button>
           </h2>
+          {/* 区切りのハイラインはボタン側 (border-b) に置く。パネルに border-t を
+              持たせると fade-in-down の -8px にハイラインごと引きずられ、
+              開く瞬間だけ区切り線がヘッダ行の中を滑り降りて見える */}
           {showCompare && (
-            <div id="compare-panel" className="border-t border-line p-5 sm:p-6 animate-fade-in-down">
+            <div id="compare-panel" className="p-5 sm:p-6 animate-fade-in-down">
               <CompareWheels
                 options={wheelOptions}
                 selectedA={compareA}
