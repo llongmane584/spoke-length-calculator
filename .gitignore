@@ -237,6 +237,7 @@ vite.config.ts.timestamp-*
 
 docs/
 .claude/settings.local.json
+.claude/worktrees
 
 #################################
 # Project-local temp/output
