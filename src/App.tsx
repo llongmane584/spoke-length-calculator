@@ -1752,23 +1752,29 @@ const SpokeLengthCalculator: React.FC = () => {
         </div>
       </div>
 
-        {/* Wheel compare section */}
-        <div ref={compareSectionRef} className="mt-8">
-          <button
-            onClick={() => setShowCompare(prev => !prev)}
-            aria-expanded={showCompare}
-            aria-controls="compare-panel"
-            className="w-full min-h-11 flex items-center justify-between px-4 py-3 rounded-lg border border-line bg-surface hover:bg-sunken text-fg font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          >
-            <span>{t('compare.toggle')}</span>
-            <ChevronDown
-              aria-hidden="true"
-              className={`h-4 w-4 text-fg-subtle transition-transform ${showCompare ? 'rotate-180' : ''}`}
-            />
-          </button>
+        {/* Wheel compare section
+            比較も入力シートと同じ作法 —— 外枠 1 枚、中はハイラインで区切る。
+            見出しはこのボタン 1 つだけ (パネル内に h2 を重ねると同じことを 2 回言う)。
+            overflow-hidden は付けない: ボタンの focus ring が outline-offset-2 で
+            枠の外に出るため、クリップすると可視フォーカスが消える */}
+        <div ref={compareSectionRef} className="mt-8 rounded-xl border border-line bg-surface">
+          {/* APG の disclosure —— 見出しの中にボタン。input.heading と同格の h2 */}
+          <h2>
+            <button
+              onClick={() => setShowCompare(prev => !prev)}
+              aria-expanded={showCompare}
+              aria-controls="compare-panel"
+              className={`w-full min-h-11 flex items-center justify-between gap-3 px-5 sm:px-6 py-4 text-left text-lg font-semibold text-fg hover:bg-sunken transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${showCompare ? 'rounded-t-xl' : 'rounded-xl'}`}
+            >
+              <span>{t('compare.toggle')}</span>
+              <ChevronDown
+                aria-hidden="true"
+                className={`shrink-0 h-4 w-4 text-fg-subtle transition-transform ${showCompare ? 'rotate-180' : ''}`}
+              />
+            </button>
+          </h2>
           {showCompare && (
-            <div id="compare-panel" className="mt-4 rounded-xl border border-line bg-surface p-5 sm:p-6 animate-fade-in-down">
-              <h2 className="text-lg font-semibold text-fg mb-4">{t('compare.heading')}</h2>
+            <div id="compare-panel" className="border-t border-line p-5 sm:p-6 animate-fade-in-down">
               <CompareWheels
                 options={wheelOptions}
                 selectedA={compareA}
