@@ -1560,14 +1560,27 @@ const SpokeLengthCalculator: React.FC = () => {
           pointer-events-none は下のフィールドのタップを塞がないため。
           z-40 —— トーストとモーダル (z-50) の下に敷き、スクリム表示時は自然に沈む。
 
-          条件付きマウントではなく常設し、opacity / translate の遷移で出し入れする。
-          アンマウントでは消えるほうが一瞬で終わり、出入りが非対称になるため。
+          条件付きマウントではなく常設し、opacity / translate / scale の遷移で
+          出し入れする。アンマウントでは消えるほうが一瞬で終わり、出入りが
+          非対称になるため。
           visibility も遷移対象に入れてある —— visible が絡む遷移では最後まで
           visible が保たれるので、フェードアウトを最後まで見せたうえで
           非表示時はヒットテストからも外れる。
-          translate であって transform ではない: Tailwind v4 の translate-* は
-          transform ではなく translate プロパティを吐くので、transform を並べても
-          何も動かない。
+          translate / scale であって transform ではない: Tailwind v4 の
+          translate-* と scale-* は transform ではなく個別プロパティを吐くので、
+          transform を並べても何も動かない。両方を transition-property に
+          列挙する必要がある。
+
+          移動量 16px + scale、入り 300ms / 出 200ms。旧値 (8px / 一律 200ms) は
+          小画面 (iPhone SE 3 等) の慣性スクロール中に知覚できなかった (#56)。
+          ヘッダーは文書頭から 130px ほどしかなく 1 回のフリックで画面外へ出るので、
+          境界の通過が速い。画面上端に張り付いた小さな要素では平行移動より
+          輪郭の変化のほうが強く読めるため scale を足し、origin-top で
+          下向きスライドと動きの向きを揃えてある。
+          duration / ease を条件分岐側に置いているのは意図的: 遷移開始時に参照される
+          transition-* は after-change style なので、状態と同時に切り替えれば
+          入り (ease-out で減速して着地) と出 (ease-in で加速して抜ける) に
+          別の時間とカーブを与えられる。
 
           色は結果帯と同じ accent-soft / sunken ではなく overlay 系トークンを使う。
           帯は不透明なシートに敷かれた面だがこれは本文の上に浮くので、ダークの
@@ -1576,11 +1589,11 @@ const SpokeLengthCalculator: React.FC = () => {
       <div
         aria-hidden="true"
         className={[
-          'pointer-events-none fixed inset-x-0 top-3 z-40 flex justify-center px-4',
-          'transition-[opacity,translate,visibility] duration-200 ease-out motion-reduce:transition-none',
+          'pointer-events-none fixed inset-x-0 top-3 z-40 flex origin-top justify-center px-4',
+          'transition-[opacity,translate,scale,visibility] motion-reduce:transition-none',
           showResultPreview
-            ? 'visible translate-y-0 opacity-100'
-            : 'invisible -translate-y-2 opacity-0',
+            ? 'visible translate-y-0 scale-100 opacity-100 duration-300 ease-out'
+            : 'invisible -translate-y-4 scale-95 opacity-0 duration-200 ease-in',
         ].join(' ')}
       >
         <div
