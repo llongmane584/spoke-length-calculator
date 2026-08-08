@@ -153,7 +153,6 @@
     "confirm": "Delete"
   },
   "compare": {
-    "heading": "Compare Wheels & Spoke Suggestion",
     "toggle": "Compare Wheels",
     "wheelA": "Current Wheel (spokes you have)",
     "wheelB": "New Wheel (spokes you need)",
