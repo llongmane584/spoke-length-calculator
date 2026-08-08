@@ -3,7 +3,7 @@ import { Save, Trash2, FileJson, FileUp, Sun, Moon, TriangleAlert, ChevronDown, 
 import { useTranslation } from 'react-i18next';
 import { useToast } from './hooks/useToast';
 import { useTheme } from './hooks/useTheme';
-import { useBelowFoldProgress } from './hooks/useBelowFoldProgress';
+import { useDockProgress } from './hooks/useDockProgress';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { HelpButton } from './components/HelpButton';
 import { HelpModal, type HelpTopic } from './components/HelpModal';
@@ -467,110 +467,143 @@ const FieldWarning: React.FC<{ id: string; message: string }> = ({ id, message }
   </p>
 );
 
-// スクロール中プレビューの 1 セル。計算できない間は「—」を出す。
-// バーごと消すのではなく値だけを置き換えるので、入力を打ち直している最中に
-// プレビューが出たり消えたりして視線が飛ばない。
-// justify-center —— 2 分割グリッドの列中央に置くことで、本来の結果帯
-// (同じ 2 分割グリッド) と数値の x 座標が揃う。
-const ResultPreviewValue: React.FC<{ label: string; value?: number }> = ({ label, value }) => (
-  <div className="flex items-baseline justify-center gap-1.5 whitespace-nowrap">
-    <span className="text-xs font-medium text-fg-muted">{label}</span>
-    <span
-      className={[
-        'text-base font-semibold tabular-nums tracking-tight sm:text-lg',
-        value !== undefined ? 'text-accent-ink' : 'text-fg-subtle',
-      ].join(' ')}
-    >
-      {value !== undefined ? `${value.toFixed(1)} mm` : '— mm'}
-    </span>
-  </div>
-);
+// 結果帯の 2 つの姿。progress 0 が本来の姿、1 が簡易表示で、間はすべて線形補間。
+// 数値は現行の Tailwind クラスの実寸をそのまま px にしたもの:
+//   pad        … p-5 / p-6
+//   headingLine… 見出し (text-sm) の行高
+//   headingGap … 見出しの mb-4
+//   gridMin    … 数値グリッドの min-h-24 / sm:min-h-20
+//   label      … text-sm / sm:text-base
+//   value      … text-2xl / sm:text-3xl
+// クラスではなくインラインの数値で持つのは、中間値がユーティリティの
+// スケール上に存在しないため。補間する以上リテラルにするしかない。
+const BAND_FULL_NARROW = { pad: 20, headingLine: 20, headingGap: 16, gridMin: 96, label: 14, value: 24 };
+const BAND_FULL_WIDE = { pad: 24, headingLine: 20, headingGap: 16, gridMin: 80, label: 16, value: 30 };
 
-// スクロール中の結果プレビュー。結果帯 (本来の計算結果領域) が画面下端より
-// 下に食み出している量 (useBelowFoldProgress) に連動して、画面下端に控えを
-// 出し入れする。結果帯は画面下端から入ってくるので、バーも下端にいることで
-// 「帯がドックから外れる / 戻る」1 つの動きとして読める。
+// 簡易表示。画面下端に貼り付くので、見出しと余白を畳んで数値だけを残す。
+// 横の余白 (pad) は畳まない —— 数値の x 座標が動くと「同じものが縮んだ」
+// ではなく「別のものに入れ替わった」に見えてしまう。
+const BAND_COMPACT = { pad: 12, headingLine: 0, headingGap: 0, gridMin: 0, label: 12, value: 18 };
+
+// 計算結果の帯。シート内の 1 区画でありながら、まだそこまでスクロールして
+// いない間は画面下端にドックして簡易表示になる。
 //
-// 帯の複製なのでスクリーンリーダーには渡さない (aria-hidden) —— 帯そのものが
-// 常に DOM にあり、二重読み上げは害でしかない。
-// pointer-events-none —— 下端は入力欄の上に重なるので、タップを塞がない。
-// z-40 —— トースト (bottom-4 right-4 z-50) とモーダル (z-50) の下に敷く。
-// 実際には両者と同時には出ない (トーストは保存/書き出し操作からしか出ず、
-// そのとき帯は既に画面内 = progress 0) が、重ね順は明示しておく。
+// 重ねた別要素ではなく「帯そのものが変形する」ことが要点。position: sticky で
+// 帯自身を画面下端に留め、見出し・余白・文字サイズを progress で線形補間して
+// 縮める。だから利用者が見ているものは常に 1 つで、簡易表示と本来の姿の間に
+// 乗り換えの瞬間が無い。控えを重ねる実装 (#58 初版) はこれを満たさなかった:
+// 別々の 2 つがクロスフェードすると「上に何か出てきた」としか読めない。
+// 横の余白と 2 分割グリッドは畳まないので、数値の x 座標は変形中も動かない。
 //
-// 条件付きマウントではなく常設し、opacity / translate の遷移で出し入れする。
-// アンマウントでは消えるほうが一瞬で終わり、出入りが非対称になるため。
-// visibility も遷移対象に入れてある —— visible が絡む遷移では最後まで visible
-// が保たれるので、フェードアウトを最後まで見せたうえで非表示時はヒットテスト
-// からも外れる。
-// translate であって transform ではない: Tailwind v4 の translate-* は
-// transform ではなく個別プロパティを吐くので、transform を並べても何も
-// 動かない。transition-property に translate 単体で列挙する必要がある。
-// scale は使わない —— 全幅のバーを縮小すると左右端が結果帯の列端からずれ、
-// 「幅を揃える」ことの意味が消える。動きは opacity + 縦移動 16px のみ。
+// sticky が効くのはシート div から overflow-hidden を外したため。あれが付いて
+// いるとシート自身がスクロールコンテナ扱いになり、中の sticky は「決して
+// スクロールしない箱」に対して貼り付こうとして何も起きない。
 //
-// duration-100 ease-linear は「出し入れ」の演出ではなく、progress の量子化
-// (0.05 刻み) の段差を均すためだけの補間。長くするとスクロールに対して
-// 遅れて見える。かつてここにあった 300ms / 200ms の非対称 duration
-// (#57, 慣性スクロール中に知覚できる強度を稼ぐための工夫) は、
-// スクロール位置に直接連動する本方式では不要になった —— 知覚できる強度は
-// 連動そのものが担う。
+// z-10 —— ドック中は上の入力欄に重なるので、その上に出す。トースト (z-50) や
+// モーダル (z-50) より下。
+// pointer-events はドック中だけ切る。入力欄の上に浮いている間はタップを
+// 塞がないため。本来の位置に着地したら通常どおり選択できる。
 //
-// 色は結果帯と同じ accent-soft / sunken ではなく overlay 系トークンを使う。
-// 帯は不透明なシートに敷かれた面だがこれは本文の上に浮くので、ダークの
-// accent-soft (accent 14%) だと下の入力欄が透けて数値と衝突する (#52)。
-// overlay 系はライトでは帯と同値のエイリアスなので見た目は変わらない。
+// aria-hidden は付けない —— 控えを重ねていた頃は二重読み上げを避けるために
+// 必要だったが、今は要素が 1 つしかない。見出しも display:none ではなく
+// max-height と opacity で畳むので、支援技術からは常に読める。
 //
-// shadow は付けない —— 既定の影は下向きに落ちるので、下端固定の要素では
-// 画面外に出て何もしない。輪郭は罫線 (border-x border-t) だけが担う。
-const ResultPreviewBar: React.FC<{
-  valuesRef: RefObject<HTMLDivElement | null>;
+// 色は accent-soft / sunken ではなく overlay 系トークン。ドック中は本文の上に
+// 浮くので、ダークの accent-soft (accent 14%) だと下の入力欄が透けて数値と
+// 衝突する (#52)。ライトでは元の値へのエイリアスなので見た目は変わらない。
+const ResultBand: React.FC<{
+  slotTopRef: RefObject<Element | null>;
   results: Results | null;
+  heading: string;
+  placeholder: string;
   leftLabel: string;
   rightLabel: string;
-}> = ({ valuesRef, results, leftLabel, rightLabel }) => {
-  const progress = useBelowFoldProgress(valuesRef);
+  isCompactViewport: boolean;
+}> = ({ slotTopRef, results, heading, placeholder, leftLabel, rightLabel, isCompactViewport }) => {
+  const full = isCompactViewport ? BAND_FULL_NARROW : BAND_FULL_WIDE;
+  // 本来の姿での高さ。これを useDockProgress に渡すことで、姿が戻りきる瞬間と
+  // sticky がドックを解除する瞬間が一致する
+  const fullHeight = full.pad * 2 + full.headingLine + full.headingGap + full.gridMin;
+  const progress = useDockProgress(slotTopRef, fullHeight);
+  const lerp = (from: number, to: number): number => from + (to - from) * progress;
 
   return (
     <div
-      aria-hidden="true"
       style={{
-        // 不透明度は progress 0.6 で振り切る。帯が動き始めてすぐ数値が
-        // 読める濃さになってほしいので、フル連動より早く立ち上げる。
-        '--preview-opacity': Math.min(1, progress / 0.6),
-        '--preview-shift': `${(1 - progress) * 16}px`,
-      } as React.CSSProperties}
+        paddingTop: `${lerp(full.pad, BAND_COMPACT.pad)}px`,
+        // 下端にドックしている間はホームインジケータを避ける。畳んだ余白より
+        // セーフエリアのほうが大きい端末では、そちらが下限になる
+        paddingBottom: `max(${lerp(full.pad, BAND_COMPACT.pad)}px, env(safe-area-inset-bottom, 0px))`,
+        paddingLeft: `${full.pad}px`,
+        paddingRight: `${full.pad}px`,
+      }}
       className={[
-        'pointer-events-none fixed inset-x-0 bottom-0 z-40',
-        'opacity-[var(--preview-opacity)] translate-y-[var(--preview-shift)]',
-        'transition-[opacity,translate,visibility] duration-100 ease-linear',
-        'motion-reduce:translate-none motion-reduce:transition-none',
-        progress === 0 ? 'invisible' : 'visible',
+        'sticky bottom-0 z-10 border-t transition-all duration-100 ease-linear',
+        'motion-reduce:transition-none',
+        progress > 0 ? 'pointer-events-none' : '',
+        results !== null
+          ? 'bg-overlay-accent border-overlay-accent-line'
+          : 'bg-overlay border-overlay-line',
       ].join(' ')}
     >
-      {/* メインコンテンツ列 (src/App.tsx:1191 の mx-auto w-full max-w-3xl px-4 sm:px-6)
-          と同一のクラスで幅を揃える。max-w-3xl と px を別の要素に分けると、
-          768px 幅の内側にさらに padding が乗る分だけシートより広くなってしまう
-          (#61: 876px 前後でカードがシート幅をはみ出した) */}
-      <div className="mx-auto w-full max-w-3xl px-4 sm:px-6">
-        <div
-          className={[
-            'border-x border-t px-5 py-3 transition-colors sm:px-6',
-            'pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]',
-            results !== null
-              ? 'bg-overlay-accent border-overlay-accent-line'
-              : 'bg-overlay border-overlay-line',
-          ].join(' ')}
-        >
-          <div className="grid grid-cols-2 items-center gap-3 text-center sm:gap-4">
-            <ResultPreviewValue label={leftLabel} value={results?.left} />
-            <ResultPreviewValue label={rightLabel} value={results?.right} />
-          </div>
-        </div>
+      {/* 見出しは畳むだけで消さない。overflow-hidden + max-height なので
+          読み上げ順からは外れない */}
+      <h2
+        style={{
+          maxHeight: `${lerp(full.headingLine, BAND_COMPACT.headingLine)}px`,
+          marginBottom: `${lerp(full.headingGap, BAND_COMPACT.headingGap)}px`,
+          opacity: 1 - progress,
+        }}
+        className="overflow-hidden text-sm font-medium text-fg-muted transition-all duration-100 ease-linear motion-reduce:transition-none"
+      >
+        {heading}
+      </h2>
+      <div
+        style={{ minHeight: `${lerp(full.gridMin, BAND_COMPACT.gridMin)}px` }}
+        className="grid w-full grid-cols-2 items-center gap-3 text-center transition-all duration-100 ease-linear motion-reduce:transition-none sm:gap-4"
+      >
+        {results !== null ? (
+          <>
+            <ResultBandValue label={leftLabel} value={results.left} full={full} lerp={lerp} />
+            <ResultBandValue label={rightLabel} value={results.right} full={full} lerp={lerp} />
+          </>
+        ) : (
+          <p
+            style={{ fontSize: `${lerp(full.label, BAND_COMPACT.label)}px` }}
+            className="col-span-2 text-fg-subtle transition-all duration-100 ease-linear motion-reduce:transition-none"
+          >
+            {placeholder}
+          </p>
+        )}
       </div>
     </div>
   );
 };
+
+// 帯の 1 セル。ラベルと数値の積み方は変えず、文字サイズだけを補間する ——
+// 縦積みと横並びを切り替えると、その瞬間だけ別のレイアウトが割り込んで
+// 「変形」に見えなくなる。
+const ResultBandValue: React.FC<{
+  label: string;
+  value: number;
+  full: typeof BAND_FULL_NARROW;
+  lerp: (from: number, to: number) => number;
+}> = ({ label, value, full, lerp }) => (
+  <div>
+    <h3
+      style={{ fontSize: `${lerp(full.label, BAND_COMPACT.label)}px` }}
+      className="font-medium text-fg-muted transition-all duration-100 ease-linear motion-reduce:transition-none"
+    >
+      {label}
+    </h3>
+    <p
+      style={{ fontSize: `${lerp(full.value, BAND_COMPACT.value)}px` }}
+      className="font-semibold leading-tight tabular-nums tracking-tight text-accent-ink transition-all duration-100 ease-linear motion-reduce:transition-none"
+    >
+      {value.toFixed(1)} mm
+    </p>
+  </div>
+);
 
 const spokeCountSegments: SegmentedOption[] = spokeCountOptions.map(value => ({ value, label: value }));
 
@@ -775,7 +808,9 @@ const SpokeLengthCalculator: React.FC = () => {
   const [touchedFields, setTouchedFields] = useState<TouchedFields>({});
   const savedCalculationsLoadedRef = useRef(false);
   const compareSectionRef = useRef<HTMLDivElement>(null);
-  const resultValuesRef = useRef<HTMLDivElement>(null);
+  // 結果帯の直前の要素。帯は sticky で自分の位置から自分の状態を決められないので、
+  // ドック度合いはこの下端 (= 帯の本来の上端) を測って決める
+  const inputSectionRef = useRef<HTMLDivElement>(null);
   const [showCompare, setShowCompare] = useState(false);
   const [compareA, setCompareA] = useState('');
   const [compareB, setCompareB] = useState('');
@@ -1231,10 +1266,14 @@ const SpokeLengthCalculator: React.FC = () => {
           </div>
         </header>
 
-        {/* 入力と結果を 1 枚のシートに収め、ハイラインで区切る */}
-        <div className="overflow-hidden rounded-xl border border-line bg-surface">
+        {/* 入力と結果を 1 枚のシートに収め、ハイラインで区切る。
+            overflow-hidden は付けない —— 付けるとこの div がスクロールコンテナに
+            なり、中の結果帯の position: sticky が効かなくなる。子は入力欄・
+            結果帯・保存欄の 3 つで、背景を持つのは中央の結果帯だけなので、
+            角丸のクリップは元々不要 */}
+        <div className="rounded-xl border border-line bg-surface">
           {/* Input section */}
-          <div className="space-y-6 p-5 sm:p-6">
+          <div ref={inputSectionRef} className="space-y-6 p-5 sm:p-6">
             <h2 className="text-xl font-semibold text-fg border-b border-line pb-2">{t('input.heading')}</h2>
 
           <div className="space-y-6">
@@ -1477,44 +1516,17 @@ const SpokeLengthCalculator: React.FC = () => {
           </div>
         </div>
 
-        {/* 結果はシート内の帯。角丸を持たせず、上のハイラインで区切る */}
-        <div
-          className={[
-            'border-t p-5 transition-colors sm:p-6',
-            currentResults !== null
-              ? 'bg-accent-soft border-accent-line'
-              : 'bg-sunken border-line',
-          ].join(' ')}
-        >
-          <h2 className="mb-4 text-sm font-medium text-fg-muted">{t('results.heading')}</h2>
-          {/* プレビューの出し入れはこのグリッド (数値そのもの) を見て決める。
-              帯全体だと見出しが覗いた時点で「見えた」ことになってしまう */}
-          <div
-            ref={resultValuesRef}
-            className="grid min-h-24 w-full grid-cols-2 items-center gap-3 text-center sm:min-h-20 sm:gap-4"
-          >
-            {currentResults !== null ? (
-              <>
-                <div>
-                  <h3 className="text-sm font-medium text-fg-muted sm:text-base">{resultsLeftText}</h3>
-                  <p className="text-2xl font-semibold leading-tight tabular-nums tracking-tight text-accent-ink sm:text-3xl">
-                    {currentResults.left.toFixed(1)} mm
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-fg-muted sm:text-base">{resultsRightText}</h3>
-                  <p className="text-2xl font-semibold leading-tight tabular-nums tracking-tight text-accent-ink sm:text-3xl">
-                    {currentResults.right.toFixed(1)} mm
-                  </p>
-                </div>
-              </>
-            ) : (
-              <p className="col-span-2 text-sm text-fg-subtle sm:text-base">
-                {t('results.placeholder')}
-              </p>
-            )}
-          </div>
-        </div>
+        {/* 結果はシート内の帯。角丸を持たせず、上のハイラインで区切る。
+            まだそこまでスクロールしていない間は画面下端にドックして縮む */}
+        <ResultBand
+          slotTopRef={inputSectionRef}
+          results={currentResults}
+          heading={t('results.heading')}
+          placeholder={t('results.placeholder')}
+          leftLabel={resultsLeftText}
+          rightLabel={resultsRightText}
+          isCompactViewport={isCompactViewport}
+        />
 
         {/* Save and export */}
         <div className="space-y-4 border-t border-line p-5 sm:p-6">
@@ -1626,13 +1638,6 @@ const SpokeLengthCalculator: React.FC = () => {
           )}
         </div>
       </div>
-
-      <ResultPreviewBar
-        valuesRef={resultValuesRef}
-        results={currentResults}
-        leftLabel={resultsLeftText}
-        rightLabel={resultsRightText}
-      />
 
       {/* JSON data display modal */}
       {showJsonOutput && (
