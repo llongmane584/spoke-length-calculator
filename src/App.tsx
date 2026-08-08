@@ -574,59 +574,66 @@ const ResultBand: React.FC<{
   rightLabel: string;
   isCompactViewport: boolean;
 }> = ({ slotTopRef, scopeRef, results, heading, placeholder, leftLabel, rightLabel, isCompactViewport }) => {
-  const { full, fullHeight, morphSpan } = bandMetrics(isCompactViewport);
+  const { full, fullHeight, travel, morphSpan } = bandMetrics(isCompactViewport);
 
   useDockMorph(slotTopRef, scopeRef, fullHeight, morphSpan);
 
   return (
-    <div
-      style={{
-        paddingTop: dockPx(full.pad, BAND_COMPACT.pad),
-        // 下端にドックしている間はホームインジケータを避ける。畳んだ余白より
-        // セーフエリアのほうが大きい端末では、そちらが下限になる
-        paddingBottom: `max(${dockPx(full.pad, BAND_COMPACT.pad)}, env(safe-area-inset-bottom, 0px))`,
-        paddingLeft: `${full.pad}px`,
-        paddingRight: `${full.pad}px`,
-      }}
-      className={[
-        'sticky bottom-0 z-10 border-t transition-colors',
-        'group-data-[docked]:pointer-events-none',
-        results !== null
-          ? 'bg-overlay-accent border-overlay-accent-line'
-          : 'bg-overlay border-overlay-line',
-      ].join(' ')}
-    >
-      {/* 見出しは畳むだけで消さない。overflow-hidden + max-height なので
-          読み上げ順からは外れない */}
-      <h2
-        style={{
-          maxHeight: dockPx(full.headingLine, BAND_COMPACT.headingLine),
-          marginBottom: dockPx(full.headingGap, BAND_COMPACT.headingGap),
-          opacity: dockFadeIn,
-        }}
-        className="overflow-hidden text-sm font-medium text-fg-muted"
-      >
-        {heading}
-      </h2>
+    <>
       <div
-        style={{ minHeight: dockPx(full.gridMin, BAND_COMPACT.gridMin) }}
-        className="grid w-full grid-cols-2 items-center gap-3 text-center sm:gap-4"
+        style={{
+          paddingTop: dockPx(full.pad, BAND_COMPACT.pad),
+          // 下端にドックしている間はホームインジケータを避ける。畳んだ余白より
+          // セーフエリアのほうが大きい端末では、そちらが下限になる
+          paddingBottom: `max(${dockPx(full.pad, BAND_COMPACT.pad)}, env(safe-area-inset-bottom, 0px))`,
+          paddingLeft: `${full.pad}px`,
+          paddingRight: `${full.pad}px`,
+        }}
+        className={[
+          'sticky bottom-0 z-10 border-t transition-colors',
+          'group-data-[docked]:pointer-events-none',
+          results !== null
+            ? 'bg-overlay-accent border-overlay-accent-line'
+            : 'bg-overlay border-overlay-line',
+        ].join(' ')}
       >
-        {results !== null ? (
-          <>
-            <ResultBandValue label={leftLabel} value={results.left} full={full} />
-            <ResultBandValue label={rightLabel} value={results.right} full={full} />
-          </>
-        ) : (
-          <p
-            style={{ fontSize: dockPx(full.label, BAND_COMPACT.label) }}
-            className="col-span-2 text-fg-subtle"
-          >
-            {placeholder}
-          </p>
-        )}
+        {/* 見出しは畳むだけで消さない。overflow-hidden + max-height なので
+            読み上げ順からは外れない */}
+        <h2
+          style={{
+            maxHeight: dockPx(full.headingLine, BAND_COMPACT.headingLine),
+            marginBottom: dockPx(full.headingGap, BAND_COMPACT.headingGap),
+            opacity: dockFadeIn,
+          }}
+          className="overflow-hidden text-sm font-medium text-fg-muted"
+        >
+          {heading}
+        </h2>
+        <div
+          style={{ minHeight: dockPx(full.gridMin, BAND_COMPACT.gridMin) }}
+          className="grid w-full grid-cols-2 items-center gap-3 text-center sm:gap-4"
+        >
+          {results !== null ? (
+            <>
+              <ResultBandValue label={leftLabel} value={results.left} full={full} />
+              <ResultBandValue label={rightLabel} value={results.right} full={full} />
+            </>
+          ) : (
+            <p
+              style={{ fontSize: dockPx(full.label, BAND_COMPACT.label) }}
+              className="col-span-2 text-fg-subtle"
+            >
+              {placeholder}
+            </p>
+          )}
+        </div>
       </div>
-    </div>
+      {/* 帯が縮んだぶんを埋める。帯 + ここの合計が常に fullHeight になるので、変形中も
+          シート以下・文書全体・スクロール可能範囲の高さが変わらない。再レイアウトは帯の
+          内部に閉じ、保存欄や比較パネルの再配置とスクロール範囲の再計算が消える。
+          ドック中は帯の本来の下端が必ず画面下端より下にあるので、ここが見えることはない */}
+      <div aria-hidden="true" style={{ height: dockPx(0, travel) }} />
+    </>
   );
 };
 
