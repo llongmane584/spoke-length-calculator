@@ -199,6 +199,13 @@
     border-color: var(--color-line);
   }
 
+  /* 画面下端にドックしている結果帯 (簡易表示で 47px) の裏にフォーカスが潜らないように。
+     Tab 移動と Android のソフトキーボードで、ブラウザが自動スクロールする先を押し上げる。
+     値の出所は App.tsx の BAND_COMPACT。 */
+  html {
+    scroll-padding-bottom: 3rem;
+  }
+
   /* v4 の preflight は button の cursor を default にする。v3 の挙動に戻す。 */
   button:not(:disabled),
   [role="button"]:not(:disabled) {

@@ -3,7 +3,7 @@ import { Save, Trash2, FileJson, FileUp, Sun, Moon, TriangleAlert, ChevronDown, 
 import { useTranslation } from 'react-i18next';
 import { useToast } from './hooks/useToast';
 import { useTheme } from './hooks/useTheme';
-import { useDockProgress } from './hooks/useDockProgress';
+import { useDockMorph } from './hooks/useDockMorph';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { HelpButton } from './components/HelpButton';
 import { HelpModal, type HelpTopic } from './components/HelpModal';
@@ -467,33 +467,82 @@ const FieldWarning: React.FC<{ id: string; message: string }> = ({ id, message }
   </p>
 );
 
-// 結果帯の 2 つの姿。progress 0 が本来の姿、1 が簡易表示で、間はすべて線形補間。
+// 結果帯の 2 つの姿。--dock 0 が本来の姿、1 が簡易表示で、間はすべて線形補間。
 // 数値は現行の Tailwind クラスの実寸をそのまま px にしたもの:
 //   pad        … p-5 / p-6
 //   headingLine… 見出し (text-sm) の行高
 //   headingGap … 見出しの mb-4
 //   gridMin    … 数値グリッドの min-h-24 / sm:min-h-20
+//   labelLine  … ラベルの行高。クラスではなくインラインで持つ (下の ResultBandValue 参照)
 //   label      … text-sm / sm:text-base
 //   value      … text-2xl / sm:text-3xl
 // クラスではなくインラインの数値で持つのは、中間値がユーティリティの
 // スケール上に存在しないため。補間する以上リテラルにするしかない。
-const BAND_FULL_NARROW = { pad: 20, headingLine: 20, headingGap: 16, gridMin: 96, label: 14, value: 24 };
-const BAND_FULL_WIDE = { pad: 24, headingLine: 20, headingGap: 16, gridMin: 80, label: 16, value: 30 };
+const BAND_FULL_NARROW = { pad: 20, headingLine: 20, headingGap: 16, gridMin: 96, labelLine: 20, label: 14, value: 24 };
+const BAND_FULL_WIDE = { pad: 24, headingLine: 20, headingGap: 16, gridMin: 80, labelLine: 20, label: 16, value: 30 };
 
-// 簡易表示。画面下端に貼り付くので、見出しと余白を畳んで数値だけを残す。
+// 簡易表示。画面下端に貼り付くので、見出しもラベルも畳んで数値だけを残す。
 // 横の余白 (pad) は畳まない —— 数値の x 座標が動くと「同じものが縮んだ」
 // ではなく「別のものに入れ替わった」に見えてしまう。
-const BAND_COMPACT = { pad: 12, headingLine: 0, headingGap: 0, gridMin: 0, label: 12, value: 18 };
+//
+// gridMin を 0 ではなく実値で持つのは、これが簡易表示の高さを決めているから。
+// 数値だけの行の実寸 (value 18px × leading-tight = 22.5px) を上回る値にして、
+// 高さが全区間で gridMin 側で決まるようにしてある。こうすると帯の高さが --dock の
+// 一次関数になり、DOCK_ABSORB で変形距離を詰めても不変条件を保てる。
+// 逆にここが 0 のままだと高さは折れ線になり、着地直前の変化率が跳ね上がる。
+//
+// label は簡易表示のプレースホルダ (結果がまだ無いときの一文) のためだけに使う。
+// ラベル自体の文字サイズは補間しない —— 畳んで見えないので意味がない。
+const BAND_COMPACT = { pad: 10, headingLine: 0, headingGap: 0, gridMin: 26, labelLine: 0, label: 12, value: 18 };
+
+// 簡易表示の高さ。border-t の 1px は両方の姿に共通なので変形量には入らない
+const BAND_COMPACT_HEIGHT =
+  BAND_COMPACT.pad * 2 + BAND_COMPACT.headingLine + BAND_COMPACT.headingGap + BAND_COMPACT.gridMin;
+
+// 帯がスクロールを吸収する割合。1 未満でなければならない ——
+// 1 では帯が縮む速さと隙間が広がる速さが釣り合い、変形中ずっと「本来の下端が
+// 画面下端にぴったり」の境界に乗る。1 を超えると帯のほうが速く縮み、変形の途中で
+// sticky から解放されて画面下端を離れてしまう (簡易表示が本文と一緒に浮き上がる)。
+// 小さくすると変形はゆっくりになり、ドック中に入力欄を覆う量が増える。
+const DOCK_ABSORB = 0.9;
+
+// --dock を 0..1 の補間係数として使う calc()。スクロール中に動くのは --dock だけなので、
+// React はこの文字列を初回に置くだけでよく、再描画は起きない。
+// フォールバックの 1 は「JS がまだ書き込む前は簡易表示」を意味する。
+const dockPx = (from: number, to: number): string => {
+  const delta = to - from;
+
+  return `calc(${from}px ${delta < 0 ? '-' : '+'} ${Math.abs(delta)}px * var(--dock, 1))`;
+};
+
+const dockFadeIn = 'calc(1 - var(--dock, 1))';
+
+// 帯の姿の寸法と、ドック度合いを測るための 2 つの距離。
+const bandMetrics = (isCompactViewport: boolean) => {
+  const full = isCompactViewport ? BAND_FULL_NARROW : BAND_FULL_WIDE;
+  // 本来の姿での高さ。これを基準に食み出し量を測ることで、姿が戻りきる瞬間と
+  // sticky がドックを解除する瞬間が一致する
+  const fullHeight = full.pad * 2 + full.headingLine + full.headingGap + full.gridMin;
+  // 帯が縮むことで吸収する量
+  const travel = fullHeight - BAND_COMPACT_HEIGHT;
+
+  return { full, fullHeight, travel, morphSpan: travel / DOCK_ABSORB };
+};
 
 // 計算結果の帯。シート内の 1 区画でありながら、まだそこまでスクロールして
 // いない間は画面下端にドックして簡易表示になる。
 //
 // 重ねた別要素ではなく「帯そのものが変形する」ことが要点。position: sticky で
-// 帯自身を画面下端に留め、見出し・余白・文字サイズを progress で線形補間して
+// 帯自身を画面下端に留め、見出し・ラベル・余白・文字サイズを --dock で線形補間して
 // 縮める。だから利用者が見ているものは常に 1 つで、簡易表示と本来の姿の間に
 // 乗り換えの瞬間が無い。控えを重ねる実装 (#58 初版) はこれを満たさなかった:
 // 別々の 2 つがクロスフェードすると「上に何か出てきた」としか読めない。
 // 横の余白と 2 分割グリッドは畳まないので、数値の x 座標は変形中も動かない。
+//
+// 補間は React ではなく CSS の calc() が行う (#60)。値はシート div の --dock に
+// フックが直接書き込むので、この style 文字列はビューポート幅にしか依存せず、
+// スクロール中の再描画は 0 回になる。連続値をそのまま使えるので、量子化と
+// それを均すための transition が要らない = スクロールに 1:1 で追従する。
 //
 // sticky が効くのはシート div から overflow-hidden を外したため。あれが付いて
 // いるとシート自身がスクロールコンテナ扱いになり、中の sticky は「決して
@@ -502,10 +551,14 @@ const BAND_COMPACT = { pad: 12, headingLine: 0, headingGap: 0, gridMin: 0, label
 // z-10 —— ドック中は上の入力欄に重なるので、その上に出す。トースト (z-50) や
 // モーダル (z-50) より下。
 // pointer-events はドック中だけ切る。入力欄の上に浮いている間はタップを
-// 塞がないため。本来の位置に着地したら通常どおり選択できる。
+// 塞がないため。本来の位置に着地したら通常どおり選択できる。ドック中かどうかは
+// シートの data-docked で伝わる (数値の --dock では pointer-events を表せない)。
+//
+// transition は色だけに残す。結果が出た瞬間の面の色替えとテーマ切替はここが担うが、
+// 寸法に効かせるとスクロールへの追従が遅れる。
 //
 // aria-hidden は付けない —— 控えを重ねていた頃は二重読み上げを避けるために
-// 必要だったが、今は要素が 1 つしかない。見出しも display:none ではなく
+// 必要だったが、今は要素が 1 つしかない。見出しもラベルも display:none ではなく
 // max-height と opacity で畳むので、支援技術からは常に読める。
 //
 // 色は accent-soft / sunken ではなく overlay 系トークン。ドック中は本文の上に
@@ -513,92 +566,106 @@ const BAND_COMPACT = { pad: 12, headingLine: 0, headingGap: 0, gridMin: 0, label
 // 衝突する (#52)。ライトでは元の値へのエイリアスなので見た目は変わらない。
 const ResultBand: React.FC<{
   slotTopRef: RefObject<Element | null>;
+  scopeRef: RefObject<HTMLElement | null>;
   results: Results | null;
   heading: string;
   placeholder: string;
   leftLabel: string;
   rightLabel: string;
   isCompactViewport: boolean;
-}> = ({ slotTopRef, results, heading, placeholder, leftLabel, rightLabel, isCompactViewport }) => {
-  const full = isCompactViewport ? BAND_FULL_NARROW : BAND_FULL_WIDE;
-  // 本来の姿での高さ。これを useDockProgress に渡すことで、姿が戻りきる瞬間と
-  // sticky がドックを解除する瞬間が一致する
-  const fullHeight = full.pad * 2 + full.headingLine + full.headingGap + full.gridMin;
-  const progress = useDockProgress(slotTopRef, fullHeight);
-  const lerp = (from: number, to: number): number => from + (to - from) * progress;
+}> = ({ slotTopRef, scopeRef, results, heading, placeholder, leftLabel, rightLabel, isCompactViewport }) => {
+  const { full, fullHeight, travel, morphSpan } = bandMetrics(isCompactViewport);
+
+  useDockMorph(slotTopRef, scopeRef, fullHeight, morphSpan);
 
   return (
-    <div
-      style={{
-        paddingTop: `${lerp(full.pad, BAND_COMPACT.pad)}px`,
-        // 下端にドックしている間はホームインジケータを避ける。畳んだ余白より
-        // セーフエリアのほうが大きい端末では、そちらが下限になる
-        paddingBottom: `max(${lerp(full.pad, BAND_COMPACT.pad)}px, env(safe-area-inset-bottom, 0px))`,
-        paddingLeft: `${full.pad}px`,
-        paddingRight: `${full.pad}px`,
-      }}
-      className={[
-        'sticky bottom-0 z-10 border-t transition-all duration-100 ease-linear',
-        'motion-reduce:transition-none',
-        progress > 0 ? 'pointer-events-none' : '',
-        results !== null
-          ? 'bg-overlay-accent border-overlay-accent-line'
-          : 'bg-overlay border-overlay-line',
-      ].join(' ')}
-    >
-      {/* 見出しは畳むだけで消さない。overflow-hidden + max-height なので
-          読み上げ順からは外れない */}
-      <h2
-        style={{
-          maxHeight: `${lerp(full.headingLine, BAND_COMPACT.headingLine)}px`,
-          marginBottom: `${lerp(full.headingGap, BAND_COMPACT.headingGap)}px`,
-          opacity: 1 - progress,
-        }}
-        className="overflow-hidden text-sm font-medium text-fg-muted transition-all duration-100 ease-linear motion-reduce:transition-none"
-      >
-        {heading}
-      </h2>
+    <>
       <div
-        style={{ minHeight: `${lerp(full.gridMin, BAND_COMPACT.gridMin)}px` }}
-        className="grid w-full grid-cols-2 items-center gap-3 text-center transition-all duration-100 ease-linear motion-reduce:transition-none sm:gap-4"
+        style={{
+          paddingTop: dockPx(full.pad, BAND_COMPACT.pad),
+          // 下端にドックしている間はホームインジケータを避ける。畳んだ余白より
+          // セーフエリアのほうが大きい端末では、そちらが下限になる
+          paddingBottom: `max(${dockPx(full.pad, BAND_COMPACT.pad)}, env(safe-area-inset-bottom, 0px))`,
+          paddingLeft: `${full.pad}px`,
+          paddingRight: `${full.pad}px`,
+        }}
+        className={[
+          'sticky bottom-0 z-10 border-t transition-colors',
+          'group-data-[docked]:pointer-events-none',
+          results !== null
+            ? 'bg-overlay-accent border-overlay-accent-line'
+            : 'bg-overlay border-overlay-line',
+        ].join(' ')}
       >
-        {results !== null ? (
-          <>
-            <ResultBandValue label={leftLabel} value={results.left} full={full} lerp={lerp} />
-            <ResultBandValue label={rightLabel} value={results.right} full={full} lerp={lerp} />
-          </>
-        ) : (
-          <p
-            style={{ fontSize: `${lerp(full.label, BAND_COMPACT.label)}px` }}
-            className="col-span-2 text-fg-subtle transition-all duration-100 ease-linear motion-reduce:transition-none"
-          >
-            {placeholder}
-          </p>
-        )}
+        {/* 見出しは畳むだけで消さない。overflow-hidden + max-height なので
+            読み上げ順からは外れない */}
+        <h2
+          style={{
+            maxHeight: dockPx(full.headingLine, BAND_COMPACT.headingLine),
+            marginBottom: dockPx(full.headingGap, BAND_COMPACT.headingGap),
+            opacity: dockFadeIn,
+          }}
+          className="overflow-hidden text-sm font-medium text-fg-muted"
+        >
+          {heading}
+        </h2>
+        <div
+          style={{ minHeight: dockPx(full.gridMin, BAND_COMPACT.gridMin) }}
+          className="grid w-full grid-cols-2 items-center gap-3 text-center sm:gap-4"
+        >
+          {results !== null ? (
+            <>
+              <ResultBandValue label={leftLabel} value={results.left} full={full} />
+              <ResultBandValue label={rightLabel} value={results.right} full={full} />
+            </>
+          ) : (
+            <p
+              style={{ fontSize: dockPx(full.label, BAND_COMPACT.label) }}
+              className="col-span-2 text-fg-subtle"
+            >
+              {placeholder}
+            </p>
+          )}
+        </div>
       </div>
-    </div>
+      {/* 帯が縮んだぶんを埋める。帯 + ここの合計が常に fullHeight になるので、変形中も
+          シート以下・文書全体・スクロール可能範囲の高さが変わらない。再レイアウトは帯の
+          内部に閉じ、保存欄や比較パネルの再配置とスクロール範囲の再計算が消える。
+          ドック中は帯の本来の下端が必ず画面下端より下にあるので、ここが見えることはない */}
+      <div aria-hidden="true" style={{ height: dockPx(0, travel) }} />
+    </>
   );
 };
 
-// 帯の 1 セル。ラベルと数値の積み方は変えず、文字サイズだけを補間する ——
-// 縦積みと横並びを切り替えると、その瞬間だけ別のレイアウトが割り込んで
-// 「変形」に見えなくなる。
+// 帯の 1 セル。ラベルと数値の積み方は変えない —— 縦積みと横並びを切り替えると、
+// その瞬間だけ別のレイアウトが割り込んで「変形」に見えなくなる。
+// 簡易表示ではラベルを見出しと同じ作法で畳み、数値だけを残す。ドックしている帯が
+// 入力欄を覆う量はこの高さで決まるので、畳めるものは畳む (#60)。
 const ResultBandValue: React.FC<{
   label: string;
   value: number;
   full: typeof BAND_FULL_NARROW;
-  lerp: (from: number, to: number) => number;
-}> = ({ label, value, full, lerp }) => (
+}> = ({ label, value, full }) => (
   <div>
     <h3
-      style={{ fontSize: `${lerp(full.label, BAND_COMPACT.label)}px` }}
-      className="font-medium text-fg-muted transition-all duration-100 ease-linear motion-reduce:transition-none"
+      style={{
+        // 文字サイズは補間しない。畳んで見えなくなるので意味がなく、
+        // 毎フレームのテキスト再シェイプを 2 ノードぶん節約できる。
+        fontSize: `${full.label}px`,
+        // 行高をインラインで持つのは、畳む基準の labelLine と実寸を一致させるため。
+        // クラス (text-sm / sm:text-base) 由来の行高だと 20px / 24px と食い違い、
+        // 本来の姿でラベルが 4px 切り落とされる
+        lineHeight: `${full.labelLine}px`,
+        maxHeight: dockPx(full.labelLine, BAND_COMPACT.labelLine),
+        opacity: dockFadeIn,
+      }}
+      className="overflow-hidden font-medium text-fg-muted"
     >
       {label}
     </h3>
     <p
-      style={{ fontSize: `${lerp(full.value, BAND_COMPACT.value)}px` }}
-      className="font-semibold leading-tight tabular-nums tracking-tight text-accent-ink transition-all duration-100 ease-linear motion-reduce:transition-none"
+      style={{ fontSize: dockPx(full.value, BAND_COMPACT.value) }}
+      className="font-semibold leading-tight tabular-nums tracking-tight text-accent-ink"
     >
       {value.toFixed(1)} mm
     </p>
@@ -811,6 +878,9 @@ const SpokeLengthCalculator: React.FC = () => {
   // 結果帯の直前の要素。帯は sticky で自分の位置から自分の状態を決められないので、
   // ドック度合いはこの下端 (= 帯の本来の上端) を測って決める
   const inputSectionRef = useRef<HTMLDivElement>(null);
+  // ドック度合い (--dock) の書き込み先。帯だけでなくシート内の兄弟にも継承させたいので、
+  // 帯自身ではなくシートに置く
+  const sheetRef = useRef<HTMLDivElement>(null);
   const [showCompare, setShowCompare] = useState(false);
   const [compareA, setCompareA] = useState('');
   const [compareB, setCompareB] = useState('');
@@ -1270,8 +1340,10 @@ const SpokeLengthCalculator: React.FC = () => {
             overflow-hidden は付けない —— 付けるとこの div がスクロールコンテナに
             なり、中の結果帯の position: sticky が効かなくなる。子は入力欄・
             結果帯・保存欄の 3 つで、背景を持つのは中央の結果帯だけなので、
-            角丸のクリップは元々不要 */}
-        <div className="rounded-xl border border-line bg-surface">
+            角丸のクリップは元々不要。
+            group と ref はドック度合いのため —— --dock と data-docked をここに書き、
+            結果帯は group-data-[docked]: で受ける */}
+        <div ref={sheetRef} className="group rounded-xl border border-line bg-surface">
           {/* Input section */}
           <div ref={inputSectionRef} className="space-y-6 p-5 sm:p-6">
             <h2 className="text-xl font-semibold text-fg border-b border-line pb-2">{t('input.heading')}</h2>
@@ -1520,6 +1592,7 @@ const SpokeLengthCalculator: React.FC = () => {
             まだそこまでスクロールしていない間は画面下端にドックして縮む */}
         <ResultBand
           slotTopRef={inputSectionRef}
+          scopeRef={sheetRef}
           results={currentResults}
           heading={t('results.heading')}
           placeholder={t('results.placeholder')}
