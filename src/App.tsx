@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, type RefObject } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Save, Trash2, FileJson, FileUp, Sun, Moon, TriangleAlert, ChevronDown, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from './hooks/useToast';
@@ -473,13 +473,12 @@ const FieldWarning: React.FC<{ id: string; message: string }> = ({ id, message }
 //   headingLine… 見出し (text-sm) の行高
 //   headingGap … 見出しの mb-4
 //   gridMin    … 数値グリッドの min-h-24 / sm:min-h-20
-//   labelLine  … ラベルの行高。クラスではなくインラインで持つ (下の ResultBandValue 参照)
 //   label      … text-sm / sm:text-base
 //   value      … text-2xl / sm:text-3xl
 // クラスではなくインラインの数値で持つのは、中間値がユーティリティの
 // スケール上に存在しないため。補間する以上リテラルにするしかない。
-const BAND_FULL_NARROW = { pad: 20, headingLine: 20, headingGap: 16, gridMin: 96, labelLine: 20, label: 14, value: 24 };
-const BAND_FULL_WIDE = { pad: 24, headingLine: 20, headingGap: 16, gridMin: 80, labelLine: 20, label: 16, value: 30 };
+const BAND_FULL_NARROW = { pad: 20, headingLine: 20, headingGap: 16, gridMin: 96, label: 14, value: 24 };
+const BAND_FULL_WIDE = { pad: 24, headingLine: 20, headingGap: 16, gridMin: 80, label: 16, value: 30 };
 
 // 簡易表示。画面下端に貼り付くので、見出しもラベルも畳んで数値だけを残す。
 // 横の余白 (pad) は畳まない —— 数値の x 座標が動くと「同じものが縮んだ」
@@ -491,9 +490,34 @@ const BAND_FULL_WIDE = { pad: 24, headingLine: 20, headingGap: 16, gridMin: 80, 
 // 一次関数になり、DOCK_ABSORB で変形距離を詰めても不変条件を保てる。
 // 逆にここが 0 のままだと高さは折れ線になり、着地直前の変化率が跳ね上がる。
 //
-// label は簡易表示のプレースホルダ (結果がまだ無いときの一文) のためだけに使う。
-// ラベル自体の文字サイズは補間しない —— 畳んで見えないので意味がない。
-const BAND_COMPACT = { pad: 10, headingLine: 0, headingGap: 0, gridMin: 26, labelLine: 0, label: 12, value: 18 };
+// 見出しとラベルの畳み方は下の ResultBand / ResultBandValue を参照。
+// どちらも「見えている間は切り落とさない」ことを守る。
+const BAND_COMPACT = { pad: 10, headingLine: 0, headingGap: 0, gridMin: 26, label: 12, value: 18 };
+
+// 見出しの文字サイズ (#59 の text-sm と同じ)。行高は headingLine / これ の比で持つので、
+// 箱の高さは文字サイズに比例して縮む —— 切り落とさずに畳めるのはこの比のおかげ。
+const BAND_HEADING_FONT = 14;
+
+// ラベルの行高。#59 はここを指定せず preflight の 1.5 を継承していたので、
+// 明示しても本来の姿の見た目は変わらない。文字サイズに比例することが要点で、
+// 箱が font-size と一緒に縮むので、こちらも切り落とす必要がない。
+const LABEL_LINE_RATIO = 1.5;
+
+// ラベルを畳む 2 段階。区間はどちらも --dock の値。
+//   FADE     … 完全不透明から透明へ。ここでは箱を触らない (文字は完全サイズのまま)
+//   COLLAPSE … 透明になった後で箱を 0 へ。目に見えないので切り落としが問題にならない
+// つまり --dock <= LABEL_FADE[0] では常に完全なラベルが出る。
+//
+// COLLAPSE の終わりが 0.54 なのは幾何の制約。ラベルの箱は gridMin がセル実寸を
+// 上回っている間だけ帯の高さに寄与しないが、wide ではセル実寸 (61.5 - 21d) と
+// gridMin (80 - 54d) が d = 0.56 で交差する。その手前で箱を 0 にしておかないと
+// 帯の高さが --dock の一次関数でなくなり、下の不変条件の余裕を食う。
+const LABEL_FADE = [0.3, 0.45] as const;
+const LABEL_COLLAPSE = [0.45, 0.54] as const;
+
+// ラベルの箱の上限として使う値。自然な箱 (1.5 × 16px = 24px) より大きいので、
+// COLLAPSE 区間に入るまで max-height は何も拘束しない
+const LABEL_BOX_MAX = 30;
 
 // 簡易表示の高さ。border-t の 1px は両方の姿に共通なので変形量には入らない
 const BAND_COMPACT_HEIGHT =
@@ -508,14 +532,38 @@ const DOCK_ABSORB = 0.9;
 
 // --dock を 0..1 の補間係数として使う calc()。スクロール中に動くのは --dock だけなので、
 // React はこの文字列を初回に置くだけでよく、再描画は起きない。
-// フォールバックの 1 は「JS がまだ書き込む前は簡易表示」を意味する。
+//
+// フォールバックは 0 = 本来の姿。1 (簡易表示) にしてはならない —— --dock が何かの理由で
+// 書かれなかったとき、1 だと帯は見出しもラベルも畳んだ 47px のまま固まり、計算結果が
+// 名前のない 2 つの数字になる。実際に #62 でこれが起きた。0 なら最悪でも「ドックしない
+// 普通の結果領域」に留まり、内容は失われない。
+const DOCK_FALLBACK = 0;
+
+const dockVar = `var(--dock, ${DOCK_FALLBACK})`;
+
 const dockPx = (from: number, to: number): string => {
   const delta = to - from;
 
-  return `calc(${from}px ${delta < 0 ? '-' : '+'} ${Math.abs(delta)}px * var(--dock, 1))`;
+  return `calc(${from}px ${delta < 0 ? '-' : '+'} ${Math.abs(delta)}px * ${dockVar})`;
 };
 
-const dockFadeIn = 'calc(1 - var(--dock, 1))';
+const dockFadeIn = `calc(1 - ${dockVar})`;
+
+// --dock の [start, end] 区間だけで 0 → 1 に進む係数。区間の外は端点に張り付く。
+// 「見えている間は畳まない」を表現するための道具で、フェードと箱の畳みを別の区間に
+// 分けるために使う。フックは --dock を書くだけで、区間の切り出しは CSS 側で行う。
+const dockRange = ([start, end]: readonly [number, number]): string =>
+  `clamp(0, (${dockVar} - ${start}) / ${end - start}, 1)`;
+
+// 上の係数で from → to を補間した px 値
+const dockPxIn = (from: number, to: number, range: readonly [number, number]): string => {
+  const delta = to - from;
+
+  return `calc(${from}px ${delta < 0 ? '-' : '+'} ${Math.abs(delta)}px * ${dockRange(range)})`;
+};
+
+// 上の係数で 1 → 0 に落ちる不透明度
+const dockFadeOutIn = (range: readonly [number, number]): string => `calc(1 - ${dockRange(range)})`;
 
 // 帯の姿の寸法と、ドック度合いを測るための 2 つの距離。
 const bandMetrics = (isCompactViewport: boolean) => {
@@ -544,6 +592,11 @@ const bandMetrics = (isCompactViewport: boolean) => {
 // スクロール中の再描画は 0 回になる。連続値をそのまま使えるので、量子化と
 // それを均すための transition が要らない = スクロールに 1:1 で追従する。
 //
+// useDockMorph をここではなく App で呼ぶのは、シート div の ref を持つのが App だから。
+// この帯 (子) の useLayoutEffect の時点では祖先の ref はまだ null で、フックは何もせずに
+// 抜け、deps も変わらないので二度と走らない —— #62 の「本来の姿でもラベルが出ない」は
+// これが原因だった。観測対象の DOM を所有しているところでフックを呼ぶ。
+//
 // sticky が効くのはシート div から overflow-hidden を外したため。あれが付いて
 // いるとシート自身がスクロールコンテナ扱いになり、中の sticky は「決して
 // スクロールしない箱」に対して貼り付こうとして何も起きない。
@@ -558,25 +611,21 @@ const bandMetrics = (isCompactViewport: boolean) => {
 // 寸法に効かせるとスクロールへの追従が遅れる。
 //
 // aria-hidden は付けない —— 控えを重ねていた頃は二重読み上げを避けるために
-// 必要だったが、今は要素が 1 つしかない。見出しもラベルも display:none ではなく
-// max-height と opacity で畳むので、支援技術からは常に読める。
+// 必要だったが、今は要素が 1 つしかない。見出しもラベルも display:none にせず
+// 文字サイズと不透明度で畳むので、支援技術からは常に読める。
 //
 // 色は accent-soft / sunken ではなく overlay 系トークン。ドック中は本文の上に
 // 浮くので、ダークの accent-soft (accent 14%) だと下の入力欄が透けて数値と
 // 衝突する (#52)。ライトでは元の値へのエイリアスなので見た目は変わらない。
 const ResultBand: React.FC<{
-  slotTopRef: RefObject<Element | null>;
-  scopeRef: RefObject<HTMLElement | null>;
   results: Results | null;
   heading: string;
   placeholder: string;
   leftLabel: string;
   rightLabel: string;
   isCompactViewport: boolean;
-}> = ({ slotTopRef, scopeRef, results, heading, placeholder, leftLabel, rightLabel, isCompactViewport }) => {
-  const { full, fullHeight, travel, morphSpan } = bandMetrics(isCompactViewport);
-
-  useDockMorph(slotTopRef, scopeRef, fullHeight, morphSpan);
+}> = ({ results, heading, placeholder, leftLabel, rightLabel, isCompactViewport }) => {
+  const { full, travel } = bandMetrics(isCompactViewport);
 
   return (
     <>
@@ -597,15 +646,23 @@ const ResultBand: React.FC<{
             : 'bg-overlay border-overlay-line',
         ].join(' ')}
       >
-        {/* 見出しは畳むだけで消さない。overflow-hidden + max-height なので
-            読み上げ順からは外れない */}
+        {/* 見出しは畳むだけで消さない (max-height ではなく文字サイズを縮めるので
+            読み上げ順からも外れない)。
+            切り落とし (max-height) ではなく font-size を縮めるのが要点 —— 見出しの箱は
+            帯の高さそのものなので全区間に線形で分散させる必要があり、そこで切り落としを
+            使うと文字が見えている間ずっと刻まれてしまう (#62)。行高を headingLine /
+            BAND_HEADING_FONT の比で持てば、箱は文字サイズに比例して縮むので高さの
+            一次性は保たれ、しかもどの瞬間も文字は切れない。
+            overflow-hidden は保険 —— 翻訳が伸びて 2 行になると箱が headingLine の想定を
+            超え、fullHeight がずれて着地位置が狂う。現行の 2 言語では起きない。 */}
         <h2
           style={{
-            maxHeight: dockPx(full.headingLine, BAND_COMPACT.headingLine),
+            fontSize: dockPx(BAND_HEADING_FONT, 0),
+            lineHeight: full.headingLine / BAND_HEADING_FONT,
             marginBottom: dockPx(full.headingGap, BAND_COMPACT.headingGap),
             opacity: dockFadeIn,
           }}
-          className="overflow-hidden text-sm font-medium text-fg-muted"
+          className="overflow-hidden font-medium text-fg-muted"
         >
           {heading}
         </h2>
@@ -639,8 +696,15 @@ const ResultBand: React.FC<{
 
 // 帯の 1 セル。ラベルと数値の積み方は変えない —— 縦積みと横並びを切り替えると、
 // その瞬間だけ別のレイアウトが割り込んで「変形」に見えなくなる。
-// 簡易表示ではラベルを見出しと同じ作法で畳み、数値だけを残す。ドックしている帯が
-// 入力欄を覆う量はこの高さで決まるので、畳めるものは畳む (#60)。
+//
+// ラベルは 3 段構えで畳む (#62)。--dock 0.3 までは完全サイズ・完全不透明、そこから
+// 0.45 で透明になり、透明になってから 0.54 までに箱を 0 へ畳む。**見えている間は
+// 縮小も切り落としも起きない** —— 本来の姿とその近傍で常に完全なラベルが出ることを
+// この順序が保証する。ラベルが無くて良いのは簡易表示だけ。
+//
+// この遅延が幾何的に無料なのは、ラベルの箱が gridMin がセル実寸を上回っている間は
+// 帯の高さに寄与しないため。逆に区間の終わりを遅らせすぎると wide で交差してしまう
+// (LABEL_COLLAPSE のコメント参照)。
 const ResultBandValue: React.FC<{
   label: string;
   value: number;
@@ -649,15 +713,14 @@ const ResultBandValue: React.FC<{
   <div>
     <h3
       style={{
-        // 文字サイズは補間しない。畳んで見えなくなるので意味がなく、
-        // 毎フレームのテキスト再シェイプを 2 ノードぶん節約できる。
-        fontSize: `${full.label}px`,
-        // 行高をインラインで持つのは、畳む基準の labelLine と実寸を一致させるため。
-        // クラス (text-sm / sm:text-base) 由来の行高だと 20px / 24px と食い違い、
-        // 本来の姿でラベルが 4px 切り落とされる
-        lineHeight: `${full.labelLine}px`,
-        maxHeight: dockPx(full.labelLine, BAND_COMPACT.labelLine),
-        opacity: dockFadeIn,
+        // 数値と同率で縮める (#59 と同じ補間)。行高は比で持つので箱も一緒に縮み、
+        // 切り落としなしで小さくなる
+        fontSize: dockPx(full.label, BAND_COMPACT.label),
+        lineHeight: LABEL_LINE_RATIO,
+        // 箱を畳むのはフェードが終わった後だけ。それまでは LABEL_BOX_MAX が
+        // 自然な箱より大きいので何も拘束しない
+        maxHeight: dockPxIn(LABEL_BOX_MAX, 0, LABEL_COLLAPSE),
+        opacity: dockFadeOutIn(LABEL_FADE),
       }}
       className="overflow-hidden font-medium text-fg-muted"
     >
@@ -884,6 +947,13 @@ const SpokeLengthCalculator: React.FC = () => {
   const [showCompare, setShowCompare] = useState(false);
   const [compareA, setCompareA] = useState('');
   const [compareB, setCompareB] = useState('');
+
+  // 結果帯のドック度合いの計測。ResultBand の中ではなくここで呼ぶ —— 上の 2 つの ref を
+  // 所有しているのが App なので、App の useLayoutEffect が走る時点では両方が attach 済み。
+  // 子側で呼ぶと祖先 (シート) の ref がまだ null で、フックが何もせずに抜けてしまう (#62)。
+  const bandDock = bandMetrics(isCompactViewport);
+
+  useDockMorph(inputSectionRef, sheetRef, bandDock.fullHeight, bandDock.morphSpan);
 
   const calculation = useMemo(() => getCalculationState(inputs), [inputs]);
   const currentResults = calculation.results;
@@ -1591,8 +1661,6 @@ const SpokeLengthCalculator: React.FC = () => {
         {/* 結果はシート内の帯。角丸を持たせず、上のハイラインで区切る。
             まだそこまでスクロールしていない間は画面下端にドックして縮む */}
         <ResultBand
-          slotTopRef={inputSectionRef}
-          scopeRef={sheetRef}
           results={currentResults}
           heading={t('results.heading')}
           placeholder={t('results.placeholder')}
