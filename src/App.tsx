@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, type RefObject } from 'react';
 import { Save, Trash2, FileJson, FileUp, Sun, Moon, TriangleAlert, ChevronDown, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from './hooks/useToast';
 import { useTheme } from './hooks/useTheme';
-import { useIsVisible } from './hooks/useIsVisible';
+import { useBelowFoldProgress } from './hooks/useBelowFoldProgress';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { HelpButton } from './components/HelpButton';
 import { HelpModal, type HelpTopic } from './components/HelpModal';
@@ -468,10 +468,12 @@ const FieldWarning: React.FC<{ id: string; message: string }> = ({ id, message }
 );
 
 // スクロール中プレビューの 1 セル。計算できない間は「—」を出す。
-// ピルごと消すのではなく値だけを置き換えるので、入力を打ち直している最中に
+// バーごと消すのではなく値だけを置き換えるので、入力を打ち直している最中に
 // プレビューが出たり消えたりして視線が飛ばない。
+// justify-center —— 2 分割グリッドの列中央に置くことで、本来の結果帯
+// (同じ 2 分割グリッド) と数値の x 座標が揃う。
 const ResultPreviewValue: React.FC<{ label: string; value?: number }> = ({ label, value }) => (
-  <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+  <div className="flex items-baseline justify-center gap-1.5 whitespace-nowrap">
     <span className="text-xs font-medium text-fg-muted">{label}</span>
     <span
       className={[
@@ -483,6 +485,86 @@ const ResultPreviewValue: React.FC<{ label: string; value?: number }> = ({ label
     </span>
   </div>
 );
+
+// スクロール中の結果プレビュー。結果帯 (本来の計算結果領域) が画面下端より
+// 下に食み出している量 (useBelowFoldProgress) に連動して、画面下端に控えを
+// 出し入れする。結果帯は画面下端から入ってくるので、バーも下端にいることで
+// 「帯がドックから外れる / 戻る」1 つの動きとして読める。
+//
+// 帯の複製なのでスクリーンリーダーには渡さない (aria-hidden) —— 帯そのものが
+// 常に DOM にあり、二重読み上げは害でしかない。
+// pointer-events-none —— 下端は入力欄の上に重なるので、タップを塞がない。
+// z-40 —— トースト (bottom-4 right-4 z-50) とモーダル (z-50) の下に敷く。
+// 実際には両者と同時には出ない (トーストは保存/書き出し操作からしか出ず、
+// そのとき帯は既に画面内 = progress 0) が、重ね順は明示しておく。
+//
+// 条件付きマウントではなく常設し、opacity / translate の遷移で出し入れする。
+// アンマウントでは消えるほうが一瞬で終わり、出入りが非対称になるため。
+// visibility も遷移対象に入れてある —— visible が絡む遷移では最後まで visible
+// が保たれるので、フェードアウトを最後まで見せたうえで非表示時はヒットテスト
+// からも外れる。
+// translate であって transform ではない: Tailwind v4 の translate-* は
+// transform ではなく個別プロパティを吐くので、transform を並べても何も
+// 動かない。transition-property に translate 単体で列挙する必要がある。
+// scale は使わない —— 全幅のバーを縮小すると左右端が結果帯の列端からずれ、
+// 「幅を揃える」ことの意味が消える。動きは opacity + 縦移動 16px のみ。
+//
+// duration-100 ease-linear は「出し入れ」の演出ではなく、progress の量子化
+// (0.05 刻み) の段差を均すためだけの補間。長くするとスクロールに対して
+// 遅れて見える。かつてここにあった 300ms / 200ms の非対称 duration
+// (#57, 慣性スクロール中に知覚できる強度を稼ぐための工夫) は、
+// スクロール位置に直接連動する本方式では不要になった —— 知覚できる強度は
+// 連動そのものが担う。
+//
+// 色は結果帯と同じ accent-soft / sunken ではなく overlay 系トークンを使う。
+// 帯は不透明なシートに敷かれた面だがこれは本文の上に浮くので、ダークの
+// accent-soft (accent 14%) だと下の入力欄が透けて数値と衝突する (#52)。
+// overlay 系はライトでは帯と同値のエイリアスなので見た目は変わらない。
+//
+// shadow は付けない —— 既定の影は下向きに落ちるので、下端固定の要素では
+// 画面外に出て何もしない。輪郭は罫線 (border-x border-t) だけが担う。
+const ResultPreviewBar: React.FC<{
+  valuesRef: RefObject<HTMLDivElement | null>;
+  results: Results | null;
+  leftLabel: string;
+  rightLabel: string;
+}> = ({ valuesRef, results, leftLabel, rightLabel }) => {
+  const progress = useBelowFoldProgress(valuesRef);
+
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        // 不透明度は progress 0.6 で振り切る。帯が動き始めてすぐ数値が
+        // 読める濃さになってほしいので、フル連動より早く立ち上げる。
+        '--preview-opacity': Math.min(1, progress / 0.6),
+        '--preview-shift': `${(1 - progress) * 16}px`,
+      } as React.CSSProperties}
+      className={[
+        'pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 sm:px-6',
+        'opacity-[var(--preview-opacity)] translate-y-[var(--preview-shift)]',
+        'transition-[opacity,translate,visibility] duration-100 ease-linear',
+        'motion-reduce:translate-none motion-reduce:transition-none',
+        progress === 0 ? 'invisible' : 'visible',
+      ].join(' ')}
+    >
+      <div
+        className={[
+          'w-full max-w-3xl border-x border-t px-5 py-3 transition-colors sm:px-6',
+          'pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]',
+          results !== null
+            ? 'bg-overlay-accent border-overlay-accent-line'
+            : 'bg-overlay border-overlay-line',
+        ].join(' ')}
+      >
+        <div className="grid grid-cols-2 items-center gap-3 text-center sm:gap-4">
+          <ResultPreviewValue label={leftLabel} value={results?.left} />
+          <ResultPreviewValue label={rightLabel} value={results?.right} />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const spokeCountSegments: SegmentedOption[] = spokeCountOptions.map(value => ({ value, label: value }));
 
@@ -687,7 +769,6 @@ const SpokeLengthCalculator: React.FC = () => {
   const [touchedFields, setTouchedFields] = useState<TouchedFields>({});
   const savedCalculationsLoadedRef = useRef(false);
   const compareSectionRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLElement>(null);
   const resultValuesRef = useRef<HTMLDivElement>(null);
   const [showCompare, setShowCompare] = useState(false);
   const [compareA, setCompareA] = useState('');
@@ -726,20 +807,6 @@ const SpokeLengthCalculator: React.FC = () => {
     })()
     : undefined;
   const hasValidResults = currentResults !== null;
-
-  // 入力フォームが縦に長く、上のフィールドを触っている間は結果帯が画面外に出る。
-  // その間だけ左右スポーク長を画面上部に浮かせる。「出さない」条件は 2 つ:
-  //   - 数値が見えている    … 同じ数値の二重表示になる
-  //   - ヘッダーが見えている … まだスクロールしていない。タイトルを覆ってしまう
-  // 比較パネルの開閉は条件に入れない。閉じずに上へスクロールしたときだけ
-  // プレビューが出ないのは、紛らわしさを避ける利より不具合に見える害が勝る。
-  //
-  // 見るのは帯ではなく数値のグリッド、しかも全体が入るまで (0.99)。帯の上端が
-  // 少し覗いただけで引っ込めると、見出しと余白しか出ていない状態でプレビューが
-  // 消え、数値がどこにも無い瞬間ができる。
-  const isHeaderVisible = useIsVisible(headerRef);
-  const areResultValuesVisible = useIsVisible(resultValuesRef, 0.99);
-  const showResultPreview = !isHeaderVisible && !areResultValuesVisible;
 
   const wheelOptions = useMemo((): WheelOption[] => {
     const presetItems: WheelOption[] = presetOptions.map(p => ({
@@ -1123,7 +1190,6 @@ const SpokeLengthCalculator: React.FC = () => {
           モバイルは p-4 のままなので表示領域は失われない。 */}
       <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
         <header
-          ref={headerRef}
           className="mb-8 flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-center sm:justify-between"
         >
           <h1 className="text-2xl font-semibold tracking-tight text-fg sm:text-3xl">
@@ -1555,67 +1621,12 @@ const SpokeLengthCalculator: React.FC = () => {
         </div>
       </div>
 
-      {/* スクロール中の結果プレビュー。結果帯の複製なのでスクリーンリーダーには渡さない
-          (aria-hidden) —— 結果帯そのものが常に DOM にあり、二重読み上げは害でしかない。
-          pointer-events-none は下のフィールドのタップを塞がないため。
-          z-40 —— トーストとモーダル (z-50) の下に敷き、スクリム表示時は自然に沈む。
-
-          条件付きマウントではなく常設し、opacity / translate / scale の遷移で
-          出し入れする。アンマウントでは消えるほうが一瞬で終わり、出入りが
-          非対称になるため。
-          visibility も遷移対象に入れてある —— visible が絡む遷移では最後まで
-          visible が保たれるので、フェードアウトを最後まで見せたうえで
-          非表示時はヒットテストからも外れる。
-          translate / scale であって transform ではない: Tailwind v4 の
-          translate-* と scale-* は transform ではなく個別プロパティを吐くので、
-          transform を並べても何も動かない。両方を transition-property に
-          列挙する必要がある。
-
-          移動量 16px + scale、入り 300ms / 出 200ms。旧値 (8px / 一律 200ms) は
-          小画面 (iPhone SE 3 等) の慣性スクロール中に知覚できなかった (#56)。
-          ヘッダーは文書頭から 130px ほどしかなく 1 回のフリックで画面外へ出るので、
-          境界の通過が速い。画面上端に張り付いた小さな要素では平行移動より
-          輪郭の変化のほうが強く読めるため scale を足し、origin-top で
-          下向きスライドと動きの向きを揃えてある。
-          duration / ease を条件分岐側に置いているのは意図的: 遷移開始時に参照される
-          transition-* は after-change style なので、状態と同時に切り替えれば
-          入り (ease-out で減速して着地) と出 (ease-in で加速して抜ける) に
-          別の時間とカーブを与えられる。
-
-          色は結果帯と同じ accent-soft / sunken ではなく overlay 系トークンを使う。
-          帯は不透明なシートに敷かれた面だがこれは本文の上に浮くので、ダークの
-          accent-soft (accent 14%) だと下の入力欄が透けて数値と衝突する (#52)。
-          overlay 系はライトでは帯と同値のエイリアスなので見た目は変わらない。 */}
-      <div
-        aria-hidden="true"
-        className={[
-          'pointer-events-none fixed inset-x-0 top-3 z-40 flex origin-top justify-center px-4',
-          'transition-[opacity,translate,scale,visibility] motion-reduce:transition-none',
-          showResultPreview
-            ? 'visible translate-y-0 scale-100 opacity-100 duration-300 ease-out'
-            : 'invisible -translate-y-4 scale-95 opacity-0 duration-200 ease-in',
-        ].join(' ')}
-      >
-        <div
-          className={[
-            'flex max-w-full items-center gap-4 rounded-full border px-4 py-2 shadow-lg transition-colors sm:gap-6',
-            currentResults !== null
-              ? 'bg-overlay-accent border-overlay-accent-line'
-              : 'bg-overlay border-overlay-line',
-          ].join(' ')}
-        >
-          {/* 幅を取れないのでラベルはビューポートに関係なく短縮形。
-              値が無いときは「—」を置いてピルの幅と位置を保つ */}
-          <ResultPreviewValue
-            label={t('results.leftShort')}
-            value={currentResults?.left}
-          />
-          <ResultPreviewValue
-            label={t('results.rightShort')}
-            value={currentResults?.right}
-          />
-        </div>
-      </div>
+      <ResultPreviewBar
+        valuesRef={resultValuesRef}
+        results={currentResults}
+        leftLabel={resultsLeftText}
+        rightLabel={resultsRightText}
+      />
 
       {/* JSON data display modal */}
       {showJsonOutput && (
