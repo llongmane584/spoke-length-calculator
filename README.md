@@ -6,7 +6,7 @@ GitHub pages: https://llongmane584.github.io/spoke-length-calculator/
 [日本語](README_ja.md)
 
 - A web application for (as accurately as possible) calculating spoke lengths required for bicycle wheel building.
-- The ERD is treated as a value based on standard 12 mm nipples. If you want to be strictly accurate, you need to consider the rim's inner wall thickness and nipple length, so please modify the tool if you care about these details.
+- Assumes 12 mm nipples. If you want to be strictly accurate, you need to consider the rim's inner wall thickness and nipple length, so please modify the tool if you care about these details.
 - If the calculations from this tool don't work out, please don't complain to the author - improve it yourself.
 - Each parameter is based on what can be input from the [Hope Pro 5](https://www.hopetech.com/products/hubs/mountain-bike/pro-5-110mm-boost-front/) specification document.
 
