@@ -30,6 +30,7 @@ import {
   btnSecondary,
   btnGhost,
   customizableSelect,
+  dismissOpenPicker,
   nativeSelect,
   sectionHeading,
   sectionHeadingIcon,
@@ -1571,6 +1572,7 @@ const SpokeLengthCalculator: React.FC = () => {
               <select
                 value={i18n.language}
                 onChange={(e) => handleLanguageChange(e.target.value)}
+                onPointerDown={supportsBaseSelect ? dismissOpenPicker : undefined}
                 aria-label={t('language.label')}
                 className={languageSelectClass}
               >

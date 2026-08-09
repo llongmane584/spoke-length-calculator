@@ -4,6 +4,7 @@ import { Fragment, createElement } from 'react';
 import {
   customizableSelect,
   customizableSelectChip,
+  dismissOpenPicker,
   fieldLabel,
   nativeSelect,
   nativeSelectChip,
@@ -94,6 +95,7 @@ export function PresetSelect({
         id={id}
         value={value}
         onChange={event => onSelect(event.target.value)}
+        onPointerDown={supportsBaseSelect ? dismissOpenPicker : undefined}
         aria-label={isChip ? label : undefined}
         className={selectClass}
       >
