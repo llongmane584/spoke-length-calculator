@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import {
   ArrowLeftRight,
   ChevronDown,
@@ -1188,6 +1188,12 @@ const SpokeLengthCalculator: React.FC = () => {
     setTouchedFields(prev => ({ ...prev, [field]: true }));
   };
 
+  useLayoutEffect(() => {
+    if (showCompare) {
+      compareSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [showCompare]);
+
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -1316,14 +1322,6 @@ const SpokeLengthCalculator: React.FC = () => {
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
     setCalculationToDelete(null);
-  };
-
-  const handleCompareToggle = () => {
-    if (!showCompare) {
-      compareSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    setShowCompare(prev => !prev);
   };
 
   // JSON export
@@ -1857,7 +1855,7 @@ const SpokeLengthCalculator: React.FC = () => {
           {/* APG の disclosure —— 見出しの中にボタン。input.heading と同格の h2 */}
           <h2>
             <button
-              onClick={handleCompareToggle}
+              onClick={() => setShowCompare(prev => !prev)}
               aria-expanded={showCompare}
               aria-controls="compare-panel"
               className={`w-full min-h-11 flex items-center justify-between gap-3 px-5 sm:px-6 py-4 text-left text-lg font-semibold text-fg hover:bg-sunken transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${showCompare ? 'rounded-t-xl border-b border-line' : 'rounded-xl'}`}
