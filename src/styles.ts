@@ -54,8 +54,12 @@ export const customizableSelect = `${selectBase} pr-3`;
 
 // 見出し行に添える chip 型の select。入力欄ではなく「ここを埋める材料を選ぶ」操作
 // なので、フルワイドの枠付きフィールドにはしない。丸いピルにして一段引かせる。
+//
+// 幅は中身ではなく外側の枠が決める (w-full)。選んだプリセット名の長さでチップが
+// 伸び縮みすると、見出し行に収まらなくなった瞬間に折り返して行数が変わり、
+// 選択のたびにレイアウトが跳ねる。溢れた名前は省略記号に落とす。
 const chipBase =
-  'inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full border border-line bg-surface py-1 pl-3 ' +
+  'flex w-full min-h-9 items-center gap-1.5 rounded-full border border-line bg-surface py-1 pl-3 ' +
   'text-sm text-fg-muted transition-colors hover:bg-sunken hover:text-fg ' +
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus';
 

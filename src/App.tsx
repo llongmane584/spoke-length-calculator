@@ -980,8 +980,10 @@ const FieldGroup: React.FC<{
   return (
     <div className={withRule ? 'border-t border-line pt-6' : undefined}>
       <div role="group" aria-labelledby={labelId}>
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-          <span id={labelId} className="flex items-center gap-2 text-sm font-semibold text-fg">
+        {/* 折り返さない。chip の中身が伸びても行数を変えないため (プリセットを
+            選ぶたびに見出しの位置が動くのを防ぐ)。 */}
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <span id={labelId} className="flex shrink-0 items-center gap-2 text-sm font-semibold text-fg">
             {icon}
             {label}
           </span>
@@ -1605,9 +1607,11 @@ const SpokeLengthCalculator: React.FC = () => {
           {/* Input section */}
           <div ref={inputSectionRef} className="space-y-6 p-5 sm:p-6">
             {/* プリセットは入力欄ではなく「ここを埋める材料の指定」なので、
-                フルワイドのフィールドを積まずに見出し行へ chip として添える。 */}
-            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-line pb-2">
-              <h2 className="text-xl font-semibold text-fg">{t('input.heading')}</h2>
+                フルワイドのフィールドを積まずに見出し行へ chip として添える。
+                折り返しは禁止 —— 選んだプリセット名の長短で行数が変わると、
+                選択のたびに見出しごと位置が跳ねる。 */}
+            <div className="flex items-center justify-between gap-3 border-b border-line pb-2">
+              <h2 className="shrink-0 text-xl font-semibold text-fg">{t('input.heading')}</h2>
               {presetOptions.length > 0 && (
                 <PresetSelect
                   id="preset"
