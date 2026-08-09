@@ -55,7 +55,7 @@ function RimOffsetDiagram() {
       <rect x="105" y="132" width="110" height="26" fill="none" stroke="currentColor" strokeWidth="1.5" />
       <line x1="105" y1="105" x2="105" y2="170" stroke="currentColor" strokeWidth="3" />
       <line x1="215" y1="105" x2="215" y2="170" stroke="currentColor" strokeWidth="3" />
-      {/* rim center plane and offset nipple bed */}
+      {/* rim centre plane and offset nipple bed */}
       <path d="M 122 38 Q 160 22 198 38 L 188 72 Q 160 60 132 72 Z" fill="none" stroke="currentColor" strokeWidth="2" />
       <line x1="160" y1="18" x2="160" y2="176" stroke="currentColor" strokeDasharray="4 3" strokeWidth="1" opacity="0.55" />
       <line x1="178" y1="34" x2="178" y2="82" className="stroke-accent-ink" strokeWidth="3" />
@@ -112,7 +112,7 @@ function FlangeDistanceDiagram() {
       <line x1="200" y1="60" x2="200" y2="140" stroke="currentColor" strokeWidth="3" />
       <circle cx="200" cy="60" r="4" fill="none" stroke="currentColor" strokeWidth="1.2" />
       <circle cx="200" cy="140" r="4" fill="none" stroke="currentColor" strokeWidth="1.2" />
-      {/* centerline */}
+      {/* centreline */}
       <line x1="160" y1="40" x2="160" y2="170" stroke="currentColor" strokeDasharray="4 3" strokeWidth="1" opacity="0.6" />
       <text x="160" y="35" textAnchor="middle" fontSize="9" fill="currentColor" opacity="0.7">{t('input.help.flangeDistance.diagram.hubCenter')}</text>
       {/* left arrow */}

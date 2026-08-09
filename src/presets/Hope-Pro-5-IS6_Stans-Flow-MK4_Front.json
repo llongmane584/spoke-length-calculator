@@ -1,5 +1,5 @@
 {
-  "displayName": "Hope Pro 5 IS6 + stans Flow MK4 29in (Front)",
+  "displayName": "Hope Pro 5 IS6 + Stan's Flow MK4 29in (Front)",
   "category": "MTB",
   "description": "Front wheel preset for Hope Pro 5 IS6 hub with Stans Flow MK4 29in rim",
   "inputs": {
@@ -20,7 +20,7 @@
   },
   "timestamp": "2026-07-18T12:58:37.597Z",
   "metadata": {
-    "calculator": "Bicycle Spoke Length Calculator",
+    "calculator": "Bicycle Spoke Calculator",
     "version": "1.1"
   }
 }

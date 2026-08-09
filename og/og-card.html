@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-GB">
 
 <head>
   <meta charset="UTF-8" />
   <title>OG card source</title>
-  <!-- public/og-image.png のソース。配信物ではないので public/ には置かない
+  <!-- public/og-image-2.png のソース。配信物ではないので public/ には置かない
        (置くと dist/ に混ざる)。
 
        再生成手順 — リポジトリルートで実行する。<ABS> はリポジトリの絶対パスに置き換える:
@@ -14,7 +14,7 @@
          playwright-cli resize 1320 760
          playwright-cli eval "() => document.fonts.ready.then(() => document.fonts.check('700 84px Inter'))"
          # ↑ true が返らなければ中断する。スクリーンショットは撮らない
-         playwright-cli screenshot "#card" --filename="<ABS>/public/og-image.png"
+         playwright-cli screenshot "#card" --filename="<ABS>/public/og-image-2.png"
          playwright-cli close
 
        playwright-cli は file: を塞いでいるので HTTP 配信が要る。vite の dev サーバーは
@@ -136,7 +136,7 @@
       <!-- file:// から file:// の <img> は Chromium で読める (塞がれるのは fetch/XHR)。
            空白で出た場合は public/icons/icon-512.png に差し替える。同じ図案。 -->
       <img src="../public/calculator.svg" alt="" />
-      <div class="title">Spoke Length<br />Calculator</div>
+      <div class="title">Spoke<br />Calculator</div>
     </div>
     <div>
       <div class="sub">Calculate bicycle spoke lengths for wheel building</div>

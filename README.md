@@ -1,4 +1,4 @@
-# Bicycle Spoke Length Calculator
+# Bicycle Spoke Calculator
 
 ## Demo page
 GitHub pages: https://llongmane584.github.io/spoke-length-calculator/
@@ -63,7 +63,7 @@ pnpm lint
 
 ### Regenerating the OG image
 
-`public/og-image.png` is the social share card (1200×630). It is committed, not built,
+`public/og-image-2.png` is the social share card (1200×630). It is committed, not built,
 so it only needs regenerating when the card design changes. The source is
 [`og/og-card.html`](og/og-card.html) — its header comment holds the authoritative
 command sequence, which uses the globally installed `playwright-cli` plus the
@@ -101,7 +101,7 @@ text renders in Inter rather than a fallback face.
 │   ├── main.tsx                   # Entry point
 │   ├── index.css                  # Tailwind v4 entry + design tokens
 │   ├── styles.ts                  # Shared button / select class strings
-│   ├── i18n.ts                    # Internationalization configuration
+│   ├── i18n.ts                    # Internationalisation configuration
 │   ├── rimOffset.ts               # Rim offset logic
 │   ├── rimOffset.test.ts          # Rim offset unit tests
 │   ├── partPresets.ts             # Hub / rim part preset loading and matching
@@ -115,7 +115,7 @@ text renders in Inter rather than a fallback face.
 │   │   ├── ConfirmDialog.tsx      # Confirmation dialog
 │   │   ├── HelpButton.tsx         # Inline help trigger
 │   │   ├── HelpModal.tsx          # Help modal with SVG diagrams
-│   │   ├── PresetSelect.tsx       # Preset picker (CSS customizable select)
+│   │   ├── PresetSelect.tsx       # Preset picker (CSS customisable select)
 │   │   ├── SegmentedControl.tsx   # Segmented radio group
 │   │   └── Toast.tsx              # Toast notification component
 │   ├── contexts/                  # React contexts
