@@ -237,7 +237,9 @@
    ライト / ダーク両対応になる (dark: もパレット直参照も要らない)。
 
    @layer に入れない —— 素のセレクタを Tailwind のユーティリティ層より後に置いて、
-   カスケード順の綱引きを避ける。 */
+   カスケード順の綱引きを避ける。裏返すと、ここに書いた宣言は同じプロパティの
+   ユーティリティを詳細度に関係なく必ず打ち消す。ユーティリティ側に決めさせたい
+   プロパティ (font-size など) はこのブロックに書かないこと。 */
 @supports (appearance: base-select) {
 
   .preset-select,
@@ -246,13 +248,18 @@
   }
 
   /* 閉じた状態。<button><span> を自前で置いてあるので、
-     長いプリセット名は省略記号に落として矢印を必ず残す。 */
+     長いプリセット名は省略記号に落として矢印を必ず残す。
+
+     font も font-size も書かない。ここはレイヤ外なので書けば text-sm などの
+     text-* ユーティリティを無言で飲み、base-select 対応ブラウザだけ文字が
+     大きくなる (#90)。フォントの継承は Tailwind preflight の @layer base にある
+     select への font: inherit が既に担っていて、そちらはユーティリティ層より
+     前なので font-size だけをユーティリティに明け渡せる。 */
   .preset-select {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     text-align: start;
-    font: inherit;
   }
 
   .preset-select>button {
