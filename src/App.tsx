@@ -77,6 +77,19 @@ interface PresetOption {
   data: PresetData;
 }
 
+type InitialDataLoadStatus = 'ok' | 'warning' | 'error';
+
+interface PresetLoadResult {
+  options: PresetOption[];
+  errors: string[];
+}
+
+interface SavedCalculationsLoadResult {
+  calculations: SavedCalculation[];
+  status: InitialDataLoadStatus;
+  details: string[];
+}
+
 type InputField = keyof Inputs;
 type NumericInputField = Exclude<InputField, 'numberOfSpokes' | 'crossingsLeft' | 'crossingsRight'>;
 type FieldErrors = Partial<Record<InputField, string>>;
@@ -444,6 +457,106 @@ const normalizeSavedCalculation = (value: unknown): SavedCalculation | null => {
   };
 };
 
+const getErrorMessage = (error: unknown): string => (
+  error instanceof Error ? error.message : String(error)
+);
+
+const loadPresetOptions = (): PresetLoadResult => {
+  const options: PresetOption[] = [];
+  const errors: string[] = [];
+
+  for (const [path, module] of Object.entries(presetModules)) {
+    try {
+      const data = module as PresetData;
+      const normalizedInputs = normalizeInputs(data.inputs);
+      const normalizedResults = normalizeResults(data.results);
+
+      if (normalizedInputs === null || normalizedResults === null) {
+        errors.push(`Invalid preset format in ${path}: missing or invalid required fields`);
+        continue;
+      }
+
+      const presetCalculation = getCalculationState(normalizedInputs);
+
+      if (presetCalculation.results === null) {
+        errors.push(`Invalid preset format in ${path}: preset inputs cannot be calculated`);
+        continue;
+      }
+
+      const fileName = path.split('/').pop()?.replace('.json', '') || '';
+      const displayName = data.displayName || fileName
+        .replace(/-/g, ' ')
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, char => char.toUpperCase());
+
+      options.push({
+        id: fileName,
+        name: displayName,
+        data: {
+          ...data,
+          inputs: normalizedInputs,
+          results: presetCalculation.results,
+        },
+      });
+    } catch (error) {
+      errors.push(`Failed to load preset from ${path}: ${getErrorMessage(error)}`);
+    }
+  }
+
+  return { options, errors };
+};
+
+const loadSavedCalculations = (): SavedCalculationsLoadResult => {
+  try {
+    const saved = localStorage.getItem('spokeCalculations');
+
+    if (saved === null) {
+      return { calculations: [], status: 'ok', details: [] };
+    }
+
+    const parsed: unknown = JSON.parse(saved);
+
+    if (!Array.isArray(parsed)) {
+      throw new Error('Saved calculations must be an array');
+    }
+
+    const calculations = parsed
+      .map(normalizeSavedCalculation)
+      .filter((calculation): calculation is SavedCalculation => calculation !== null);
+    const invalidCount = parsed.length - calculations.length;
+
+    if (invalidCount > 0) {
+      return {
+        calculations,
+        status: 'warning',
+        details: [`Discarded ${invalidCount} invalid saved calculation(s)`],
+      };
+    }
+
+    return { calculations, status: 'ok', details: [] };
+  } catch (error) {
+    return {
+      calculations: [],
+      status: 'error',
+      details: [getErrorMessage(error)],
+    };
+  }
+};
+
+const PRESET_LOAD_RESULT = loadPresetOptions();
+const INITIAL_SAVED_CALCULATIONS = loadSavedCalculations();
+
+for (const error of PRESET_LOAD_RESULT.errors) {
+  console.error(error);
+}
+
+if (INITIAL_SAVED_CALCULATIONS.status !== 'ok') {
+  console.warn(
+    'Failed to load all saved calculations:',
+    ...INITIAL_SAVED_CALCULATIONS.details,
+  );
+}
+
 const getControlClassName = (hasError: boolean, className?: string): string => (
   [
     'w-full px-3 py-2 border rounded-md bg-surface text-fg tabular-nums placeholder:text-fg-subtle transition-colors focus-visible:outline-2 focus-visible:outline-offset-2',
@@ -481,6 +594,25 @@ const FieldWarning: React.FC<{ id: string; message: string }> = ({ id, message }
     <TriangleAlert aria-hidden="true" className="shrink-0 mt-0.5 h-4 w-4" />
     <span>{message}</span>
   </p>
+);
+
+interface InitialDataAlertProps {
+  message: string;
+  severity: Exclude<InitialDataLoadStatus, 'ok'>;
+}
+
+const InitialDataAlert: React.FC<InitialDataAlertProps> = ({ message, severity }) => (
+  <div
+    role="alert"
+    className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-sm ${
+      severity === 'error'
+        ? 'border-danger-line bg-danger-soft text-danger-ink'
+        : 'border-warn-line bg-warn-soft text-warn-ink'
+    }`}
+  >
+    <TriangleAlert aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+    <span>{message}</span>
+  </div>
 );
 
 // 結果帯の 2 つの姿。--dock 0 が本来の姿、1 が簡易表示で、間はすべて線形補間。
@@ -950,17 +1082,21 @@ const SpokeLengthCalculator: React.FC = () => {
     crossingsRight: '3' // 3-cross is also typical
   });
 
-  const [savedCalculations, setSavedCalculations] = useState<SavedCalculation[]>([]);
+  const presetOptions = PRESET_LOAD_RESULT.options;
+  const [savedCalculations, setSavedCalculations] = useState<SavedCalculation[]>(
+    INITIAL_SAVED_CALCULATIONS.calculations,
+  );
+  const [savedDataLoadStatus, setSavedDataLoadStatus] = useState<InitialDataLoadStatus>(
+    INITIAL_SAVED_CALCULATIONS.status,
+  );
   const [calculationName, setCalculationName] = useState('');
   const [showJsonOutput, setShowJsonOutput] = useState(false);
   const [jsonData, setJsonData] = useState('');
   const [selectedPreset, setSelectedPreset] = useState<string>('');
-  const [presetOptions, setPresetOptions] = useState<PresetOption[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [calculationToDelete, setCalculationToDelete] = useState<number | null>(null);
   const [helpTopic, setHelpTopic] = useState<HelpTopic | null>(null);
   const [touchedFields, setTouchedFields] = useState<TouchedFields>({});
-  const savedCalculationsLoadedRef = useRef(false);
   const compareSectionRef = useRef<HTMLDivElement>(null);
   // 結果帯の直前の要素。帯は sticky で自分の位置から自分の状態を決められないので、
   // ドック度合いはこの下端 (= 帯の本来の上端) を測って決める
@@ -1053,12 +1189,6 @@ const SpokeLengthCalculator: React.FC = () => {
   };
 
   useEffect(() => {
-    if (showCompare) {
-      compareSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [showCompare]);
-
-  useEffect(() => {
     if (typeof window === 'undefined') {
       return;
     }
@@ -1076,68 +1206,6 @@ const SpokeLengthCalculator: React.FC = () => {
     };
   }, []);
 
-  // Dynamically load preset data
-  useEffect(() => {
-    const loadPresets = async () => {
-      const presets: PresetOption[] = [];
-      let hasError = false;
-
-      for (const [path, module] of Object.entries(presetModules)) {
-        try {
-          const data = module as PresetData;
-
-          const normalizedInputs = normalizeInputs(data.inputs);
-          const normalizedResults = normalizeResults(data.results);
-
-          if (normalizedInputs === null || normalizedResults === null) {
-            console.error(`Invalid preset format in ${path}: missing or invalid required fields`);
-            hasError = true;
-            continue;
-          }
-
-          const presetCalculation = getCalculationState(normalizedInputs);
-
-          if (presetCalculation.results === null) {
-            console.error(`Invalid preset format in ${path}: preset inputs cannot be calculated`);
-            hasError = true;
-            continue;
-          }
-
-          // Generate ID from filename
-          const fileName = path.split('/').pop()?.replace('.json', '') || '';
-          
-          // Determine display name (use displayName if available, otherwise format filename)
-          const displayName = data.displayName || fileName
-            .replace(/-/g, ' ')
-            .replace(/_/g, ' ')
-            .replace(/\b\w/g, char => char.toUpperCase());
-
-          presets.push({
-            id: fileName,
-            name: displayName,
-            data: {
-              ...data,
-              inputs: normalizedInputs,
-              results: presetCalculation.results,
-            },
-          });
-        } catch (error) {
-          console.error(`Failed to load preset from ${path}:`, error);
-          hasError = true;
-        }
-      }
-
-      setPresetOptions(presets);
-      
-      // Show toast notification if there were errors
-      if (hasError) {
-        showToast(t('alerts.presetLoadError'), 'error');
-      }
-    };
-
-    loadPresets();
-  }, [showToast, t]);
-
   // Language switch handler
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang);
@@ -1153,43 +1221,6 @@ const SpokeLengthCalculator: React.FC = () => {
   useEffect(() => {
     document.documentElement.lang = i18n.language;
   }, [i18n.language]);
-
-  // Load saved calculations from local storage
-  useEffect(() => {
-    if (savedCalculationsLoadedRef.current) {
-      return;
-    }
-
-    savedCalculationsLoadedRef.current = true;
-
-    try {
-      const saved = localStorage.getItem('spokeCalculations');
-
-      if (!saved) {
-        return;
-      }
-
-      const parsed: unknown = JSON.parse(saved);
-
-      if (!Array.isArray(parsed)) {
-        throw new Error('Saved calculations must be an array');
-      }
-
-      const normalized = parsed
-        .map(normalizeSavedCalculation)
-        .filter((calculation): calculation is SavedCalculation => calculation !== null);
-
-      setSavedCalculations(normalized);
-
-      if (normalized.length !== parsed.length) {
-        showToast(t('alerts.savedDataLoadFailed'), 'warning');
-      }
-    } catch (error) {
-      console.warn('Failed to load saved calculations:', error);
-      setSavedCalculations([]);
-      showToast(t('alerts.savedDataLoadFailed'), 'error');
-    }
-  }, [showToast, t]);
 
   // Update input values
   const handleInputChange = (field: keyof Inputs, value: string) => {
@@ -1228,6 +1259,7 @@ const SpokeLengthCalculator: React.FC = () => {
     }
 
     setSavedCalculations(updated);
+    setSavedDataLoadStatus('ok');
     setCalculationName('');
     showToast(t('alerts.saved'), 'success');
   };
@@ -1273,6 +1305,7 @@ const SpokeLengthCalculator: React.FC = () => {
       }
 
       setSavedCalculations(updated);
+      setSavedDataLoadStatus('ok');
       showToast(t('alerts.deleted'), 'success');
     }
     setShowDeleteConfirm(false);
@@ -1283,6 +1316,14 @@ const SpokeLengthCalculator: React.FC = () => {
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
     setCalculationToDelete(null);
+  };
+
+  const handleCompareToggle = () => {
+    if (!showCompare) {
+      compareSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    setShowCompare(prev => !prev);
   };
 
   // JSON export
@@ -1443,6 +1484,13 @@ const SpokeLengthCalculator: React.FC = () => {
             <h2 className="text-xl font-semibold text-fg border-b border-line pb-2">{t('input.heading')}</h2>
 
           <div className="space-y-6">
+            {PRESET_LOAD_RESULT.errors.length > 0 && (
+              <InitialDataAlert
+                message={t('alerts.presetLoadError')}
+                severity="error"
+              />
+            )}
+
             {/* Preset selection - only show if presets exist */}
             {presetOptions.length > 0 && (
               <div>
@@ -1757,6 +1805,13 @@ const SpokeLengthCalculator: React.FC = () => {
           </label>
 
           {/* List of saved calculations */}
+          {savedDataLoadStatus !== 'ok' && (
+            <InitialDataAlert
+              message={t('alerts.savedDataLoadFailed')}
+              severity={savedDataLoadStatus}
+            />
+          )}
+
           {savedCalculations.length > 0 && (
             <div className="pt-2">
               <h3 className="text-base font-semibold text-fg mb-3">{t('results.savedCalculations')}</h3>
@@ -1802,7 +1857,7 @@ const SpokeLengthCalculator: React.FC = () => {
           {/* APG の disclosure —— 見出しの中にボタン。input.heading と同格の h2 */}
           <h2>
             <button
-              onClick={() => setShowCompare(prev => !prev)}
+              onClick={handleCompareToggle}
               aria-expanded={showCompare}
               aria-controls="compare-panel"
               className={`w-full min-h-11 flex items-center justify-between gap-3 px-5 sm:px-6 py-4 text-left text-lg font-semibold text-fg hover:bg-sunken transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${showCompare ? 'rounded-t-xl border-b border-line' : 'rounded-xl'}`}
