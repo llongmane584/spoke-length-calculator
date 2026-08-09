@@ -222,3 +222,146 @@
     color-scheme: dark;
   }
 }
+
+/* CSS customizable select。ネイティブ <select> の意味論・キーボード操作・
+   スクリーンリーダ・モバイルの UI をそのまま保ったまま、ポップアップの中身だけを
+   自前で描く。独自コンボボックスを書かずに済むので ARIA を手で組む必要がない
+   (SegmentedControl.tsx 冒頭の方針と同じ理由)。
+
+   対応していないブラウザはこのブロックに入らない。PresetSelect が
+   CSS.supports() を見てクラス文字列とマークアップの両方を従来のものへ切り替えるので、
+   ここが丸ごと無視されても壊れない。appearance-none を持つ nativeSelect と
+   このブロックが同じ要素に同時に当たることは無い。
+
+   色は必ずトークン変数を読む。.dark が変数側を差し替えるので、これだけで
+   ライト / ダーク両対応になる (dark: もパレット直参照も要らない)。
+
+   @layer に入れない —— 素のセレクタを Tailwind のユーティリティ層より後に置いて、
+   カスケード順の綱引きを避ける。 */
+@supports (appearance: base-select) {
+
+  .preset-select,
+  .preset-select::picker(select) {
+    appearance: base-select;
+  }
+
+  /* 閉じた状態。<button><selectedcontent> を自前で置いてあるので、
+     長いプリセット名は省略記号に落として矢印を必ず残す。 */
+  .preset-select {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: start;
+    font: inherit;
+  }
+
+  .preset-select>button {
+    flex: 1 1 auto;
+    min-width: 0;
+    appearance: none;
+    border: 0;
+    padding: 0;
+    background: none;
+    font: inherit;
+    color: inherit;
+    text-align: start;
+  }
+
+  .preset-select selectedcontent {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .preset-select::picker-icon {
+    flex: none;
+    color: var(--color-fg-subtle);
+    transition: rotate 150ms ease;
+  }
+
+  .preset-select:open::picker-icon {
+    rotate: 180deg;
+  }
+
+  .preset-select::picker(select) {
+    border: 1px solid var(--color-line-strong);
+    border-radius: 0.75rem;
+    background: var(--color-surface);
+    box-shadow: 0 12px 32px -12px rgb(0 0 0 / 0.35);
+    padding: 0.25rem;
+    max-height: 20rem;
+    overflow-y: auto;
+    /* トップレイヤの要素なので、display と overlay も allow-discrete で繋がないと
+       閉じるアニメーションが再生されずに消える。 */
+    opacity: 0;
+    translate: 0 -0.25rem;
+    transition:
+      opacity 120ms ease,
+      translate 120ms ease,
+      display 120ms allow-discrete,
+      overlay 120ms allow-discrete;
+  }
+
+  .preset-select:open::picker(select) {
+    opacity: 1;
+    translate: 0;
+  }
+
+  /* 開くときの初期値。:open の規則より後に置く必要がある。 */
+  @starting-style {
+    .preset-select:open::picker(select) {
+      opacity: 0;
+      translate: 0 -0.25rem;
+    }
+  }
+
+  .preset-select optgroup {
+    padding: 0.5rem 0.5rem 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-fg-subtle);
+  }
+
+  /* ✓ は絶対配置にして本文のフローから外す。グリッドで列に分けると、素のテキストだけの
+     option (言語切替やホイール比較) が無名アイテムになって ✓ の列へ落ちてしまう。
+     左の padding が ✓ のぶんの座席。 */
+  .preset-select option {
+    position: relative;
+    display: block;
+    padding: 0.5rem 0.5rem 0.5rem 1.75rem;
+    border-radius: 0.5rem;
+    color: var(--color-fg);
+  }
+
+  .preset-select option:hover,
+  .preset-select option:focus {
+    background: var(--color-sunken);
+  }
+
+  .preset-select option::checkmark {
+    position: absolute;
+    left: 0.5rem;
+    top: 0.5rem;
+    color: var(--color-accent);
+  }
+
+  /* 寸法の要約。子要素ではなく data 属性から起こす —— <option> の中に要素を置くと
+     React の DOM ネスト検証に引っかかる。擬似要素は畳んだ状態には複製されないので、
+     閉じたセレクトは何もしなくても名前だけの 1 行に収まる。 */
+  .preset-select option[data-spec]::after {
+    content: attr(data-spec);
+    display: block;
+    margin-top: 0.125rem;
+    font-size: 0.75rem;
+    color: var(--color-fg-subtle);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+
+    .preset-select::picker(select),
+    .preset-select::picker-icon {
+      transition: none;
+    }
+  }
+}

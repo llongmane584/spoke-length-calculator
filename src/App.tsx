@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useId, useLayoutEffect, useMemo, useRef } from 'react';
 import {
   ArrowLeftRight,
   ChevronDown,
@@ -7,7 +7,6 @@ import {
   FileUp,
   Moon,
   Save,
-  SlidersHorizontal,
   Sun,
   Tag,
   Trash2,
@@ -25,14 +24,39 @@ import { HelpModal, type HelpTopic } from './components/HelpModal';
 import { MtbHubIcon } from './components/icons/MtbHubIcon';
 import CompareWheels, { type WheelOption } from './components/CompareWheels';
 import { SegmentedControl, type SegmentedOption } from './components/SegmentedControl';
-import { btnPrimary, btnSecondary, btnGhost, nativeSelect, selectChevron } from './styles';
+import { PresetSelect, type PresetSelectGroup } from './components/PresetSelect';
+import {
+  btnPrimary,
+  btnSecondary,
+  btnGhost,
+  customizableSelect,
+  dismissOpenPicker,
+  nativeSelect,
+  sectionHeading,
+  sectionHeadingIcon,
+  selectChevron,
+  supportsBaseSelect,
+} from './styles';
 import { assessRimOffset, getEffectiveFlangeDistances, type RimOffsetAssessment } from './rimOffset';
+import {
+  HUB_FIELDS,
+  RIM_FIELDS,
+  buildPartPresets,
+  matchPreset,
+  type MatchablePreset,
+  type PartPresetOption,
+} from './partPresets';
 
 // Dynamic import of preset data
+// `*` は `/` をまたがないので、この glob は下の hubs/ rims/ を拾わない。
 const presetModules = import.meta.glob('./presets/*.json', { eager: true });
+const hubPresetModules = import.meta.glob('./presets/hubs/*.json', { eager: true });
+const rimPresetModules = import.meta.glob('./presets/rims/*.json', { eager: true });
 
 // Type definitions
-interface Inputs {
+// interface ではなく type エイリアス。interface には暗黙のインデックスシグネチャが
+// 付かないので Record<string, string> を要求する matchPreset に渡せない。
+type Inputs = {
   erd: string;
   rimOffset: string;
   pitchCircleLeft: string;
@@ -43,7 +67,7 @@ interface Inputs {
   numberOfSpokes: string;
   crossingsLeft: string;
   crossingsRight: string;
-}
+};
 
 interface Results {
   left: number;
@@ -125,6 +149,21 @@ const inputFields = [
   'crossingsLeft',
   'crossingsRight',
 ] as const satisfies readonly InputField[];
+
+// 部品プリセットの担当欄。partPresets.ts 側は Inputs 型を知らない (Vite 非依存に
+// 保って node --test から読めるようにしてある) ので、ここで InputField[] として
+// 受け直す。フィールド名のタイポはこの代入でコンパイルエラーになる。
+const hubPresetFields: readonly InputField[] = HUB_FIELDS;
+const rimPresetFields: readonly InputField[] = RIM_FIELDS;
+const HUB_POSITIONS = ['front', 'rear'] as const;
+
+// ヘッダーの言語切替。プリセットとは性質が違う操作なので PresetSelect は使わないが、
+// base-select の分岐だけは同じ規則で揃える —— プリセットのポップアップだけが新しくて
+// 他が OS 標準のままだと、かえって古く見えるため。
+// 選択肢が素のテキストだけなので、畳んだ状態はブラウザ生成のボタンで足りる。
+const languageSelectClass = supportsBaseSelect
+  ? `${customizableSelect} preset-select min-h-9 w-auto py-1 pr-2 text-sm`
+  : `${nativeSelect} min-h-9 w-auto py-1 pr-8 text-sm`;
 
 // Tailwind の `sm:` 直下を指す。v4 のブレークポイントは rem (--breakpoint-sm: 40rem)
 // なので px で書くとルートフォントサイズを変えたときに CSS と JS がずれる —
@@ -544,9 +583,19 @@ const loadSavedCalculations = (): SavedCalculationsLoadResult => {
 };
 
 const PRESET_LOAD_RESULT = loadPresetOptions();
+// ハブ / リム単体のプリセット。全体プリセットと違い 10 項目すべては持たないので
+// getCalculationState では検証できず、専用のローダーを通す。
+const HUB_PRESET_LOAD_RESULT = buildPartPresets(hubPresetModules, HUB_FIELDS, true);
+const RIM_PRESET_LOAD_RESULT = buildPartPresets(rimPresetModules, RIM_FIELDS, false);
 const INITIAL_SAVED_CALCULATIONS = loadSavedCalculations();
 
-for (const error of PRESET_LOAD_RESULT.errors) {
+const PRESET_LOAD_ERRORS = [
+  ...PRESET_LOAD_RESULT.errors,
+  ...HUB_PRESET_LOAD_RESULT.errors,
+  ...RIM_PRESET_LOAD_RESULT.errors,
+];
+
+for (const error of PRESET_LOAD_ERRORS) {
   console.error(error);
 }
 
@@ -910,31 +959,42 @@ const RadialHint: React.FC = () => {
 };
 
 // Groups related input fields under a label, separated by a hairline rule.
-// The rule lives on the wrapper rather than on the fieldset itself: a bordered
-// fieldset gets a notch cut out of its top border where the legend sits.
-// `min-w-0` neutralises the fieldset UA default `min-inline-size: min-content`,
-// so a long unwrappable label can never push the form wider than its container.
+// The rule lives on the wrapper rather than on the group itself: a bordered
+// fieldset would get a notch cut out of its top border where the legend sits.
+//
+// fieldset/legend ではなく role="group" + aria-labelledby を使う。見出しの右へ
+// プリセットの chip を並べたいのだが、<legend> は fieldset のキャプションとして
+// 特別に描かれ、fieldset を grid/flex にしてもアイテムにならないので横に置けない。
+// かといって chip を <legend> の中に入れると、グループのアクセシブル名に
+// 選択中の部品名まで混ざってしまう。role="group" なら意味を保ったまま
+// レイアウトが自由になる (支援技術への伝わり方は fieldset/legend と等価)。
 const FieldGroup: React.FC<{
   label: string;
   icon: React.ReactNode;
+  /** 見出しの右に置く操作 (プリセットの chip)。 */
+  action?: React.ReactNode;
   withRule?: boolean;
   children: React.ReactNode;
-}> = ({ label, icon, withRule = true, children }) => (
-  <div className={withRule ? 'border-t border-line pt-6' : undefined}>
-    <fieldset className="min-w-0">
-      <legend className="mb-3 text-sm font-semibold text-fg">
-        <span className="flex items-center gap-2">
-          {icon}
-          {label}
-        </span>
-      </legend>
-      <div className="space-y-4">{children}</div>
-    </fieldset>
-  </div>
-);
+}> = ({ label, icon, action, withRule = true, children }) => {
+  const labelId = useId();
 
-const sectionHeading = 'mb-3 flex items-center gap-2 text-sm font-semibold text-fg';
-const sectionHeadingIcon = 'h-4 w-4 shrink-0 text-accent';
+  return (
+    <div className={withRule ? 'border-t border-line pt-6' : undefined}>
+      <div role="group" aria-labelledby={labelId}>
+        {/* 折り返さない。chip の中身が伸びても行数を変えないため (プリセットを
+            選ぶたびに見出しの位置が動くのを防ぐ)。 */}
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <span id={labelId} className="flex shrink-0 items-center gap-2 text-sm font-semibold text-fg">
+            {icon}
+            {label}
+          </span>
+          {action}
+        </div>
+        <div className="space-y-4">{children}</div>
+      </div>
+    </div>
+  );
+};
 
 // Regular number input component
 interface NumberInputProps {
@@ -1083,6 +1143,8 @@ const SpokeLengthCalculator: React.FC = () => {
   });
 
   const presetOptions = PRESET_LOAD_RESULT.options;
+  const hubPresetOptions = HUB_PRESET_LOAD_RESULT.options;
+  const rimPresetOptions = RIM_PRESET_LOAD_RESULT.options;
   const [savedCalculations, setSavedCalculations] = useState<SavedCalculation[]>(
     INITIAL_SAVED_CALCULATIONS.calculations,
   );
@@ -1092,7 +1154,6 @@ const SpokeLengthCalculator: React.FC = () => {
   const [calculationName, setCalculationName] = useState('');
   const [showJsonOutput, setShowJsonOutput] = useState(false);
   const [jsonData, setJsonData] = useState('');
-  const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [calculationToDelete, setCalculationToDelete] = useState<number | null>(null);
   const [helpTopic, setHelpTopic] = useState<HelpTopic | null>(null);
@@ -1175,6 +1236,64 @@ const SpokeLengthCalculator: React.FC = () => {
     return [...presetItems, ...savedItems];
   }, [presetOptions, savedCalculations]);
 
+  // プリセットの select は選択状態を state で覚えない。今の入力値に一致する定義を
+  // 毎回探して value にする —— これだけで「ホイールを選ぶとハブ / リムの欄も点く」
+  // 「フランジ距離を手で直すとハブの欄が消える」が同期処理なしに成り立つ。
+  const matchableWheelPresets = useMemo(
+    (): MatchablePreset[] => presetOptions.map(preset => ({ id: preset.id, fields: preset.data.inputs })),
+    [presetOptions],
+  );
+  const selectedPreset = matchPreset(matchableWheelPresets, inputs, inputFields);
+  const selectedHubPreset = matchPreset(hubPresetOptions, inputs, hubPresetFields);
+  const selectedRimPreset = matchPreset(rimPresetOptions, inputs, rimPresetFields);
+
+  const wheelPresetGroups = useMemo((): PresetSelectGroup[] => [{
+    items: presetOptions.map(preset => ({
+      id: preset.id,
+      name: preset.name,
+      spec: t('input.presetSpec.wheel', {
+        erd: preset.data.inputs.erd,
+        spokes: preset.data.inputs.numberOfSpokes,
+        crossLeft: preset.data.inputs.crossingsLeft,
+        crossRight: preset.data.inputs.crossingsRight,
+      }),
+    })),
+  }], [presetOptions, t]);
+
+  // ハブは前後で寸法が違うので optgroup で分ける。フロント組みにリアハブを
+  // 選んでしまう事故を、リストの並びの時点で防ぐ。
+  const hubPresetGroups = useMemo((): PresetSelectGroup[] => (
+    HUB_POSITIONS
+      .map(position => ({
+        label: t(`input.hubPosition.${position}`),
+        items: hubPresetOptions
+          .filter(option => option.position === position)
+          .map(option => ({
+            id: option.id,
+            name: option.name,
+            spec: t('input.presetSpec.hub', {
+              pcdLeft: option.fields.pitchCircleLeft,
+              pcdRight: option.fields.pitchCircleRight,
+              flangeLeft: option.fields.flangeDistanceLeft,
+              flangeRight: option.fields.flangeDistanceRight,
+              hole: option.fields.spokeHoleDiameter,
+            }),
+          })),
+      }))
+      .filter(group => group.items.length > 0)
+  ), [hubPresetOptions, t]);
+
+  const rimPresetGroups = useMemo((): PresetSelectGroup[] => [{
+    items: rimPresetOptions.map(option => ({
+      id: option.id,
+      name: option.name,
+      spec: t('input.presetSpec.rim', {
+        erd: option.fields.erd,
+        offset: option.fields.rimOffset,
+      }),
+    })),
+  }], [rimPresetOptions, t]);
+
   // タイトルは幅に関係なくフルで出す。375px でも折り返して収まり、
   // ヘッダーは flex-col になるので h1 が単独行を占める。
   const titleText = t('title');
@@ -1232,7 +1351,6 @@ const SpokeLengthCalculator: React.FC = () => {
   const handleInputChange = (field: keyof Inputs, value: string) => {
     setInputs(prev => ({ ...prev, [field]: value }));
     setTouchedFields(prev => ({ ...prev, [field]: true }));
-    setSelectedPreset('');
   };
 
   // Save calculation results
@@ -1274,22 +1392,31 @@ const SpokeLengthCalculator: React.FC = () => {
   const loadCalculation = (calculation: SavedCalculation) => {
     setInputs(calculation.inputs);
     setTouchedFields(createTouchedFields(true));
-    setSelectedPreset('');
   };
 
   // Load preset
   const loadPreset = (presetId: string) => {
-    if (presetId === '') {
-      setSelectedPreset('');
-      return;
-    }
-    
     const preset = presetOptions.find(p => p.id === presetId);
     if (preset) {
       setInputs(preset.data.inputs);
       setTouchedFields({});
-      setSelectedPreset(presetId);
     }
+  };
+
+  // Load a hub / rim part preset.
+  // 部品は自分の担当欄だけを塗る。全体プリセットのように inputs を丸ごと差し替えると、
+  // 組み方の設定やもう一方の部品の値まで巻き添えで消えてしまう。
+  //
+  // touchedFields には触れない —— 塗った欄は必ず非空になり、visibleFieldErrors は
+  // 「touched または非空」で出すので、値がおかしければそのままエラーが見える。
+  const loadPartPreset = (options: PartPresetOption[], partId: string) => {
+    const part = options.find(option => option.id === partId);
+
+    if (part === undefined) {
+      return;
+    }
+
+    setInputs(prev => ({ ...prev, ...part.fields }));
   };
 
   // Delete saved calculation
@@ -1400,7 +1527,6 @@ const SpokeLengthCalculator: React.FC = () => {
           if (normalizedInputs !== null) {
             setInputs(normalizedInputs);
             setTouchedFields(createTouchedFields(true));
-            setSelectedPreset('');
 
             const importedCalculation = getCalculationState(normalizedInputs);
             showToast(
@@ -1446,13 +1572,16 @@ const SpokeLengthCalculator: React.FC = () => {
               <select
                 value={i18n.language}
                 onChange={(e) => handleLanguageChange(e.target.value)}
+                onPointerDown={supportsBaseSelect ? dismissOpenPicker : undefined}
                 aria-label={t('language.label')}
-                className={`${nativeSelect} min-h-9 w-auto py-1 pr-8 text-sm`}
+                className={languageSelectClass}
               >
                 <option value="en">English</option>
                 <option value="ja">日本語</option>
               </select>
-              <ChevronDown aria-hidden="true" className={`${selectChevron} right-2.5`} />
+              {!supportsBaseSelect && (
+                <ChevronDown aria-hidden="true" className={`${selectChevron} right-2.5`} />
+              )}
             </div>
             <button
               onClick={toggleTheme}
@@ -1479,47 +1608,46 @@ const SpokeLengthCalculator: React.FC = () => {
         <div ref={sheetRef} className="group rounded-xl border border-line bg-surface">
           {/* Input section */}
           <div ref={inputSectionRef} className="space-y-6 p-5 sm:p-6">
-            <h2 className="text-xl font-semibold text-fg border-b border-line pb-2">{t('input.heading')}</h2>
+            {/* プリセットは入力欄ではなく「ここを埋める材料の指定」なので、
+                フルワイドのフィールドを積まずに見出し行へ chip として添える。
+                折り返しは禁止 —— 選んだプリセット名の長短で行数が変わると、
+                選択のたびに見出しごと位置が跳ねる。 */}
+            <div className="flex items-center justify-between gap-3 border-b border-line pb-2">
+              <h2 className="shrink-0 text-xl font-semibold text-fg">{t('input.heading')}</h2>
+              {presetOptions.length > 0 && (
+                <PresetSelect
+                  id="preset"
+                  label={t('input.preset')}
+                  placeholder={t('input.presetPlaceholder')}
+                  value={selectedPreset}
+                  groups={wheelPresetGroups}
+                  onSelect={loadPreset}
+                />
+              )}
+            </div>
 
           <div className="space-y-6">
-            {PRESET_LOAD_RESULT.errors.length > 0 && (
+            {PRESET_LOAD_ERRORS.length > 0 && (
               <InitialDataAlert
                 message={t('alerts.presetLoadError')}
                 severity="error"
               />
             )}
 
-            {/* Preset selection - only show if presets exist */}
-            {presetOptions.length > 0 && (
-              <div>
-                <label htmlFor="preset" className={sectionHeading}>
-                  <SlidersHorizontal aria-hidden="true" className={sectionHeadingIcon} />
-                  {t('input.preset')}
-                </label>
-                <div className="relative">
-                  <select
-                    id="preset"
-                    value={selectedPreset}
-                    onChange={(e) => loadPreset(e.target.value)}
-                    className={nativeSelect}
-                  >
-                    <option value="">{t('input.presetOption')}</option>
-                    {presetOptions.map((preset) => (
-                      <option key={preset.id} value={preset.id}>
-                        {preset.name}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown aria-hidden="true" className={selectChevron} />
-                </div>
-              </div>
-            )}
-
-            {/* Without the preset block above, this rule would double up with the h2 border */}
             <FieldGroup
               label={t('input.group.rim')}
               icon={<Circle aria-hidden="true" className={sectionHeadingIcon} />}
-              withRule={presetOptions.length > 0}
+              withRule={false}
+              action={rimPresetOptions.length > 0 && (
+                <PresetSelect
+                  id="rimPreset"
+                  label={t('input.rimPreset')}
+                  placeholder={t('input.rimPresetPlaceholder')}
+                  value={selectedRimPreset}
+                  groups={rimPresetGroups}
+                  onSelect={partId => loadPartPreset(rimPresetOptions, partId)}
+                />
+              )}
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -1569,6 +1697,16 @@ const SpokeLengthCalculator: React.FC = () => {
             <FieldGroup
               label={t('input.group.hub')}
               icon={<MtbHubIcon aria-hidden="true" className={sectionHeadingIcon} />}
+              action={hubPresetOptions.length > 0 && (
+                <PresetSelect
+                  id="hubPreset"
+                  label={t('input.hubPreset')}
+                  placeholder={t('input.hubPresetPlaceholder')}
+                  value={selectedHubPreset}
+                  groups={hubPresetGroups}
+                  onSelect={partId => loadPartPreset(hubPresetOptions, partId)}
+                />
+              )}
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>

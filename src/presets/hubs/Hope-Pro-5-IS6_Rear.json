@@ -1,0 +1,13 @@
+{
+  "displayName": "Hope Pro 5 IS6",
+  "position": "rear",
+  "category": "MTB",
+  "description": "Hope Pro 5 IS 6-bolt rear hub",
+  "inputs": {
+    "pitchCircleLeft": "57",
+    "pitchCircleRight": "59",
+    "flangeDistanceLeft": "35",
+    "flangeDistanceRight": "22.6",
+    "spokeHoleDiameter": "2.6"
+  }
+}

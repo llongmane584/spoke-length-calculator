@@ -17,8 +17,11 @@ Most of the code in this project was created with [Claude Code](https://claude.a
 ## Features
 
 - **Precise spoke length calculation**: Uses common formulas combining cosine rule (planar) and Pythagorean theorem (3D)
-- **Preset functionality**: Select from author-owned hub/rim combinations
-  - Hope Pro 5 IS6 + Nextie Premium 2936 (Front/Rear)
+- **Presets**: Fill the form from author-owned parts, picked from the chips next to each section heading
+  - Whole wheel: Hope Pro 5 CL / IS6 hubs paired with Nextie Premium 2936 or Stan's Flow MK4 (front/rear)
+  - Hub only / rim only: pick a hub and a rim separately to work out a wheel that has never been built
+  - The chips mirror the current inputs — pick a wheel and the hub/rim chips light up on their own;
+    edit a field by hand and the chips that no longer match go quiet
 - **Rich input parameters**:
   - ERD (Effective Rim Diameter)
   - Rim offset (automatically applied to reduce the effective left/right flange-distance difference)
@@ -72,7 +75,8 @@ text renders in Inter rather than a fallback face.
 ## Usage
 
 1. **Enter basic information**
-   - **Preset selection**: Choose from hub/rim combinations (optional)
+   - **Presets** (optional): use the chip beside "Input Values" for a whole wheel, or the chips
+     beside the Rim / Hub headings to fill just that section
    - Input various dimensions for rim and hub
    - Select number of spokes and lacing pattern
 
@@ -100,6 +104,8 @@ text renders in Inter rather than a fallback face.
 │   ├── i18n.ts                    # Internationalization configuration
 │   ├── rimOffset.ts               # Rim offset logic
 │   ├── rimOffset.test.ts          # Rim offset unit tests
+│   ├── partPresets.ts             # Hub / rim part preset loading and matching
+│   ├── presetData.test.ts         # Keeps whole-wheel presets in sync with the parts
 │   ├── spokeCompare.ts            # Wheel comparison logic
 │   ├── vite-env.d.ts              # Vite environment types
 │   ├── assets/                    # Static assets
@@ -109,6 +115,7 @@ text renders in Inter rather than a fallback face.
 │   │   ├── ConfirmDialog.tsx      # Confirmation dialog
 │   │   ├── HelpButton.tsx         # Inline help trigger
 │   │   ├── HelpModal.tsx          # Help modal with SVG diagrams
+│   │   ├── PresetSelect.tsx       # Preset picker (CSS customizable select)
 │   │   ├── SegmentedControl.tsx   # Segmented radio group
 │   │   └── Toast.tsx              # Toast notification component
 │   ├── contexts/                  # React contexts
@@ -122,13 +129,10 @@ text renders in Inter rather than a fallback face.
 │   ├── locales/                   # Translation files
 │   │   ├── en.json                # English translations
 │   │   └── ja.json                # Japanese translations
-│   └── presets/                   # Preset data (6 files)
-│       ├── Hope-Pro-5-CL_Nextie-Premium-2936_Front.json
-│       ├── Hope-Pro-5-CL_Nextie-Premium-2936_Rear.json
-│       ├── Hope-Pro-5-IS6_Nextie-Premium-2936_Front.json
-│       ├── Hope-Pro-5-IS6_Nextie-Premium-2936_Rear.json
-│       ├── Hope-Pro-5-IS6_Stans-Flow-MK4_Front.json
-│       └── Hope-Pro-5-IS6_Stans-Flow-MK4_Rear.json
+│   └── presets/                   # Preset data
+│       ├── *.json                 # Whole wheel: {hub}_{rim}_{Front|Rear}.json (6 files)
+│       ├── hubs/                  # Hub only: {hub}_{Front|Rear}.json (4 files)
+│       └── rims/                  # Rim only: {rim}.json (2 files)
 ├── public/                        # Static files
 │   └── calculator.svg
 ├── dist/                          # Build output

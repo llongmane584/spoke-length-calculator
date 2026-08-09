@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, CircleCheck, TriangleAlert } from 'lucide-react';
+import { CircleCheck, TriangleAlert } from 'lucide-react';
 import { compareWheels, type WheelSpec } from '../spokeCompare';
-import { nativeSelect, selectChevron } from '../styles';
+import { PresetSelect, type PresetSelectGroup } from './PresetSelect';
 
 export interface WheelOption {
   id: string;
@@ -33,49 +33,35 @@ const CompareWheels: React.FC<Props> = ({ options, selectedA, selectedB, onChang
     return compareWheels(specA, specB);
   }, [specA, specB]);
 
+  // optgroup が要るのでネイティブ select のまま。見た目は PresetSelect が
+  // 入力欄側のプリセット選択と揃える (対応ブラウザでは appearance: base-select)。
+  const groups = useMemo((): PresetSelectGroup[] => [
+    { label: t('compare.groupPresets'), items: presets.map(o => ({ id: o.id, name: o.label })) },
+    { label: t('compare.groupSaved'), items: saved.map(o => ({ id: o.id, name: o.label })) },
+  ].filter(group => group.items.length > 0), [presets, saved, t]);
+
   const renderSelect = (
+    id: string,
     value: string,
     onChange: (id: string) => void,
     label: string,
   ) => (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-fg-muted">
-        {label}
-      </label>
-      {/* optgroup が必要なのでネイティブ select のまま。ポップアップの見た目は
-          index.css の base 層にある color-scheme がテーマに追従させる。 */}
-      <div className="relative">
-        <select
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          className={nativeSelect}
-        >
-          <option value="">{t('compare.placeholder')}</option>
-          {presets.length > 0 && (
-            <optgroup label={t('compare.groupPresets')}>
-              {presets.map(o => (
-                <option key={o.id} value={o.id}>{o.label}</option>
-              ))}
-            </optgroup>
-          )}
-          {saved.length > 0 && (
-            <optgroup label={t('compare.groupSaved')}>
-              {saved.map(o => (
-                <option key={o.id} value={o.id}>{o.label}</option>
-              ))}
-            </optgroup>
-          )}
-        </select>
-        <ChevronDown aria-hidden="true" className={selectChevron} />
-      </div>
-    </div>
+    <PresetSelect
+      id={id}
+      variant="field"
+      label={label}
+      placeholder={t('compare.placeholder')}
+      value={value}
+      groups={groups}
+      onSelect={onChange}
+    />
   );
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {renderSelect(selectedA, onChangeA, t('compare.wheelA'))}
-        {renderSelect(selectedB, onChangeB, t('compare.wheelB'))}
+        {renderSelect('compareWheelA', selectedA, onChangeA, t('compare.wheelA'))}
+        {renderSelect('compareWheelB', selectedB, onChangeB, t('compare.wheelB'))}
       </div>
 
       {result === null ? (
