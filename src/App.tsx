@@ -1692,6 +1692,8 @@ const SpokeLengthCalculator: React.FC = () => {
                   )}
                 </div>
               </div>
+              {/* ERD の測定基準は標準 12mm ニップル前提。計算式側に補正項は無い */}
+              <p className="text-xs text-fg-subtle">{t('input.nippleNote')}</p>
             </FieldGroup>
 
             <FieldGroup

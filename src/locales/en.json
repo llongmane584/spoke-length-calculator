@@ -36,6 +36,7 @@
     "crossingsRight": "Crossings [R]",
     "radialLacing": "0 (Radial Lacing)",
     "crossingsRadialHint": "0 = radial lacing",
+    "nippleNote": "* The ERD is treated as a value based on standard 12 mm nipples. Nipple length and rim inner-wall thickness are not part of the calculation, so other nipple lengths need the ERD value or the result adjusted.",
     "group": {
       "rim": "Rim",
       "hub": "Hub",
@@ -44,7 +45,7 @@
     "help": {
       "erd": {
         "title": "ERD (Effective Rim Diameter)",
-        "description": "The diameter measured between the points where the spoke nipples seat on the rim — i.e., the effective circle the spoke ends form.\n\nThis is NOT the rim's outer or bead diameter. Most rim makers publish the ERD; if not, measure it with a ruler or dedicated ERD gauge.\n\nUnit: mm.",
+        "description": "The diameter measured between the points where the spoke nipples seat on the rim — i.e., the effective circle the spoke ends form.\n\nThis is NOT the rim's outer or bead diameter. Most rim makers publish the ERD; if not, measure it with a ruler or dedicated ERD gauge.\n\nThis calculator assumes standard 12 mm nipples. With longer nipples (14 mm, 16 mm, …) the spoke ends sit at a different depth, so adjust the ERD value or the result accordingly.\n\nUnit: mm.",
         "ariaLabel": "Help for ERD",
         "diagram": {
           "nippleSeat": "nipple seat"
