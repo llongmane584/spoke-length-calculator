@@ -1723,7 +1723,7 @@ const SpokeLengthCalculator: React.FC = () => {
                     min={1}
                     max={100}
                     error={visibleFieldErrors.pitchCircleLeft}
-                    placeholder={t('input.flangeLeftPlaceholder')}
+                    placeholder={t('input.pcdLeftPlaceholder')}
                   />
                   <FieldError id="pitchCircleLeft-error" message={visibleFieldErrors.pitchCircleLeft} />
                 </div>
@@ -1741,7 +1741,7 @@ const SpokeLengthCalculator: React.FC = () => {
                     min={1}
                     max={100}
                     error={visibleFieldErrors.pitchCircleRight}
-                    placeholder={t('input.flangeRightPlaceholder')}
+                    placeholder={t('input.pcdRightPlaceholder')}
                   />
                   <FieldError id="pitchCircleRight-error" message={visibleFieldErrors.pitchCircleRight} />
                 </div>
