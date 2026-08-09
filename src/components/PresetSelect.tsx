@@ -1,5 +1,5 @@
 import { ChevronDown } from 'lucide-react';
-import { Fragment, createElement } from 'react';
+import { Fragment } from 'react';
 
 import {
   customizableSelect,
@@ -11,23 +11,6 @@ import {
   selectChevron,
   supportsBaseSelect,
 } from '../styles';
-
-/**
- * 畳んだ状態を自分で組むための <button><selectedcontent>。
- *
- * 省略するとブラウザが同等のボタンを起こすが、それは author 側の CSS から掴めず、
- * 長いプリセット名がチップからはみ出しても省略記号にできない。自前で置けば
- * min-width:0 と text-overflow を効かせられる。
- *
- * <selectedcontent> は @types/react にまだ無い要素。JSX で書くには
- * JSX.IntrinsicElements の拡張が要り、それには namespace が必要で eslint の
- * no-namespace に触れるので createElement で作る。
- *
- * なお React の DOM ネスト検証は <select> の子に <button> を許さず、開発ビルドで
- * 警告を 1 本出す (customizable select がまだ React 側に反映されていないため)。
- * 本番ビルドでは出ず、SSR もしていないので実害はない。
- */
-const SelectedContent = () => createElement('selectedcontent');
 
 export interface PresetSelectItem {
   id: string;
@@ -61,7 +44,7 @@ interface PresetSelectProps {
 // 寸法の要約は子要素ではなく data 属性で渡し、CSS の ::after + attr() で描く。
 // <option> の中に <span> を置くと React の DOM ネスト検証に引っかかるうえ、
 // base-select 非対応のブラウザではテキストが連結されて 1 行に潰れる。
-// ::after なら畳んだ状態にも複製されないので、閉じたときは自動的に名前だけになる。
+// 畳んだ状態には item.name だけを出すので、要約は開いたときにしか現れない。
 const renderItems = (items: PresetSelectItem[]) => (
   items.map(item => (
     <option key={item.id} value={item.id} data-spec={item.spec}>
@@ -87,6 +70,12 @@ export function PresetSelect({
     ? `${isChip ? customizableSelectChip : customizableSelect} preset-select`
     : (isChip ? nativeSelectChip : nativeSelect);
 
+  // 畳んだ状態に出るラベル。どの項目にも一致しない value が来たらブラウザは何も
+  // 選ばないので、プレースホルダに倒す (空欄よりは「まだ選んでいない」と読める)。
+  const selectedLabel = value === ''
+    ? placeholder
+    : groups.flatMap(group => group.items).find(item => item.id === value)?.name ?? placeholder;
+
   const select = (
     // chip の幅は見出し行の残り幅ではなくブレークポイントごとの固定値にする。
     // 全体 / リム / ハブで隣の見出しが違っても揃い、選択名は内側で省略される。
@@ -99,9 +88,22 @@ export function PresetSelect({
         aria-label={isChip ? label : undefined}
         className={selectClass}
       >
+        {/* 畳んだ状態を自分で組む。省略するとブラウザが同等のボタンを起こすが、
+            それは author 側の CSS から掴めず、長いプリセット名がチップから
+            はみ出しても省略記号にできない。自前で置けば min-width:0 と
+            text-overflow を効かせられる。
+
+            中身はブラウザ任せの <selectedcontent> ではなく自分で描く。あれは
+            選択中の option を複製する要素で、複製が走るのは挿入時と選択が
+            変わったときだけ —— 選択はそのままで option のテキストだけが
+            変わる言語切替では、旧言語の複製が残る (実測済み)。
+
+            なお React の DOM ネスト検証は <select> の子に <button> を許さず、
+            開発ビルドで警告を 1 本出す (customizable select がまだ React 側に
+            反映されていないため)。本番ビルドでは出ず、SSR もしていないので実害はない。 */}
         {supportsBaseSelect && (
           <button>
-            <SelectedContent />
+            <span>{selectedLabel}</span>
           </button>
         )}
         {/* プレースホルダを disabled にしてはいけない。'' は初期状態でも手編集後でも

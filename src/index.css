@@ -245,7 +245,7 @@
     appearance: base-select;
   }
 
-  /* 閉じた状態。<button><selectedcontent> を自前で置いてあるので、
+  /* 閉じた状態。<button><span> を自前で置いてあるので、
      長いプリセット名は省略記号に落として矢印を必ず残す。 */
   .preset-select {
     display: flex;
@@ -267,7 +267,7 @@
     text-align: start;
   }
 
-  .preset-select selectedcontent {
+  .preset-select>button>span {
     display: block;
     overflow: hidden;
     text-overflow: ellipsis;
