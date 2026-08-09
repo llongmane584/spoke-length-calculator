@@ -7,7 +7,7 @@ export default defineConfig(({ command }) => ({
   base: command === 'serve' ? '/' : '/spoke-length-calculator/',
   plugins: [react(), tailwindcss()],
   server: {
-    host: '127.0.0.1',
+    host: '0.0.0.0',
     strictPort: true,
   },
   // Tailwind v4 は @tailwindcss/vite 経由で Lightning CSS を使うため PostCSS を必要としない。
