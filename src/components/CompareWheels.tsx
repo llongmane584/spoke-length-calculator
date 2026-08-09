@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CircleCheck, TriangleAlert } from 'lucide-react';
 import { compareWheels, type WheelSpec } from '../spokeCompare';
@@ -132,4 +132,7 @@ const CompareWheels: React.FC<Props> = ({ options, selectedA, selectedB, onChang
   );
 };
 
-export default CompareWheels;
+// 畳んでいる間もマウントされたままなので (App の compare-panel を参照)、入力欄を
+// 打つたびに親が再描画されるとここも巻き添えになる。props はどれも参照が安定して
+// いる (options は useMemo、onChange は setState そのもの) ので memo で素通しできる。
+export default memo(CompareWheels);
