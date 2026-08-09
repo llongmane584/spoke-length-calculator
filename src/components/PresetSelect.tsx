@@ -79,7 +79,7 @@ export function PresetSelect({
   const select = (
     // chip の幅は見出し行の残り幅ではなくブレークポイントごとの固定値にする。
     // 全体 / リム / ハブで隣の見出しが違っても揃い、選択名は内側で省略される。
-    <div className={isChip ? 'relative w-24 shrink-0 min-[375px]:w-36 sm:w-64' : 'relative'}>
+    <div className={isChip ? 'relative w-32 shrink-0 min-[375px]:w-40 sm:w-64' : 'relative'}>
       <select
         id={id}
         value={value}
