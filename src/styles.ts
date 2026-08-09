@@ -26,13 +26,51 @@ export const btnGhost =
 /** 破壊的動作。 */
 export const btnDanger = `${btnBase} bg-danger text-on-danger hover:bg-danger-hover`;
 
+/**
+ * CSS customizable select (`appearance: base-select`) が使えるか。
+ * クラス文字列とマークアップの両方をこの 1 つの値で切り替える —— nativeSelect の
+ * `appearance-none` は base-select を打ち消すので、CSS のカスケード順に賭けず
+ * そもそも同じ要素に載せない。レンダリング中に変わらないのでモジュール定数でよい。
+ */
+export const supportsBaseSelect =
+  typeof CSS !== 'undefined' && CSS.supports('appearance', 'base-select');
+
+const selectBase =
+  'w-full min-h-11 rounded-md border border-line-strong bg-surface py-2 pl-3 text-fg ' +
+  'transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus';
+
 // appearance-none はドロップダウンのポップアップまでは変えられない。
 // ポップアップ側は index.css の base 層にある color-scheme が担当する。
 // pr-9 は重ねる ChevronDown のぶんの余白。
-export const nativeSelect =
-  'w-full min-h-11 appearance-none rounded-md border border-line-strong bg-surface py-2 pl-3 pr-9 text-fg ' +
-  'transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus';
+export const nativeSelect = `${selectBase} appearance-none pr-9`;
+
+/**
+ * CSS customizable select (`appearance: base-select`) が使えるときの select。
+ * ポップアップまで自前で描けるので、重ねる ChevronDown も appearance-none も要らない
+ * —— むしろ appearance-none は base-select を打ち消すので入れてはいけない。
+ * 実際の見た目は index.css の `@supports (appearance: base-select)` ブロックが持つ。
+ */
+export const customizableSelect = `${selectBase} pr-3`;
+
+// 見出し行に添える chip 型の select。入力欄ではなく「ここを埋める材料を選ぶ」操作
+// なので、フルワイドの枠付きフィールドにはしない。丸いピルにして一段引かせる。
+const chipBase =
+  'inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full border border-line bg-surface py-1 pl-3 ' +
+  'text-sm text-fg-muted transition-colors hover:bg-sunken hover:text-fg ' +
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus';
+
+export const nativeSelectChip = `${chipBase} appearance-none pr-8`;
+export const customizableSelectChip = `${chipBase} pr-3`;
 
 /** ネイティブ select に重ねる ChevronDown 用。pointer-events-none が無いとクリックを食う。 */
 export const selectChevron =
   'pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-subtle';
+
+/** グループを持たない単独の見出しラベル (保存名の入力欄など)。 */
+export const sectionHeading = 'mb-3 flex items-center gap-2 text-sm font-semibold text-fg';
+
+/** sectionHeading に添えるアイコン。 */
+export const sectionHeadingIcon = 'h-4 w-4 shrink-0 text-accent';
+
+/** グループの中に置くフィールドラベル。見出しと張り合わないよう一段弱くする。 */
+export const fieldLabel = 'mb-1 block text-sm font-medium text-fg-muted';

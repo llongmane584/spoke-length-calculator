@@ -1,0 +1,9 @@
+{
+  "displayName": "Stan's Flow MK4 29in",
+  "category": "MTB",
+  "description": "Stan's NoTubes Flow MK4 29in rim",
+  "inputs": {
+    "erd": "600",
+    "rimOffset": "3.0"
+  }
+}

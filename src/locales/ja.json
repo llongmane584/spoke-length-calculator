@@ -2,9 +2,21 @@
   "title": "スポーク長計算機",
   "input": {
     "heading": "入力値",
-    "preset": "プリセット",
-    "presetPlaceholder": "プリセットを選択",
-    "presetOption": "選択してください",
+    "preset": "ホイールプリセット",
+    "presetPlaceholder": "ホイールを選ぶ",
+    "hubPreset": "ハブプリセット",
+    "hubPresetPlaceholder": "ハブを選ぶ",
+    "rimPreset": "リムプリセット",
+    "rimPresetPlaceholder": "リムを選ぶ",
+    "hubPosition": {
+      "front": "フロント",
+      "rear": "リア"
+    },
+    "presetSpec": {
+      "wheel": "ERD {{erd}} · {{spokes}}H · {{crossLeft}}/{{crossRight}}クロス",
+      "hub": "PCD {{pcdLeft}}/{{pcdRight}} · フランジ {{flangeLeft}}/{{flangeRight}} · 穴 {{hole}}",
+      "rim": "ERD {{erd}} · オフセット {{offset}}"
+    },
     "erd": "ERD (mm)",
     "erdPlaceholder": "有効リム直径",
     "rimOffset": "リムオフセット (mm)",

@@ -17,8 +17,11 @@ GitHub pages: https://llongmane584.github.io/spoke-length-calculator/
 ## 機能
 
 - **スポーク長の精密計算**: 余弦定理(平面)とピタゴラスの定理(立体)を組み合わせたありふれた計算式を使用
-- **プリセット機能**: 作者所有のハブ/リムの組み合わせをプリセットとして選択可能
-  - Hope Pro 5 IS6 + Nextie Premium 2936（フロント/リア）
+- **プリセット機能**: 作者所有の部品から入力欄を埋められる。各見出しの横のチップで選択する
+  - ホイール単位: Hope Pro 5 CL / IS6 のハブ × Nextie Premium 2936 / Stan's Flow MK4（フロント/リア）
+  - ハブ単体・リム単体: それぞれ個別に選べるので、まだ組んだことのない組み合わせも試算できる
+  - チップは今の入力値を映す —— ホイールを選べばハブ・リムのチップも自動で点き、
+    値を手で書き換えると一致しなくなったチップが自動で消える
 - **豊富な入力パラメータ**:
   - ERD（有効リム径）
   - リムオフセット（左右の実効フランジ距離差を縮める方向へ自動適用）
@@ -71,7 +74,8 @@ pnpm lint
 ## 使い方
 
 1. **基本情報の入力**
-   - **プリセット選択**: ハブ/リムの組み合わせから選択（オプション）
+   - **プリセット**（オプション）: 「入力値」見出しの横のチップでホイールごと、
+     「リム」「ハブ」見出しの横のチップでその区画だけを埋められる
    - リムとハブの各種寸法を入力
    - スポーク本数と組み方を選択
 
@@ -99,6 +103,8 @@ pnpm lint
 │   ├── i18n.ts                    # 多言語化設定
 │   ├── rimOffset.ts               # リムオフセットのロジック
 │   ├── rimOffset.test.ts          # リムオフセットの単体テスト
+│   ├── partPresets.ts             # ハブ / リム部品プリセットの読み込みと一致判定
+│   ├── presetData.test.ts         # 全体プリセットと部品の数値がずれていないか検証
 │   ├── spokeCompare.ts            # ホイール比較のロジック
 │   ├── vite-env.d.ts              # Vite 環境型定義
 │   ├── assets/                    # 静的アセット
@@ -108,6 +114,7 @@ pnpm lint
 │   │   ├── ConfirmDialog.tsx      # 確認ダイアログ
 │   │   ├── HelpButton.tsx         # インラインヘルプの起動ボタン
 │   │   ├── HelpModal.tsx          # SVG 図解つきヘルプモーダル
+│   │   ├── PresetSelect.tsx       # プリセット選択 (CSS customizable select)
 │   │   ├── SegmentedControl.tsx   # セグメントコントロール
 │   │   └── Toast.tsx              # トースト通知コンポーネント
 │   ├── contexts/                  # React コンテキスト
@@ -121,13 +128,10 @@ pnpm lint
 │   ├── locales/                   # 翻訳ファイル
 │   │   ├── en.json                # 英語翻訳
 │   │   └── ja.json                # 日本語翻訳
-│   └── presets/                   # プリセットデータ (6 ファイル)
-│       ├── Hope-Pro-5-CL_Nextie-Premium-2936_Front.json
-│       ├── Hope-Pro-5-CL_Nextie-Premium-2936_Rear.json
-│       ├── Hope-Pro-5-IS6_Nextie-Premium-2936_Front.json
-│       ├── Hope-Pro-5-IS6_Nextie-Premium-2936_Rear.json
-│       ├── Hope-Pro-5-IS6_Stans-Flow-MK4_Front.json
-│       └── Hope-Pro-5-IS6_Stans-Flow-MK4_Rear.json
+│   └── presets/                   # プリセットデータ
+│       ├── *.json                 # ホイール単位: {ハブ}_{リム}_{Front|Rear}.json (6 ファイル)
+│       ├── hubs/                  # ハブ単体: {ハブ}_{Front|Rear}.json (4 ファイル)
+│       └── rims/                  # リム単体: {リム}.json (2 ファイル)
 ├── public/                        # 静的ファイル
 │   └── calculator.svg
 ├── dist/                          # ビルド出力

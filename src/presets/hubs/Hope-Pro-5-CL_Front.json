@@ -1,0 +1,13 @@
+{
+  "displayName": "Hope Pro 5 CL",
+  "position": "front",
+  "category": "MTB",
+  "description": "Hope Pro 5 Centerlock front hub",
+  "inputs": {
+    "pitchCircleLeft": "43",
+    "pitchCircleRight": "43",
+    "flangeDistanceLeft": "27",
+    "flangeDistanceRight": "35.6",
+    "spokeHoleDiameter": "2.6"
+  }
+}

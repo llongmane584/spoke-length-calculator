@@ -2,9 +2,21 @@
   "title": "Spoke Length Calculator",
   "input": {
     "heading": "Input Values",
-    "preset": "Preset",
-    "presetPlaceholder": "Select a preset",
-    "presetOption": "Please Select",
+    "preset": "Wheel preset",
+    "presetPlaceholder": "Pick a wheel",
+    "hubPreset": "Hub preset",
+    "hubPresetPlaceholder": "Pick a hub",
+    "rimPreset": "Rim preset",
+    "rimPresetPlaceholder": "Pick a rim",
+    "hubPosition": {
+      "front": "Front",
+      "rear": "Rear"
+    },
+    "presetSpec": {
+      "wheel": "ERD {{erd}} · {{spokes}}H · {{crossLeft}}x/{{crossRight}}x",
+      "hub": "PCD {{pcdLeft}}/{{pcdRight}} · Flange {{flangeLeft}}/{{flangeRight}} · Hole {{hole}}",
+      "rim": "ERD {{erd}} · Offset {{offset}}"
+    },
     "erd": "ERD (mm)",
     "erdPlaceholder": "Effective Rim Diameter",
     "rimOffset": "Rim Offset (mm)",
