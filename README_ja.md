@@ -114,7 +114,7 @@ pnpm lint
 │   │   ├── ConfirmDialog.tsx      # 確認ダイアログ
 │   │   ├── HelpButton.tsx         # インラインヘルプの起動ボタン
 │   │   ├── HelpModal.tsx          # SVG 図解つきヘルプモーダル
-│   │   ├── PresetSelect.tsx       # プリセット選択 (CSS customizable select)
+│   │   ├── PresetSelect.tsx       # プリセット選択 (CSS customisable select)
 │   │   ├── SegmentedControl.tsx   # セグメントコントロール
 │   │   └── Toast.tsx              # トースト通知コンポーネント
 │   ├── contexts/                  # React コンテキスト

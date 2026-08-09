@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { assessRimOffset, getEffectiveFlangeDistances } from './rimOffset.ts';
 
-test('applies the offset toward the smaller flange-distance difference', () => {
+test('applies the offset towards the smaller flange-distance difference', () => {
   assert.deepEqual(
     getEffectiveFlangeDistances({
       flangeDistanceLeft: 35,

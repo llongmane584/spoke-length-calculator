@@ -1,5 +1,5 @@
 {
-  "title": "Spoke Length Calculator",
+  "title": "Spoke Calculator",
   "input": {
     "heading": "Input Values",
     "preset": "Wheel preset",
@@ -52,25 +52,25 @@
       },
       "rimOffset": {
         "title": "Rim Offset",
-        "description": "The lateral displacement from the rim center plane to the spoke holes (nipple seats).\n\nEnter an unsigned offset amount. The calculator automatically applies it in the direction that reduces the difference between the effective left and right center-to-flange distances. If both flange distances are equal, the offset does not affect the calculation.\n\nIf the entered offset is greater than the difference between the left and right flange distances, it increases the asymmetry compared with no offset, and a warning appears below the input.\n\nUnit: mm.",
+        "description": "The lateral displacement from the rim centre plane to the spoke holes (nipple seats).\n\nEnter an unsigned offset amount. The calculator automatically applies it in the direction that reduces the difference between the effective left and right centre-to-flange distances. If both flange distances are equal, the offset does not affect the calculation.\n\nIf the entered offset is greater than the difference between the left and right flange distances, it increases the asymmetry compared with no offset, and a warning appears below the input.\n\nUnit: mm.",
         "ariaLabel": "Help for Rim Offset"
       },
       "pcd": {
         "title": "PCD (Pitch Circle Diameter)",
-        "description": "The diameter of the circle passing through the centers of the spoke holes on the hub flange.\n\nLeft and Right flanges often have different PCDs (especially on rear hubs and disc-brake hubs), so measure each side separately.\n\nUnit: mm.",
+        "description": "The diameter of the circle passing through the centres of the spoke holes on the hub flange.\n\nLeft and Right flanges often have different PCDs (especially on rear hubs and disc-brake hubs), so measure each side separately.\n\nUnit: mm.",
         "ariaLabel": "Help for PCD"
       },
       "flangeDistance": {
         "title": "Flange Distance",
-        "description": "The horizontal distance from the hub's center plane (centerline of the locknuts) to each flange.\n\nLeft and Right are usually asymmetric due to cassette / disc rotor offset — measure each side independently.\n\nUnit: mm.",
+        "description": "The horizontal distance from the hub's centre plane (centreline of the locknuts) to each flange.\n\nLeft and Right are usually asymmetric due to cassette / disc rotor offset — measure each side independently.\n\nUnit: mm.",
         "ariaLabel": "Help for Flange Distance",
         "diagram": {
-          "hubCenter": "hub center"
+          "hubCenter": "hub centre"
         }
       },
       "spokeHoleDiameter": {
         "title": "Spoke Hole Diameter",
-        "description": "The diameter of the spoke holes on the hub flange. Used to correct the spoke length so the spoke reaches across the hole rather than its center.\n\nTypically around 2.5 mm for standard hubs.\n\nUnit: mm.",
+        "description": "The diameter of the spoke holes on the hub flange. Used to correct the spoke length so the spoke reaches across the hole rather than its centre.\n\nTypically around 2.5 mm for standard hubs.\n\nUnit: mm.",
         "ariaLabel": "Help for Spoke Hole Diameter",
         "diagram": {
           "holeDiameter": "hole Ø",

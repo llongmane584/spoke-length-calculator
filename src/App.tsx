@@ -1463,7 +1463,7 @@ const SpokeLengthCalculator: React.FC = () => {
       results: currentResults,
       timestamp: new Date().toISOString(),
       metadata: {
-        calculator: 'Bicycle Spoke Length Calculator',
+        calculator: 'Bicycle Spoke Calculator',
         version: '1.0'
       }
     };
@@ -1576,7 +1576,7 @@ const SpokeLengthCalculator: React.FC = () => {
                 aria-label={t('language.label')}
                 className={languageSelectClass}
               >
-                <option value="en">English</option>
+                <option value="en-GB">English</option>
                 <option value="ja">日本語</option>
               </select>
               {!supportsBaseSelect && (

@@ -1,9 +1,9 @@
 {
   "id": ".",
-  "name": "Spoke Length Calculator",
-  "short_name": "Spoke Length",
+  "name": "Spoke Calculator",
+  "short_name": "Spoke Calculator",
   "description": "Calculate bicycle spoke lengths for wheel building.",
-  "lang": "en",
+  "lang": "en-GB",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
