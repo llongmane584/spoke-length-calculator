@@ -47,11 +47,31 @@ export const supportsBaseSelect =
  * タッチだと何も起きない (Chrome 151 で確認)。素の
  * `appearance: base-select` だけを持つ select でも再現するので、
  * このアプリの CSS・マークアップ・画面幅とは無関係なブラウザ側の穴。
- * ピッカーが画面を覆うモバイルでは「閉じる手段がない」——
- * 消すためだけに適当な項目を選ばされる —— という詰みとして出る。
  *
  * pointerdown の既定動作を止めるとポップオーバーの light-dismiss が走り、
  * トリガーを叩いても素直に閉じるようになる。
+ *
+ * ここまでが効くのは Chrome だけ。WebKit では空振りする
+ * (Playwright の WebKit 26.5 + iPhone 15 で実測。実 Safari ではない):
+ *
+ * - 再タップの pointerdown は届き `preventDefault()` も通る (document で
+ *   拾った defaultPrevented が true) が、ピッカーは開いたまま。
+ *   「既定動作の抑止 → light-dismiss」という連鎖を WebKit は持たない。
+ * - 代わりに足せる経路も無い。`hidePicker()` 相当は存在せず
+ *   ('hidePicker' in HTMLSelectElement.prototype は Chrome も WebKit も false)、
+ *   `blur()` は効かず (開いている間 activeElement は既に option)、
+ *   touchstart の抑止も空振り、mousedown はタッチでは発火しない。
+ *
+ * だから WebKit 向けの分岐は入れていない。合成キーイベントのような
+ * 「閉じたように見せる」手も入れない。WebKit で閉じる手段はピッカーの外を
+ * タップすることと Escape (どちらも実測)。その「外」を残しているのが
+ * index.css の ::picker(select) の max-height なので、あれを緩めると
+ * WebKit では本当に閉じられなくなる。
+ *
+ * base-select 非対応のブラウザ (iOS 18.7 の実機など) には、supportsBaseSelect の
+ * 分岐でこのハンドラがそもそも付かない。そこに出るのは OS のネイティブメニューで、
+ * 位置も閉出も OS のもの —— トリガーに重なって再タップできないのも、
+ * アプリからは動かせないそちら側の話 (#88 / #91)。
  *
  * ポインタの種類では分けない。閉じるという結果は変わらず、
  * 「マウスなら大丈夫」を前提にした分岐は入力手段が混ざる端末
@@ -61,7 +81,7 @@ export const supportsBaseSelect =
  * ピッカーの中身は select の子なので、イベントはここまで上がってくる。
  * optgroup の見出しとピッカーの余白も同じくここへ来る (前者は optgroup、
  * 後者は select が target) が、こちらは止めても閉じない —— light-dismiss は
- * ピッカーの外を叩いたときだけ走るため。実測で確認済み。
+ * ピッカーの外を叩いたときだけ走るため。Chrome で実測して確認済み。
  */
 export const dismissOpenPicker = (event: PointerEvent<HTMLSelectElement>) => {
   if ((event.target as Element).closest('option') !== null) return;
