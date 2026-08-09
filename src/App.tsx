@@ -1,5 +1,20 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Save, Trash2, FileJson, FileUp, Sun, Moon, TriangleAlert, ChevronDown, X } from 'lucide-react';
+import {
+  ArrowLeftRight,
+  ChevronDown,
+  Circle,
+  FileJson,
+  FileUp,
+  Moon,
+  Save,
+  SlidersHorizontal,
+  Sun,
+  Tag,
+  Trash2,
+  TriangleAlert,
+  Waypoints,
+  X,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from './hooks/useToast';
 import { useTheme } from './hooks/useTheme';
@@ -7,6 +22,7 @@ import { useDockMorph } from './hooks/useDockMorph';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { HelpButton } from './components/HelpButton';
 import { HelpModal, type HelpTopic } from './components/HelpModal';
+import { MtbHubIcon } from './components/icons/MtbHubIcon';
 import CompareWheels, { type WheelOption } from './components/CompareWheels';
 import { SegmentedControl, type SegmentedOption } from './components/SegmentedControl';
 import { btnPrimary, btnSecondary, btnGhost, nativeSelect, selectChevron } from './styles';
@@ -768,18 +784,25 @@ const RadialHint: React.FC = () => {
 // so a long unwrappable label can never push the form wider than its container.
 const FieldGroup: React.FC<{
   label: string;
+  icon: React.ReactNode;
   withRule?: boolean;
   children: React.ReactNode;
-}> = ({ label, withRule = true, children }) => (
+}> = ({ label, icon, withRule = true, children }) => (
   <div className={withRule ? 'border-t border-line pt-6' : undefined}>
     <fieldset className="min-w-0">
       <legend className="mb-3 text-sm font-semibold text-fg">
-        {label}
+        <span className="flex items-center gap-2">
+          {icon}
+          {label}
+        </span>
       </legend>
       <div className="space-y-4">{children}</div>
     </fieldset>
   </div>
 );
+
+const sectionHeading = 'mb-3 flex items-center gap-2 text-sm font-semibold text-fg';
+const sectionHeadingIcon = 'h-4 w-4 shrink-0 text-accent';
 
 // Regular number input component
 interface NumberInputProps {
@@ -1378,18 +1401,6 @@ const SpokeLengthCalculator: React.FC = () => {
             {titleText}
           </h1>
           <div className="flex items-center gap-3">
-            <button
-              onClick={toggleTheme}
-              className={btnGhost}
-              title={t('theme.toggle')}
-              aria-label={t('theme.toggle')}
-            >
-              {theme === 'dark' ? (
-                <Sun className="w-5 h-5" aria-hidden="true" />
-              ) : (
-                <Moon className="w-5 h-5" aria-hidden="true" />
-              )}
-            </button>
             {/* 選択肢が English / 日本語 と自明なのでアイコンは置かない。
                 そのぶんアクセシブル名は aria-label で与える。 */}
             <div className="relative">
@@ -1404,6 +1415,18 @@ const SpokeLengthCalculator: React.FC = () => {
               </select>
               <ChevronDown aria-hidden="true" className={`${selectChevron} right-2.5`} />
             </div>
+            <button
+              onClick={toggleTheme}
+              className={btnGhost}
+              title={t('theme.toggle')}
+              aria-label={t('theme.toggle')}
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-5 h-5" aria-hidden="true" />
+              ) : (
+                <Moon className="w-5 h-5" aria-hidden="true" />
+              )}
+            </button>
           </div>
         </header>
 
@@ -1423,9 +1446,13 @@ const SpokeLengthCalculator: React.FC = () => {
             {/* Preset selection - only show if presets exist */}
             {presetOptions.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-fg-muted mb-1.5">{t('input.preset')}</label>
+                <label htmlFor="preset" className={sectionHeading}>
+                  <SlidersHorizontal aria-hidden="true" className={sectionHeadingIcon} />
+                  {t('input.preset')}
+                </label>
                 <div className="relative">
                   <select
+                    id="preset"
                     value={selectedPreset}
                     onChange={(e) => loadPreset(e.target.value)}
                     className={nativeSelect}
@@ -1443,7 +1470,11 @@ const SpokeLengthCalculator: React.FC = () => {
             )}
 
             {/* Without the preset block above, this rule would double up with the h2 border */}
-            <FieldGroup label={t('input.group.rim')} withRule={presetOptions.length > 0}>
+            <FieldGroup
+              label={t('input.group.rim')}
+              icon={<Circle aria-hidden="true" className={sectionHeadingIcon} />}
+              withRule={presetOptions.length > 0}
+            >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center gap-1 mb-1">
@@ -1489,7 +1520,10 @@ const SpokeLengthCalculator: React.FC = () => {
               </div>
             </FieldGroup>
 
-            <FieldGroup label={t('input.group.hub')}>
+            <FieldGroup
+              label={t('input.group.hub')}
+              icon={<MtbHubIcon aria-hidden="true" className={sectionHeadingIcon} />}
+            >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center gap-1 mb-1">
@@ -1594,7 +1628,10 @@ const SpokeLengthCalculator: React.FC = () => {
               </div>
             </FieldGroup>
 
-            <FieldGroup label={t('input.group.lacing')}>
+            <FieldGroup
+              label={t('input.group.lacing')}
+              icon={<Waypoints aria-hidden="true" className={sectionHeadingIcon} />}
+            >
               <div>
                 {/* label ではなく span + aria-labelledby。radiogroup は単一の
                     フォームコントロールではないので label/for では結びつかない。
@@ -1673,8 +1710,12 @@ const SpokeLengthCalculator: React.FC = () => {
         {/* Save and export */}
         <div className="space-y-4 border-t border-line p-5 sm:p-6">
           <div>
-            <label className="block text-sm font-medium text-fg-muted mb-1.5">{t('results.calculationName')}</label>
+            <label htmlFor="calculationName" className={sectionHeading}>
+              <Tag aria-hidden="true" className={sectionHeadingIcon} />
+              {t('results.calculationName')}
+            </label>
             <input
+              id="calculationName"
               type="text"
               value={calculationName}
               onChange={(e) => setCalculationName(e.target.value)}
@@ -1766,7 +1807,10 @@ const SpokeLengthCalculator: React.FC = () => {
               aria-controls="compare-panel"
               className={`w-full min-h-11 flex items-center justify-between gap-3 px-5 sm:px-6 py-4 text-left text-lg font-semibold text-fg hover:bg-sunken transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${showCompare ? 'rounded-t-xl border-b border-line' : 'rounded-xl'}`}
             >
-              <span>{t('compare.toggle')}</span>
+              <span className="flex items-center gap-2">
+                <ArrowLeftRight aria-hidden="true" className="h-4 w-4 shrink-0 text-accent" />
+                {t('compare.toggle')}
+              </span>
               <ChevronDown
                 aria-hidden="true"
                 className={`shrink-0 h-4 w-4 text-fg-subtle transition-transform ${showCompare ? 'rotate-180' : ''}`}
