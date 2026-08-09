@@ -88,9 +88,9 @@ export function PresetSelect({
     : (isChip ? nativeSelectChip : nativeSelect);
 
   const select = (
-    // chip の枠は行の余りを埋めるだけ (flex-1 + 上限)。中身の長さに幅を決めさせない
-    // ので、何を選んでもチップの位置と大きさは初期状態のまま動かない。
-    <div className={isChip ? 'relative flex-1 min-w-0 max-w-64' : 'relative'}>
+    // chip の幅は見出し行の残り幅ではなくブレークポイントごとの固定値にする。
+    // 全体 / リム / ハブで隣の見出しが違っても揃い、選択名は内側で省略される。
+    <div className={isChip ? 'relative w-24 shrink-0 min-[375px]:w-36 sm:w-64' : 'relative'}>
       <select
         id={id}
         value={value}
