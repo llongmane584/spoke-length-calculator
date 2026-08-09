@@ -68,10 +68,16 @@ export const supportsBaseSelect =
  * index.css の ::picker(select) の max-height なので、あれを緩めると
  * WebKit では本当に閉じられなくなる。
  *
- * base-select 非対応のブラウザ (iOS 18.7 の実機など) には、supportsBaseSelect の
- * 分岐でこのハンドラがそもそも付かない。そこに出るのは OS のネイティブメニューで、
- * 位置も閉出も OS のもの —— トリガーに重なって再タップできないのも、
- * アプリからは動かせないそちら側の話 (#88 / #91)。
+ * base-select 非対応のブラウザには、supportsBaseSelect の分岐でこのハンドラが
+ * そもそも付かない。そこに出るのは OS のネイティブメニューで、位置も閉出も
+ * OS のもの —— トリガーに重なって再タップできないのも、アプリからは動かせない
+ * そちら側の話 (#88 / #91)。
+ *
+ * iOS Safari は 26.6 の実機でも `CSS.supports('appearance','base-select')` が
+ * false で、こちらの経路に落ちる (実機で実測)。Playwright の WebKit 26.5
+ * デスクトップビルドは true を返すので、あれを iOS の代用にはできない。
+ * なお同じ実機の UA は `CPU iPhone OS 18_7` と名乗る —— OS トークンは実際の
+ * バージョンと一致しない。判定は必ず CSS.supports で行うこと。
  *
  * ポインタの種類では分けない。閉じるという結果は変わらず、
  * 「マウスなら大丈夫」を前提にした分岐は入力手段が混ざる端末
