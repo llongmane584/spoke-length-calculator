@@ -1990,7 +1990,7 @@ const SpokeLengthCalculator: React.FC = () => {
               onClick={() => setShowCompare(prev => !prev)}
               aria-expanded={showCompare}
               aria-controls="compare-panel"
-              className={`w-full min-h-11 flex items-center justify-between gap-3 px-5 sm:px-6 py-4 text-left text-lg font-semibold text-fg hover:bg-sunken transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${showCompare ? 'rounded-t-xl border-b border-line' : 'rounded-xl'}`}
+              className={`w-full min-h-11 flex items-center justify-between gap-3 px-5 sm:px-6 py-4 text-left text-lg font-semibold text-fg hover:bg-sunken border-b transition-[background-color,border-color,border-radius] duration-200 ease-out motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${showCompare ? 'rounded-t-xl border-line' : 'rounded-xl border-transparent'}`}
             >
               <span className="flex items-center gap-2">
                 <ArrowLeftRight aria-hidden="true" className="h-4 w-4 shrink-0 text-accent" />
@@ -1998,24 +1998,47 @@ const SpokeLengthCalculator: React.FC = () => {
               </span>
               <ChevronDown
                 aria-hidden="true"
-                className={`shrink-0 h-4 w-4 text-fg-subtle transition-transform ${showCompare ? 'rotate-180' : ''}`}
+                className={`shrink-0 h-4 w-4 text-fg-subtle transition-transform duration-200 ease-out motion-reduce:transition-none ${showCompare ? 'rotate-180' : ''}`}
               />
             </button>
           </h2>
           {/* 区切りのハイラインはボタン側 (border-b) に置く。パネルに border-t を
-              持たせると fade-in-down の -8px にハイラインごと引きずられ、
-              開く瞬間だけ区切り線がヘッダ行の中を滑り降りて見える */}
-          {showCompare && (
-            <div id="compare-panel" className="p-5 sm:p-6 animate-fade-in-down">
-              <CompareWheels
-                options={wheelOptions}
-                selectedA={compareA}
-                selectedB={compareB}
-                onChangeA={setCompareA}
-                onChangeB={setCompareB}
-              />
+              持たせると畳み込みにハイラインごと引きずられ、開閉の瞬間だけ区切り線が
+              ヘッダ行の中を滑って見える。border-b は開閉で付け外しせず色だけ変える ——
+              1px の出入りでヘッダの高さがガタつくため。
+              パネルはアンマウントせず grid の 0fr/1fr で畳む。消してしまうと閉じる側に
+              トランジションが走らない (#95)。
+              **開く側だけ transition-none にしてあるのは意図的。** 下の
+              useLayoutEffect の scrollIntoView は呼んだ瞬間のスクロール可能範囲に
+              クランプされる。ここが最終要素でフッタが無いので、開くのをアニメにすると
+              まだ縮んだ文書に対してスクロール先が決まってしまい、伸びたパネルの下端が
+              折り返しの下に取り残される (1280x720 実測で 153px)。開く高さは即時に
+              確定させ、フェードだけ子側で見せる */}
+          <div
+            id="compare-panel"
+            className={`grid ${showCompare
+              ? 'grid-rows-[1fr] visible transition-none'
+              : 'grid-rows-[0fr] invisible transition-[grid-template-rows,visibility] duration-200 ease-out motion-reduce:transition-none'}`}
+          >
+            {/* クリップはこの内側だけ。外枠に overflow-hidden を付けられない理由は上記。
+                padding をここではなく子に置くのは、border-box では高さ 0 でも padding が
+                残り、0fr でも箱が開いたままになるため */}
+            <div className="min-h-0 overflow-hidden">
+              <div
+                className={`p-5 sm:p-6 transition-[opacity,translate] duration-200 ease-out motion-reduce:transition-none ${
+                  showCompare ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
+                }`}
+              >
+                <CompareWheels
+                  options={wheelOptions}
+                  selectedA={compareA}
+                  selectedB={compareB}
+                  onChangeA={setCompareA}
+                  onChangeB={setCompareB}
+                />
+              </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
 

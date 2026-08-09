@@ -104,20 +104,6 @@
      tnum の挙動が一貫しないが Inter は素直で、lang に関係なく桁が揃う。 */
   --font-sans: "Inter", "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
-
-  --animate-fade-in-down: fade-in-down 0.2s ease-out;
-
-  @keyframes fade-in-down {
-    0% {
-      opacity: 0;
-      transform: translateY(-8px);
-    }
-
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
 }
 
 .dark {
