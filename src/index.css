@@ -297,6 +297,10 @@
     background: var(--color-surface);
     box-shadow: 0 12px 32px -12px rgb(0 0 0 / 0.35);
     padding: 0.25rem;
+    /* この上限は見た目のためだけではない。WebKit にはトリガーの再タップで閉じる
+       経路が無く (styles.ts の dismissOpenPicker を参照)、閉じる手段が
+       「ピッカーの外をタップする」しか残らない。max-height を緩めて
+       ピッカーが画面を覆うと、その的ごと消えて閉じられなくなる。 */
     max-height: 20rem;
     overflow-y: auto;
     /* トップレイヤの要素なので、display と overlay も allow-discrete で繋がないと
