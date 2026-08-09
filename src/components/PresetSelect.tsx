@@ -44,7 +44,7 @@ interface PresetSelectProps {
 // 寸法の要約は子要素ではなく data 属性で渡し、CSS の ::after + attr() で描く。
 // <option> の中に <span> を置くと React の DOM ネスト検証に引っかかるうえ、
 // base-select 非対応のブラウザではテキストが連結されて 1 行に潰れる。
-// ::after なら畳んだ状態にも複製されないので、閉じたときは自動的に名前だけになる。
+// 畳んだ状態には item.name だけを出すので、要約は開いたときにしか現れない。
 const renderItems = (items: PresetSelectItem[]) => (
   items.map(item => (
     <option key={item.id} value={item.id} data-spec={item.spec}>
