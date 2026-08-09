@@ -1713,10 +1713,7 @@ const SpokeLengthCalculator: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-fg-muted">
-                      <span className="md:hidden">{t('input.pcdLeft')}</span>
-                      <span className="hidden md:block">{t('input.pcdLeft')}</span>
-                    </label>
+                    <label className="block text-sm font-medium text-fg-muted">{t('input.pcdLeft')}</label>
                     <HelpButton topic="pcd" onOpen={setHelpTopic} />
                   </div>
                   <NumberInput
@@ -1734,10 +1731,7 @@ const SpokeLengthCalculator: React.FC = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="block text-sm font-medium text-fg-muted">
-                      <span className="md:hidden">{t('input.pcdRight')}</span>
-                      <span className="hidden md:block">{t('input.pcdRight')}</span>
-                    </label>
+                    <label className="block text-sm font-medium text-fg-muted">{t('input.pcdRight')}</label>
                     <HelpButton topic="pcd" onOpen={setHelpTopic} />
                   </div>
                   <NumberInput
