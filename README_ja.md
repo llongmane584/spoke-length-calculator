@@ -63,7 +63,7 @@ pnpm lint
 
 ### OGP 画像の再生成
 
-`public/og-image.png` は SNS 共有用のカード画像 (1200×630)。ビルドで生成せずコミットして
+`public/og-image-2.png` は SNS 共有用のカード画像 (1200×630)。ビルドで生成せずコミットして
 いるので、カードのデザインを変えたときだけ再生成すればよい。ソースは
 [`og/og-card.html`](og/og-card.html) で、正確なコマンド列はそのファイル冒頭のコメントにある。
 グローバルの `playwright-cli` と、依存ゼロの静的サーバー [`og/serve.mjs`](og/serve.mjs) を使う。
