@@ -108,9 +108,8 @@
   "buttons": {
     "calculate": "Calculate",
     "save": "Save",
-    "jsonDisplay": "JSON Display",
-    "jsonShort": "JSON",
-    "loadJson": "Load JSON File",
+    "jsonExport": "Export JSON",
+    "jsonImport": "Import JSON",
     "load": "Load",
     "share": "Share",
     "copyToClipboard": "Copy to Clipboard",
@@ -126,7 +125,6 @@
     "placeholder": "Calculation results will be displayed here",
     "calculationName": "Calculation Name",
     "namePlaceholder": "Name your calculation for saving",
-    "namePlaceholderShort": "Save name",
     "savedCalculations": "Saved Calculations",
     "jsonOutput": "JSON Output"
   },
@@ -165,11 +163,16 @@
       "title": "Confirm Deletion",
       "message": "Are you sure you want to delete this saved calculation?"
     },
+    "save": {
+      "title": "Save Calculation",
+      "empty": "No saved calculations yet"
+    },
     "cancel": "Cancel",
     "confirm": "Delete"
   },
   "compare": {
     "toggle": "Compare Wheels",
+    "short": "Compare",
     "wheelA": "Current Wheel (spokes you have)",
     "wheelB": "New Wheel (spokes you need)",
     "placeholder": "Select a wheel",

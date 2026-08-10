@@ -29,6 +29,25 @@ export const btnGhost =
 export const btnDanger = `${btnBase} bg-danger text-on-danger hover:bg-danger-hover`;
 
 /**
+ * 計算結果の下に並ぶアクションバーの 1 つ。5 つを均等割りするので btnBase とは
+ * 別に持つ:
+ *
+ * - 横 padding を持たない (px-1)。幅は grid が決めるので、px-4 を残すと
+ *   375px 幅で中身のほうが先に潰れる
+ * - 5 つとも同格 (btnSecondary と同じ枠付き・塗りなし)。ここに主要動作の塗りを
+ *   混ぜない —— 主要動作は「1 画面に 1 つ」で、それは各ダイアログの中にある
+ * - relative は保存件数バッジの土台
+ *
+ * ラベルは狭い画面では sr-only にして隠す。aria-label で別に名前を与えるのでは
+ * なく同じ文字列を隠す —— 見えているラベルと読み上げ名が食い違わない。
+ */
+export const btnAction =
+  'relative inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-1 py-2 ' +
+  'border border-line-strong bg-surface text-xs font-medium text-fg transition-colors hover:bg-sunken ' +
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ' +
+  'disabled:cursor-not-allowed disabled:bg-sunken disabled:text-fg-subtle disabled:hover:bg-sunken';
+
+/**
  * CSS customizable select (`appearance: base-select`) が使えるか。
  * クラス文字列とマークアップの両方をこの 1 つの値で切り替える —— nativeSelect の
  * `appearance-none` は base-select を打ち消すので、CSS のカスケード順に賭けず

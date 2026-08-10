@@ -108,9 +108,8 @@
   "buttons": {
     "calculate": "計算実行",
     "save": "保存",
-    "jsonDisplay": "JSON表示",
-    "jsonShort": "JSON",
-    "loadJson": "JSONファイル読込",
+    "jsonExport": "JSON出力",
+    "jsonImport": "JSON入力",
     "load": "読込",
     "share": "共有",
     "copyToClipboard": "クリップボードにコピー",
@@ -126,7 +125,6 @@
     "placeholder": "計算結果がここに表示されます",
     "calculationName": "計算名",
     "namePlaceholder": "計算に名前を付けて保存",
-    "namePlaceholderShort": "計算に名前を付けて保存",
     "savedCalculations": "保存された計算",
     "jsonOutput": "JSON出力"
   },
@@ -165,11 +163,16 @@
       "title": "削除の確認",
       "message": "この保存された計算を削除してもよろしいですか？"
     },
+    "save": {
+      "title": "計算を保存",
+      "empty": "保存された計算はありません"
+    },
     "cancel": "キャンセル",
     "confirm": "削除"
   },
   "compare": {
     "toggle": "ホイールを比較",
+    "short": "比較",
     "wheelA": "現状ホイール（手持ちスポーク）",
     "wheelB": "交換後ホイール（必要なスポーク）",
     "placeholder": "ホイールを選択",

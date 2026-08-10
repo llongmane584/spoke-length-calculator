@@ -1,27 +1,24 @@
-import React, { useState, useEffect, useId, useLayoutEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useId, useMemo, useRef } from 'react';
 import {
-  ArrowLeftRight,
   ChevronDown,
   Circle,
   FileJson,
-  FileUp,
   Moon,
-  Save,
-  Share2,
   Sun,
-  Tag,
-  Trash2,
   TriangleAlert,
   Waypoints,
-  X,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from './hooks/useToast';
 import { useTheme } from './hooks/useTheme';
 import { useDockMorph } from './hooks/useDockMorph';
+import { ActionBar } from './components/ActionBar';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { HelpButton } from './components/HelpButton';
 import { HelpModal, type HelpTopic } from './components/HelpModal';
+import { InitialDataAlert } from './components/InitialDataAlert';
+import { Modal } from './components/Modal';
+import { SaveDialog } from './components/SaveDialog';
 import { MtbHubIcon } from './components/icons/MtbHubIcon';
 import CompareWheels, { type WheelOption } from './components/CompareWheels';
 import { SegmentedControl, type SegmentedOption } from './components/SegmentedControl';
@@ -33,7 +30,6 @@ import {
   customizableSelect,
   dismissOpenPicker,
   nativeSelect,
-  sectionHeading,
   sectionHeadingIcon,
   selectChevron,
   supportsBaseSelect,
@@ -706,25 +702,6 @@ const FieldWarning: React.FC<{ id: string; message: string }> = ({ id, message }
   </p>
 );
 
-interface InitialDataAlertProps {
-  message: string;
-  severity: Exclude<InitialDataLoadStatus, 'ok'>;
-}
-
-const InitialDataAlert: React.FC<InitialDataAlertProps> = ({ message, severity }) => (
-  <div
-    role="alert"
-    className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-sm ${
-      severity === 'error'
-        ? 'border-danger-line bg-danger-soft text-danger-ink'
-        : 'border-warn-line bg-warn-soft text-warn-ink'
-    }`}
-  >
-    <TriangleAlert aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
-    <span>{message}</span>
-  </div>
-);
-
 // 結果帯の 2 つの姿。--dock 0 が本来の姿、1 が簡易表示で、間はすべて線形補間。
 // 数値は現行の Tailwind クラスの実寸をそのまま px にしたもの:
 //   pad        … p-5 / p-6
@@ -755,16 +732,6 @@ const BAND_COMPACT = { pad: 10, headingLine: 0, headingGap: 0, gridMin: 26, labe
 // 見出しの文字サイズ (#59 の text-sm と同じ)。行高は headingLine / これ の比で持つので、
 // 箱の高さは文字サイズに比例して縮む —— 切り落とさずに畳めるのはこの比のおかげ。
 const BAND_HEADING_FONT = 14;
-
-// 共有ボタンの文字サイズ。見出しより一段小さくして、同じ行に居ながら主張しない。
-// 行高は見出しと同じく headingLine / これ の比で与えるので、箱は見出しと同じ
-// headingLine (20px) から 0 へ。つまり共有を足しても帯の高さは 1px も増えない。
-const BAND_SHARE_FONT = 12;
-
-// 共有ボタンの当たり判定を広げる量。padding とその符号違いの margin で、
-// 見た目と行の高さを変えずに押せる範囲だけを外へ出す (HelpButton の p-2 -m-2 と
-// 同じ作法)。20px の箱 + 8px × 2 で 36px 角の当たり判定になる。
-const BAND_SHARE_HIT_PAD = 8;
 
 // ラベルの行高。#59 はここを指定せず preflight の 1.5 を継承していたので、
 // 明示しても本来の姿の見た目は変わらない。文字サイズに比例することが要点で、
@@ -892,10 +859,8 @@ const ResultBand: React.FC<{
   placeholder: string;
   leftLabel: string;
   rightLabel: string;
-  shareLabel: string;
-  onShare: () => void;
   isCompactViewport: boolean;
-}> = ({ results, heading, placeholder, leftLabel, rightLabel, shareLabel, onShare, isCompactViewport }) => {
+}> = ({ results, heading, placeholder, leftLabel, rightLabel, isCompactViewport }) => {
   const { full, travel } = bandMetrics(isCompactViewport);
 
   return (
@@ -917,18 +882,15 @@ const ResultBand: React.FC<{
             : 'bg-overlay border-overlay-line',
         ].join(' ')}
       >
-        {/* 見出しの段。共有はここに右寄せで同居させる —— 帯は高さがそのまま変形量に
-            なる区画なので、操作のために独立した行を足すと、その分だけ本来の姿が高く
-            なり、着地までのスクロール距離まで伸びる。同じ段に入れれば増分は 0。
-            段の高さは今までどおり見出しの箱 (headingLine = 20px) が決める。共有ボタンも
-            同じ 20px の箱に収めてあるので、この flex 行の高さは片方だけのときと変わらない。
-            不透明度は段ごと落とす —— 見出しと共有は同時に消えてよい。 */}
+        {/* 見出しの段。高さは見出しの箱 (headingLine = 20px) が決める。
+            帯は高さがそのまま変形量になる区画なので、ここに行を足してはいけない ——
+            足したぶんだけ本来の姿が高くなり、着地までのスクロール距離まで伸びる。
+            共有ボタンはこの段に同居していたが、#102 で下のアクションバーへ移した。 */}
         <div
           style={{
             marginBottom: dockPx(full.headingGap, BAND_COMPACT.headingGap),
             opacity: dockFadeIn,
           }}
-          className="flex items-center justify-between gap-3"
         >
           {/* 見出しは畳むだけで消さない (max-height ではなく文字サイズを縮めるので
               読み上げ順からも外れない)。
@@ -948,27 +910,6 @@ const ResultBand: React.FC<{
           >
             {heading}
           </h2>
-          {/* 共有。見出しと同じ縮み方 (font-size と、それに比例する行高) をするので、
-              段の高さを 1px も増やさない。押せる範囲だけは padding と符号違いの margin で
-              外へ出す —— HelpButton の p-2 -m-2 と同じで、見た目も段の高さも変わらない。
-              どちらも --dock で 0 へ畳むので、簡易表示では跡形もなくなる。
-              ドック中は帯ごと pointer-events を切ってあるので押せないが、そのとき
-              画面には押す対象が見えていないので齟齬はない。 */}
-          <button
-            type="button"
-            onClick={onShare}
-            disabled={results === null}
-            style={{
-              fontSize: dockPx(BAND_SHARE_FONT, 0),
-              lineHeight: full.headingLine / BAND_SHARE_FONT,
-              padding: dockPx(BAND_SHARE_HIT_PAD, 0),
-              margin: dockPx(-BAND_SHARE_HIT_PAD, 0),
-            }}
-            className="inline-flex shrink-0 items-center gap-[0.35em] rounded-md font-medium text-fg-subtle transition-colors hover:text-accent-ink disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-fg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          >
-            <Share2 aria-hidden="true" className="h-[1.2em] w-[1.2em] shrink-0" />
-            {shareLabel}
-          </button>
         </div>
         <div
           style={{ minHeight: dockPx(full.gridMin, BAND_COMPACT.gridMin) }}
@@ -1255,7 +1196,9 @@ const SpokeLengthCalculator: React.FC = () => {
   const [calculationToDelete, setCalculationToDelete] = useState<number | null>(null);
   const [helpTopic, setHelpTopic] = useState<HelpTopic | null>(null);
   const [touchedFields, setTouchedFields] = useState<TouchedFields>({});
-  const compareSectionRef = useRef<HTMLDivElement>(null);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  // JSON 入力の file input。アクションバーのボタンから click() で開く
+  const fileInputRef = useRef<HTMLInputElement>(null);
   // 結果帯の直前の要素。帯は sticky で自分の位置から自分の状態を決められないので、
   // ドック度合いはこの下端 (= 帯の本来の上端) を測って決める
   const inputSectionRef = useRef<HTMLDivElement>(null);
@@ -1396,19 +1339,10 @@ const SpokeLengthCalculator: React.FC = () => {
   const titleText = t('title');
   const resultsLeftText = t(isCompactViewport ? 'results.leftShort' : 'results.left');
   const resultsRightText = t(isCompactViewport ? 'results.rightShort' : 'results.right');
-  const calculationNamePlaceholder = t(
-    isCompactViewport ? 'results.namePlaceholderShort' : 'results.namePlaceholder'
-  );
 
   const markFieldTouched = (field: InputField) => {
     setTouchedFields(prev => ({ ...prev, [field]: true }));
   };
-
-  useLayoutEffect(() => {
-    if (showCompare) {
-      compareSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [showCompare]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -1466,16 +1400,19 @@ const SpokeLengthCalculator: React.FC = () => {
     setTouchedFields(prev => ({ ...prev, [field]: true }));
   };
 
-  // Save calculation results
-  const saveCalculation = () => {
+  // Save calculation results.
+  // 保存できたかどうかを返す —— 呼び出し側 (保存ダイアログ) はこれを見て閉じる。
+  // 名前が空のときのように保存しなかった経路で閉じてしまうと、警告のトーストだけが
+  // 出てダイアログは消え、「保存された」と誤解させる
+  const saveCalculation = (): boolean => {
     if (!calculationName.trim()) {
       showToast(t('alerts.enterCalculationName'), 'warning');
-      return;
+      return false;
     }
 
     if (currentResults === null) {
       showToast(t('alerts.performCalculationFirst'), 'warning');
-      return;
+      return false;
     }
 
     const newCalculation: SavedCalculation = {
@@ -1492,19 +1429,40 @@ const SpokeLengthCalculator: React.FC = () => {
     } catch (error) {
       console.error('Failed to save calculation:', error);
       showToast(t('alerts.saveFailed'), 'error');
-      return;
+      return false;
     }
 
     setSavedCalculations(updated);
     setSavedDataLoadStatus('ok');
     setCalculationName('');
     showToast(t('alerts.saved'), 'success');
+
+    return true;
   };
 
   // Load saved calculation
   const loadCalculation = (calculation: SavedCalculation) => {
     setInputs(calculation.inputs);
     setTouchedFields(createTouchedFields(true));
+  };
+
+  // 保存ダイアログからの保存・読込。どちらも済んだらダイアログを閉じる ——
+  // 結果が反映されるのは背後の入力欄なので、開いたままでは何が起きたか見えない
+  const handleSaveRequest = () => {
+    if (saveCalculation()) {
+      setShowSaveDialog(false);
+    }
+  };
+
+  const handleLoadRequest = (id: number) => {
+    const calculation = savedCalculations.find(calc => calc.id === id);
+
+    if (calculation === undefined) {
+      return;
+    }
+
+    loadCalculation(calculation);
+    setShowSaveDialog(false);
   };
 
   // Load preset
@@ -2039,204 +1997,93 @@ const SpokeLengthCalculator: React.FC = () => {
           placeholder={t('results.placeholder')}
           leftLabel={resultsLeftText}
           rightLabel={resultsRightText}
-          shareLabel={t('buttons.share')}
-          onShare={shareCalculation}
           isCompactViewport={isCompactViewport}
         />
 
-        {/* Save and export */}
-        <div className="space-y-4 border-t border-line p-5 sm:p-6">
-          <div>
-            <label htmlFor="calculationName" className={sectionHeading}>
-              <Tag aria-hidden="true" className={sectionHeadingIcon} />
-              {t('results.calculationName')}
-            </label>
-            <input
-              id="calculationName"
-              type="text"
-              value={calculationName}
-              onChange={(e) => setCalculationName(e.target.value)}
-              className="w-full min-h-11 px-3 py-2 border border-line-strong rounded-md bg-surface text-fg placeholder:text-fg-subtle transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-              placeholder={calculationNamePlaceholder}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={saveCalculation}
-              disabled={!hasValidResults}
-              className={btnPrimary}
-            >
-              <Save className="w-4 h-4" aria-hidden="true" />
-              {t('buttons.save')}
+        {/* 計算結果に対してできることは、この 1 行にすべて集約する (#102)。
+            計算名の入力も保存済みの一覧も比較も、常設の区画は持たずダイアログ側へ
+            —— 帯の下に積み上がっていた縦の区画がボタン 1 行になる */}
+        <ActionBar
+          onShare={shareCalculation}
+          onSave={() => setShowSaveDialog(true)}
+          onExportJson={exportToJSON}
+          onImportJson={() => fileInputRef.current?.click()}
+          onCompare={() => setShowCompare(true)}
+          hasResults={hasValidResults}
+          savedCount={savedCalculations.length}
+        />
+        {/* JSON 入力の実体。バーのボタンから click() で開くので画面には出さない ——
+            file input は見た目を作れないので、以前は label + span を押させていた */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          onChange={loadFromJSON}
+          className="hidden"
+        />
+        </div>
+      </div>
+
+      {/* JSON 出力。中身は textarea 1 枚で、書き出し先はフッタの 2 つが決める */}
+      <Modal
+        isOpen={showJsonOutput}
+        onClose={() => setShowJsonOutput(false)}
+        title={t('results.jsonOutput')}
+        widthClass="max-w-2xl"
+        footer={
+          <>
+            <button onClick={() => setShowJsonOutput(false)} className={btnSecondary}>
+              {t('buttons.close')}
             </button>
-            <button
-              onClick={exportToJSON}
-              disabled={!hasValidResults}
-              className={btnSecondary}
-            >
+            <button onClick={copyToClipboard} className={btnSecondary}>
+              {t('buttons.copyToClipboard')}
+            </button>
+            <button onClick={downloadJSON} className={btnPrimary}>
               <FileJson className="w-4 h-4" aria-hidden="true" />
-              <span className="sm:hidden">{t('buttons.jsonShort')}</span>
-              <span className="hidden sm:inline">{t('buttons.jsonDisplay')}</span>
+              {t('buttons.downloadJson')}
             </button>
-          </div>
-          {/* Load JSON file */}
-          <label className="block">
-            <input
-              type="file"
-              accept=".json"
-              onChange={loadFromJSON}
-              className="hidden"
-            />
-            <span className={`${btnSecondary} w-full cursor-pointer`}>
-              <FileUp className="w-4 h-4" aria-hidden="true" />
-              {t('buttons.loadJson')}
-            </span>
-          </label>
+          </>
+        }
+      >
+        <textarea
+          value={jsonData}
+          readOnly
+          className="min-h-64 w-full flex-1 resize-none rounded-md border border-line-strong bg-sunken p-3 font-mono text-sm text-fg"
+        />
+      </Modal>
 
-          {/* List of saved calculations */}
-          {savedDataLoadStatus !== 'ok' && (
-            <InitialDataAlert
-              message={t('alerts.savedDataLoadFailed')}
-              severity={savedDataLoadStatus}
-            />
-          )}
+      {/* 保存 —— 計算名を付けて保存することと、保存済みを読む・消すことをまとめて持つ */}
+      <SaveDialog
+        isOpen={showSaveDialog}
+        onClose={() => setShowSaveDialog(false)}
+        name={calculationName}
+        onNameChange={setCalculationName}
+        onSave={handleSaveRequest}
+        savedCalculations={savedCalculations}
+        loadFailure={savedDataLoadStatus === 'ok' ? undefined : savedDataLoadStatus}
+        onLoad={handleLoadRequest}
+        onDelete={deleteCalculation}
+        leftLabel={resultsLeftText}
+        rightLabel={resultsRightText}
+      />
 
-          {savedCalculations.length > 0 && (
-            <div className="pt-2">
-              <h3 className="text-base font-semibold text-fg mb-3">{t('results.savedCalculations')}</h3>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {savedCalculations.map((calc) => (
-                  <div key={calc.id} className="border border-line bg-surface rounded-lg p-3 flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="font-medium text-fg">{calc.name}</p>
-                      <p className="text-xs tabular-nums text-fg-subtle">{calc.timestamp}</p>
-                      <p className="text-sm tabular-nums text-fg-muted">
-                        {resultsLeftText}: {calc.results.left !== null ? calc.results.left.toFixed(1) : '-'}mm / {resultsRightText}: {calc.results.right !== null ? calc.results.right.toFixed(1) : '-'}mm
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => loadCalculation(calc)}
-                        className={`${btnGhost} text-sm text-accent-ink hover:text-accent`}
-                      >
-                        {t('buttons.load')}
-                      </button>
-                      <button
-                        onClick={() => deleteCalculation(calc.id)}
-                        aria-label={t('dialog.confirm')}
-                        className={`${btnGhost} text-danger-ink hover:text-danger`}
-                      >
-                        <Trash2 className="w-4 h-4" aria-hidden="true" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* ホイール比較。選択は閉じても保持する (compareA / compareB は App が持つ) */}
+      <Modal
+        isOpen={showCompare}
+        onClose={() => setShowCompare(false)}
+        title={t('compare.toggle')}
+        widthClass="max-w-2xl"
+      >
+        <CompareWheels
+          options={wheelOptions}
+          selectedA={compareA}
+          selectedB={compareB}
+          onChangeA={setCompareA}
+          onChangeB={setCompareB}
+        />
+      </Modal>
 
-        {/* Wheel compare section
-            比較も入力シートと同じ作法 —— 外枠 1 枚、中はハイラインで区切る。
-            見出しはこのボタン 1 つだけ (パネル内に h2 を重ねると同じことを 2 回言う)。
-            overflow-hidden は付けない: ボタンの focus ring が outline-offset-2 で
-            枠の外に出るため、クリップすると可視フォーカスが消える */}
-        <div ref={compareSectionRef} className="mt-8 rounded-xl border border-line bg-surface">
-          {/* APG の disclosure —— 見出しの中にボタン。input.heading と同格の h2 */}
-          <h2>
-            <button
-              onClick={() => setShowCompare(prev => !prev)}
-              aria-expanded={showCompare}
-              aria-controls="compare-panel"
-              className={`w-full min-h-11 flex items-center justify-between gap-3 px-5 sm:px-6 py-4 text-left text-lg font-semibold text-fg hover:bg-sunken border-b transition-[background-color,border-color,border-radius] duration-200 ease-out motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${showCompare ? 'rounded-t-xl border-line' : 'rounded-xl border-transparent'}`}
-            >
-              <span className="flex items-center gap-2">
-                <ArrowLeftRight aria-hidden="true" className="h-4 w-4 shrink-0 text-accent" />
-                {t('compare.toggle')}
-              </span>
-              <ChevronDown
-                aria-hidden="true"
-                className={`shrink-0 h-4 w-4 text-fg-subtle transition-transform duration-200 ease-out motion-reduce:transition-none ${showCompare ? 'rotate-180' : ''}`}
-              />
-            </button>
-          </h2>
-          {/* 区切りのハイラインはボタン側 (border-b) に置く。パネルに border-t を
-              持たせると畳み込みにハイラインごと引きずられ、開閉の瞬間だけ区切り線が
-              ヘッダ行の中を滑って見える。border-b は開閉で付け外しせず色だけ変える ——
-              1px の出入りでヘッダの高さがガタつくため。
-              パネルはアンマウントせず grid の 0fr/1fr で畳む。消してしまうと閉じる側に
-              トランジションが走らない (#95)。
-              **開く側だけ transition-none にしてあるのは意図的。** 下の
-              useLayoutEffect の scrollIntoView は呼んだ瞬間のスクロール可能範囲に
-              クランプされる。ここが最終要素でフッタが無いので、開くのをアニメにすると
-              まだ縮んだ文書に対してスクロール先が決まってしまい、伸びたパネルの下端が
-              折り返しの下に取り残される (1280x720 実測で 153px)。開く高さは即時に
-              確定させ、フェードだけ子側で見せる */}
-          <div
-            id="compare-panel"
-            className={`grid ${showCompare
-              ? 'grid-rows-[1fr] visible transition-none'
-              : 'grid-rows-[0fr] invisible transition-[grid-template-rows,visibility] duration-200 ease-out motion-reduce:transition-none'}`}
-          >
-            {/* クリップはこの内側だけ。外枠に overflow-hidden を付けられない理由は上記。
-                padding をここではなく子に置くのは、border-box では高さ 0 でも padding が
-                残り、0fr でも箱が開いたままになるため */}
-            <div className="min-h-0 overflow-hidden">
-              <div
-                className={`p-5 sm:p-6 transition-[opacity,translate] duration-200 ease-out motion-reduce:transition-none ${
-                  showCompare ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
-                }`}
-              >
-                <CompareWheels
-                  options={wheelOptions}
-                  selectedA={compareA}
-                  selectedB={compareB}
-                  onChangeA={setCompareA}
-                  onChangeB={setCompareB}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* JSON data display modal */}
-      {showJsonOutput && (
-        <div className="fixed inset-0 bg-scrim flex items-center justify-center z-50 p-4">
-          <div className="bg-surface border border-line rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-fg">{t('results.jsonOutput')}</h3>
-              <button
-                onClick={() => setShowJsonOutput(false)}
-                aria-label={t('buttons.close')}
-                className={btnGhost}
-              >
-                <X className="w-5 h-5" aria-hidden="true" />
-              </button>
-            </div>
-            <textarea
-              value={jsonData}
-              readOnly
-              className="w-full flex-1 min-h-64 p-3 border border-line-strong rounded-md text-sm font-mono bg-sunken text-fg resize-none mb-4"
-            />
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <button onClick={copyToClipboard} className={`${btnSecondary} w-full sm:w-auto`}>
-                {t('buttons.copyToClipboard')}
-              </button>
-              <button onClick={downloadJSON} className={`${btnPrimary} w-full sm:w-auto`}>
-                <FileJson className="w-4 h-4" aria-hidden="true" />
-                {t('buttons.downloadJson')}
-              </button>
-              <button onClick={() => setShowJsonOutput(false)} className={`${btnSecondary} w-full sm:w-auto`}>
-                {t('buttons.close')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete confirmation dialog */}
+      {/* 削除確認。保存ダイアログの上に開く */}
       <ConfirmDialog
         isOpen={showDeleteConfirm}
         onConfirm={confirmDelete}
