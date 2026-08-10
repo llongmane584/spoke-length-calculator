@@ -132,7 +132,8 @@ const CompareWheels: React.FC<Props> = ({ options, selectedA, selectedB, onChang
   );
 };
 
-// 畳んでいる間もマウントされたままなので (App の compare-panel を参照)、入力欄を
-// 打つたびに親が再描画されるとここも巻き添えになる。props はどれも参照が安定して
-// いる (options は useMemo、onChange は setState そのもの) ので memo で素通しできる。
+// #102 でダイアログの中に入ったので、閉じている間はマウントもされない。それでも
+// memo を外さないのは、開いている間の親の再描画 (トースト、ビューポート幅の変化) を
+// ここまで下ろさないため。props はどれも参照が安定している (options は useMemo、
+// onChange は setState そのもの) ので素通しできる。
 export default memo(CompareWheels);
