@@ -5,6 +5,11 @@
 //
 // fragment (`#...`) を使うのはサーバーに何も足さないため。クエリ文字列と違って
 // 静的配信でもリクエストに乗らず、既存の GitHub Pages / PWA 構成のまま動く。
+//
+// ただし fragment はハッシュルーターとの共有地になった (#118)。そこで共有ペイロードは
+// ルート配下の search として `#/?v=1&...` の形で載せる —— ルーターから見れば
+// pathname が `/`、search が `?v=1&...` なので、計算機の画面にそのまま着地する。
+// 読み取り側は `?` の無い旧形式 (`#v=1&...`) も受ける (下の shareQuery)。
 
 /**
  * 共有 URL の形式のバージョン。
@@ -61,6 +66,28 @@ export const buildShareFragment = (values: Record<string, string>): string => {
 };
 
 /**
+ * 共有 URL が着地するルート。計算機の画面。
+ * ハッシュルーターは fragment を「パス [?search]」として読むので、ペイロードの前に
+ * これを置かないとどのルートにも当たらない。
+ */
+const SHARE_ROUTE = '/';
+
+/**
+ * fragment から共有ペイロード (URLSearchParams の文字列) だけを取り出す。
+ * 先頭の `#` と、その後ろのルート部分を落とす。
+ *
+ * `?` が無ければ全体をペイロードとして扱う —— ルーター導入前 (#118 以前) に配った
+ * `#v=1&...` 形式の URL を殺さないため。`#/about` のようなただのルートは
+ * `v` を持たないので、下の hasShareFragment / parseShareFragment が弾く。
+ */
+const shareQuery = (fragment: string): string => {
+  const raw = fragment.startsWith('#') ? fragment.slice(1) : fragment;
+  const queryStart = raw.indexOf('?');
+
+  return queryStart === -1 ? raw : raw.slice(queryStart + 1);
+};
+
+/**
  * 現在の URL の fragment だけを共有用に差し替える。
  * origin / pathname / search は保持する —— base が `/spoke-length-calculator/` の
  * サブパス配信なので、組み立て直すと配置場所を二重に持つことになる。
@@ -68,9 +95,27 @@ export const buildShareFragment = (values: Record<string, string>): string => {
 export const buildShareUrl = (currentUrl: string, values: Record<string, string>): string => {
   const url = new URL(currentUrl);
 
-  url.hash = buildShareFragment(values);
+  url.hash = `${SHARE_ROUTE}?${buildShareFragment(values)}`;
 
   return url.toString();
+};
+
+/**
+ * 旧形式の共有 fragment を新形式に直したものを返す。直す必要が無ければ null。
+ *
+ * 旧形式 (`#v=1&...`) はハッシュルーターから見るとパスなので、そのままでは
+ * どのルートにも当たらず「見つかりません」に落ちる。読み込み時に一度だけ
+ * 書き換えて計算機に着地させる。中身は落とさないので、書き換え後の URL を
+ * 再読み込みしても共有内容は残る。
+ */
+export const routedShareFragment = (fragment: string): string | null => {
+  const raw = fragment.startsWith('#') ? fragment.slice(1) : fragment;
+
+  if (raw.startsWith(SHARE_ROUTE) || !hasShareFragment(raw)) {
+    return null;
+  }
+
+  return `#${SHARE_ROUTE}?${raw}`;
 };
 
 /**
@@ -84,7 +129,7 @@ export const buildShareUrl = (currentUrl: string, values: Record<string, string>
  * 付いていても (SNS の計測パラメータなど) 復元できたほうがよい。
  */
 export const parseShareFragment = (fragment: string): Record<string, string> | null => {
-  const raw = fragment.startsWith('#') ? fragment.slice(1) : fragment;
+  const raw = shareQuery(fragment);
 
   if (raw === '') {
     return null;
@@ -117,7 +162,7 @@ export const parseShareFragment = (fragment: string): Record<string, string> | n
  * 共有と無関係な場面 (`#` 無し、ページ内リンクなど) を区別するために使う。
  */
 export const hasShareFragment = (fragment: string): boolean => {
-  const raw = fragment.startsWith('#') ? fragment.slice(1) : fragment;
+  const raw = shareQuery(fragment);
 
   return raw !== '' && new URLSearchParams(raw).has(VERSION_KEY);
 };

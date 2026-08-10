@@ -8,6 +8,7 @@ import {
   buildShareUrl,
   hasShareFragment,
   parseShareFragment,
+  routedShareFragment,
 } from './shareLink.ts';
 
 const sampleInputs: Record<string, string> = {
@@ -93,6 +94,53 @@ test('rejects an empty or unrelated fragment', () => {
   assert.equal(parseShareFragment('#section-erd'), null);
 });
 
+// ハッシュルーターが同じ fragment を使うので、ルートを名乗るだけの fragment を
+// 共有 URL と取り違えないことを固定しておく。取り違えると「共有リンクが読めません」の
+// 警告がページを開くたびに出る。
+test('rejects a fragment that only names a route', () => {
+  for (const fragment of ['#/', '#/about', '#/changelog/2026', '#/?tab=1']) {
+    assert.equal(parseShareFragment(fragment), null, `${fragment} is not a share link`);
+    assert.equal(hasShareFragment(fragment), false, `${fragment} is not a share link`);
+  }
+});
+
+test('reads the payload out of the route fragment it now writes', () => {
+  const shared = buildShareUrl('https://llongmane584.github.io/spoke-length-calculator/', sampleInputs);
+  const { hash } = new URL(shared);
+
+  assert.equal(hash.startsWith('#/?'), true, `expected a routed fragment, got ${hash}`);
+  assert.equal(hasShareFragment(hash), true);
+  assert.deepEqual(parseShareFragment(hash), sampleInputs);
+});
+
+// #118 でルーターを入れる前に配った URL は `#v=1&...` の形をしている。読めなくなると
+// 共有された側が黙って初期状態で起動するので、旧形式のまま読めることを固定しておく。
+test('still reads a share fragment from before the router', () => {
+  const legacy = `#${buildShareFragment(sampleInputs)}`;
+
+  assert.equal(hasShareFragment(legacy), true);
+  assert.deepEqual(parseShareFragment(legacy), sampleInputs);
+});
+
+test('moves a pre-router fragment onto the calculator route', () => {
+  const legacy = `#${buildShareFragment(sampleInputs)}`;
+  const routed = routedShareFragment(legacy);
+
+  assert.notEqual(routed, null);
+  assert.equal(routed?.startsWith('#/?'), true);
+  assert.deepEqual(parseShareFragment(routed ?? ''), sampleInputs);
+});
+
+test('leaves a fragment alone when there is nothing to move', () => {
+  // すでに新形式
+  assert.equal(routedShareFragment(`#/?${buildShareFragment(sampleInputs)}`), null);
+  // 共有 URL ではない
+  assert.equal(routedShareFragment('#/about'), null);
+  assert.equal(routedShareFragment('#section-erd'), null);
+  assert.equal(routedShareFragment('#'), null);
+  assert.equal(routedShareFragment(''), null);
+});
+
 test('ignores unknown parameters so added ones do not break older clients', () => {
   const fragment = `${buildShareFragment(sampleInputs)}&utm_source=chat`;
 
@@ -131,6 +179,7 @@ test('replaces only the fragment of the current URL', () => {
   assert.equal(url.origin, 'https://llongmane584.github.io');
   assert.equal(url.pathname, '/spoke-length-calculator/');
   assert.equal(url.search, '?lang=ja');
+  assert.equal(url.hash, `#/?${buildShareFragment(sampleInputs)}`);
   assert.deepEqual(parseShareFragment(url.hash), sampleInputs);
 });
 

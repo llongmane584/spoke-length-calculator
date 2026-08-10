@@ -216,3 +216,23 @@ export const sectionHeadingIcon = 'h-4 w-4 shrink-0 text-accent';
 
 /** グループの中に置くフィールドラベル。見出しと張り合わないよう一段弱くする。 */
 export const fieldLabel = 'mb-1 block text-sm font-medium text-fg-muted';
+
+// 本文中のリンク。#118 の情報ページで初めて必要になった。
+//
+// 下線は消さない —— 色だけで区別すると WCAG 1.4.1 (色に頼らない) に落ちる。本文の
+// text-fg に対して accent-ink は明るさが近く、ダークでもライトでも色差だけでは弱い。
+// rounded-sm はフォーカスリングのため。下線付きの文字列に角の無いリングが付くと、
+// 文字の下端とリングの下辺が重なって二重線に見える。
+export const link =
+  'rounded-sm text-accent-ink underline decoration-1 underline-offset-2 ' +
+  'transition-colors hover:text-accent-hover ' +
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus';
+
+// メニュードロワーの 1 行。行そのものがリンクなので、44 の当たり判定 (min-h-11) を持たせる。
+//
+// -mx-3 のリストに置く前提。全幅の区切り線付きの行 (-mx-5) にはしない ——
+// ドロワーの本文は overflow-y-auto で、overflow-y を付けると overflow-x も auto に
+// なるため、枠の縁に置いた行の outline-offset-2 が切られる。
+export const menuRow =
+  'flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-base font-medium ' +
+  'transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus';

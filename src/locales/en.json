@@ -190,5 +190,69 @@
     "allNew": "No spokes can be reused — full replacement required.",
     "note": "* Reuse is based on length only (±1 mm tolerance). Spoke gauge and fatigue are not considered.",
     "selectBoth": "Select both wheels to see the suggestion."
+  },
+  "menu": {
+    "title": "Menu",
+    "close": "Close",
+    "language": "Language",
+    "theme": "Theme",
+    "version": "Version {{version}}"
+  },
+  "pages": {
+    "backToApp": "Back to the calculator",
+    "notFound": {
+      "title": "Page not found",
+      "body": "There is nothing at this address. The link may be out of date or mistyped."
+    },
+    "about": {
+      "title": "About this app",
+      "body": "A web application for (as accurately as possible) calculating the spoke lengths required for bicycle wheel building. Lengths come from common formulas combining the cosine rule (planar) and Pythagoras' theorem (3D).\n\nIt assumes 12 mm nipples. If you want to be strictly accurate, you need to account for the rim's inner wall thickness and the nipple length, so please modify the tool if you care about those details.\n\nEach parameter is based on what can be entered from the Hope Pro 5 specification document. If the calculations from this tool don't work out, please don't complain to the author — improve it yourself.\n\nMost of the code in this project was created with Claude Code. It is distributed under the MIT License."
+    },
+    "usage": {
+      "title": "How to use",
+      "intro": "Enter the rim and hub dimensions and the spoke lengths for both sides follow along.",
+      "steps": {
+        "input": {
+          "title": "Enter basic information",
+          "body": "Enter the rim and hub dimensions, then select the number of spokes and the lacing pattern.\nTo use a preset, the chip beside the \"Input Values\" heading fills a whole wheel, and the chips beside the Rim and Hub headings fill just that section."
+        },
+        "result": {
+          "title": "Read the result",
+          "body": "Spoke lengths for both sides update live as you type. There is no Calculate button."
+        },
+        "save": {
+          "title": "Save results",
+          "body": "Save a calculation under a name of your choice. Saved data can be recalled later."
+        },
+        "share": {
+          "title": "Share the inputs",
+          "body": "\"Share\", on the Calculation Results heading row, builds a URL carrying the current input conditions. Devices with a share sheet open it; elsewhere the link is copied to the clipboard.\nOnly the inputs travel in the URL — results and saved data do not."
+        },
+        "manage": {
+          "title": "Manage your data",
+          "body": "Export the calculation data as a JSON file and import it back. Saved data can also be deleted."
+        }
+      }
+    },
+    "license": {
+      "title": "License",
+      "intro": "This application is distributed under the MIT License.",
+      "thirdParty": "Third-party notices"
+    },
+    "changelog": {
+      "title": "Changelog",
+      "latest": "Latest change",
+      "viewAll": "All changes",
+      "allTitle": "All changes",
+      "yearTitle": "Changes in {{year}}",
+      "yearsHeading": "By year",
+      "backToChangelog": "Back to the changelog",
+      "empty": "There are no changes recorded for this year.",
+      "releases": {
+        "v0_1_0": {
+          "notes": "First release.\nSpoke length calculation, with hub and rim presets to fill the form.\nSaving and reloading results, plus JSON export and import.\nSharing the input conditions by URL, and comparing two wheels.\nEnglish and Japanese, with light and dark themes."
+        }
+      }
+    }
   }
 }

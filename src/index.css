@@ -209,6 +209,24 @@
   }
 }
 
+/* ドロワーは常時 DOM に置き、data-state の切替だけで開閉する。スライド距離は
+   パネル幅いっぱいだが、親の描画領域でクリップするので、画面の右端から出てくる
+   ようには見えない。バックドロップは透明のままで、左右の余白は暗くならない。 */
+.drawer-panel-motion {
+  transform: translateX(100%);
+  transition: transform 240ms linear;
+}
+
+.drawer-panel-motion[data-state='open'] {
+  transform: translateX(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer-panel-motion {
+    transition: none;
+  }
+}
+
 /* CSS customizable select。ネイティブ <select> の意味論・キーボード操作・
    スクリーンリーダ・モバイルの UI をそのまま保ったまま、ポップアップの中身だけを
    自前で描く。独自コンボボックスを書かずに済むので ARIA を手で組む必要がない

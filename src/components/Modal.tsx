@@ -1,20 +1,8 @@
-import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { useId, useRef, type ReactNode, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
+import { useDialogLayer } from '../hooks/useDialogLayer'
 import { btnGhost, btnIcon } from '../styles'
-
-// 開いているダイアログの重なり順。入れ子 (保存ダイアログの上に削除確認) のために要る。
-//
-// - 重ね順 … 後から開いたものを上に出す。DOM の並び順に賭けない —— 並びは JSX の
-//   都合で変わるが、どちらが上かは「どちらを後に開いたか」で決まるべきもの。
-// - Escape … 一番上の 1 枚だけが閉じる。document の keydown は登録順に走るので、
-//   自分が最前面かを見ないと、下に隠れている 1 枚まで一緒に閉じてしまう。
-//
-// 実体は開いている間だけ積まれる token の配列。閉じるときに自分のぶんだけ抜く。
-const openDialogs: symbol[] = []
-
-const BASE_Z = 50
-const Z_STEP = 10
 
 interface ModalProps {
   isOpen: boolean
@@ -49,62 +37,19 @@ export function Modal({
 }: ModalProps) {
   const { t } = useTranslation()
   const titleId = useId()
-  const dialogRef = useRef<HTMLDivElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
-  const [depth, setDepth] = useState(0)
-
-  useEffect(() => {
-    if (!isOpen) return
-
-    const token = Symbol('dialog')
-    openDialogs.push(token)
-    setDepth(openDialogs.length - 1)
-
-    const focusTarget = initialFocusRef?.current ?? closeButtonRef.current ?? dialogRef.current
-    focusTarget?.focus()
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // 最前面でなければ何もしない。下の 1 枚が上の 1 枚の代わりに反応しないため
-      if (openDialogs[openDialogs.length - 1] !== token) return
-
-      if (event.key === 'Escape') {
-        onClose()
-        return
-      }
-
-      if (event.key !== 'Tab' || dialogRef.current === null) return
-
-      // disabled を除くのが要点。保存ボタンは結果が無い間 disabled なので、
-      // 含めると Tab が「フォーカスできない要素」へ送られて輪が途切れる
-      const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), ' +
-        'textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      )
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault()
-        last?.focus()
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault()
-        first?.focus()
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-      openDialogs.splice(openDialogs.indexOf(token), 1)
-    }
-  }, [isOpen, onClose, initialFocusRef])
+  // 落としどころの既定は見出しの ×。showClose が false のときは current が null なので、
+  // フックがそのまま本体へ落とす。
+  // 選ぶのは ref オブジェクトであって .current ではない —— 渡した ref の中身が null でも
+  // × には戻らず本体へ落ちる。現在の呼び出し側は × を出さないときだけ null になるので
+  // 差は出ないが、null になり得る ref を渡すときはここを踏まえること。
+  const { dialogRef, zIndex } = useDialogLayer(isOpen, onClose, initialFocusRef ?? closeButtonRef)
 
   if (!isOpen) return null
 
   return (
     <div
-      style={{ zIndex: BASE_Z + depth * Z_STEP }}
+      style={{ zIndex }}
       className="fixed inset-0 flex items-center justify-center bg-scrim p-4"
       onClick={onClose}
     >

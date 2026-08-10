@@ -34,6 +34,8 @@ Most of the code in this project was created with [Claude Code](https://claude.a
 - **Manage saved data**: View and delete saved calculation results
 - **JSON export/import**: Backup and share calculation data
 - **Share inputs by URL**: Turn the current inputs into a link that opens with the same conditions
+- **Menu drawer**: The hamburger in the top right leads to About / How to use / License / Changelog.
+  A right-side drawer on desktop, a full-screen cover on phones, with the version number at the bottom
 - **Responsive design**: Compatible from smartphones to desktop
 
 ## Tech Stack
@@ -42,6 +44,9 @@ Most of the code in this project was created with [Claude Code](https://claude.a
 - **Vite**: Fast development server and build tool
 - **Tailwind CSS v4**: Utility-first CSS framework, configured CSS-first in `src/index.css`
 - **Lucide React**: Icon library
+- **React Router**: Routing for the information pages. Hash routing (`#/about`) means direct links
+  and reloads work on GitHub Pages without a 404 fallback. Share URLs ride in the search part under
+  the route (`#/?v=1&…`); pre-router `#v=1&…` links are still read
 
 ## Setup
 
@@ -104,11 +109,14 @@ text renders in Inter rather than a fallback face.
 ```
 /spoke-length-calculator/
 ├── src/
-│   ├── App.tsx                    # Main application component
-│   ├── main.tsx                   # Entry point
+│   ├── App.tsx                    # Shell: header, routes and the menu drawer
+│   ├── main.tsx                   # Entry point (HashRouter lives here)
 │   ├── index.css                  # Tailwind v4 entry + design tokens
-│   ├── styles.ts                  # Shared button / select class strings
+│   ├── styles.ts                  # Shared button / select / link class strings
 │   ├── i18n.ts                    # Internationalisation configuration
+│   ├── changelog.ts               # Version number and the changelog skeleton
+│   ├── changelog.test.ts          # Changelog / version consistency tests
+│   ├── locales.test.ts            # Keeps en.json and ja.json structurally identical
 │   ├── rimOffset.ts               # Rim offset logic
 │   ├── rimOffset.test.ts          # Rim offset unit tests
 │   ├── partPresets.ts             # Hub / rim part preset loading and matching
@@ -116,23 +124,44 @@ text renders in Inter rather than a fallback face.
 │   ├── shareLink.ts               # Puts the inputs in a URL fragment and reads them back
 │   ├── shareLink.test.ts          # Share link unit tests
 │   ├── spokeCompare.ts            # Wheel comparison logic
+│   ├── thirdPartyNotices.test.ts  # Keeps the shipped Lucide notice in sync
 │   ├── vite-env.d.ts              # Vite environment types
 │   ├── assets/                    # Static assets
 │   │   └── react.svg
+│   ├── pages/                     # One component per route
+│   │   ├── CalculatorPage.tsx     # The calculator itself
+│   │   ├── AboutPage.tsx          # About this app
+│   │   ├── UsagePage.tsx          # How to use
+│   │   ├── LicensePage.tsx        # Renders the repository LICENSE verbatim
+│   │   ├── ChangelogPage.tsx      # Latest entry + link to all changes
+│   │   ├── ChangelogAllPage.tsx   # Newest year, with links to the others
+│   │   ├── ChangelogYearPage.tsx  # A single year
+│   │   └── NotFoundPage.tsx       # Unknown hash route
 │   ├── components/                # Reusable components
+│   │   ├── AppHeader.tsx          # Title + hamburger
+│   │   ├── AppDrawer.tsx          # Menu drawer (nav, language, theme, version)
+│   │   ├── PageShell.tsx          # Shared frame for the information pages
+│   │   ├── ChangelogSections.tsx  # Entry list and year navigation
+│   │   ├── ActionBar.tsx          # Action row under the results
 │   │   ├── CompareWheels.tsx      # Wheel comparison panel
 │   │   ├── ConfirmDialog.tsx      # Confirmation dialog
 │   │   ├── HelpButton.tsx         # Inline help trigger
 │   │   ├── HelpModal.tsx          # Help modal with SVG diagrams
+│   │   ├── InitialDataAlert.tsx   # Warning / error banner
+│   │   ├── Modal.tsx              # Generic dialog (focus trap, Escape, stacking)
 │   │   ├── PresetSelect.tsx       # Preset picker (CSS customisable select)
+│   │   ├── SaveDialog.tsx         # Save and manage stored calculations
 │   │   ├── SegmentedControl.tsx   # Segmented radio group
-│   │   └── Toast.tsx              # Toast notification component
+│   │   ├── Toast.tsx              # Toast notification component
+│   │   └── icons/MtbHubIcon.tsx   # Custom Lucide-shaped icon
 │   ├── contexts/                  # React contexts
 │   │   ├── ThemeContext.tsx       # Theme context implementation
 │   │   ├── themeContextValue.ts
 │   │   ├── ToastContext.tsx       # Toast context implementation
 │   │   └── ToastContextDefinition.ts
 │   ├── hooks/                     # Custom React hooks
+│   │   ├── useDialogLayer.ts      # Stacking, Escape and focus trap for overlays
+│   │   ├── useDockMorph.ts        # Writes --dock for the docking result band
 │   │   ├── useTheme.ts            # Theme hook
 │   │   └── useToast.ts            # Toast hook
 │   ├── locales/                   # Translation files
