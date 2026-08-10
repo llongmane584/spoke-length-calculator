@@ -25,8 +25,9 @@ export default function App() {
 
   // 閉じたらフォーカスをハンバーガーへ戻す。戻さないと行き先が body になり、
   // 続きの Tab がページの先頭からやり直しになる。
-  // useCallback なのは useDialogLayer の効果が onClose を deps に持つため ——
-  // 毎レンダリングで別の関数を渡すと、登録と初期フォーカスをやり直し続ける。
+  // useDialogLayer も「開く前にフォーカスがあった要素」へ返すが、あちらは活性要素頼み
+  // ——ボタンをクリックしてもフォーカスを与えないブラウザがあるので、行き先が確実に
+  // 分かっているここでは ref で名指しする。
   const closeMenu = useCallback(() => {
     setIsMenuOpen(false)
     menuButtonRef.current?.focus()

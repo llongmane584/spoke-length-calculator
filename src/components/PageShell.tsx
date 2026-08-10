@@ -1,7 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 
 // 情報ページの共通枠。戻る道と見出しと、遷移したときの読み上げ位置の面倒を見る。
 //
@@ -23,15 +23,19 @@ interface PageShellProps {
 
 export function PageShell({ title, children, back }: PageShellProps) {
   const { t } = useTranslation()
+  const { pathname } = useLocation()
   const headingRef = useRef<HTMLHeadingElement>(null)
 
   // ハッシュが変わっただけではスクロール位置も読み上げ位置も動かないので、自分で移す。
-  // マウント時の一度でよい —— ページごとに別のコンポーネントなので、遷移すれば必ず
-  // 新しくマウントされる。
+  //
+  // deps がマウント時の [] ではなく pathname なのは、遷移しても新しくマウントされるとは
+  // 限らないため —— /changelog/:year は年が変わっても同じ位置の同じコンポーネントなので、
+  // React は作り直さずに更新する。年のピルはページの最下部にあるので、[] のままだと
+  // 一覧を読み下げて別の年を押した利用者が最下部に取り残され、選んだ年は画面の上に流れる。
   useEffect(() => {
     window.scrollTo(0, 0)
     headingRef.current?.focus()
-  }, [])
+  }, [pathname])
 
   // 履歴に残る名前と、タブに出る名前。deps に t を入れるのは言語を切り替えたときに
   // 追従させるため。計算機にいるときのぶんは App が持つ (両方が書くと、子の効果が

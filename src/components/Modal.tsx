@@ -39,7 +39,10 @@ export function Modal({
   const titleId = useId()
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   // 落としどころの既定は見出しの ×。showClose が false のときは current が null なので、
-  // フックがそのまま本体へ落とす (以前ここに書いていた三段の ?? と同じ順序)。
+  // フックがそのまま本体へ落とす。
+  // 選ぶのは ref オブジェクトであって .current ではない —— 渡した ref の中身が null でも
+  // × には戻らず本体へ落ちる。現在の呼び出し側は × を出さないときだけ null になるので
+  // 差は出ないが、null になり得る ref を渡すときはここを踏まえること。
   const { dialogRef, zIndex } = useDialogLayer(isOpen, onClose, initialFocusRef ?? closeButtonRef)
 
   if (!isOpen) return null
