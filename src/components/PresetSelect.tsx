@@ -1,5 +1,5 @@
 import { ChevronDown } from 'lucide-react';
-import { Fragment } from 'react';
+import { Fragment, useLayoutEffect, useRef } from 'react';
 
 import {
   customizableSelect,
@@ -76,11 +76,55 @@ export function PresetSelect({
     ? placeholder
     : groups.flatMap(group => group.items).find(item => item.id === value)?.name ?? placeholder;
 
+  const selectRef = useRef<HTMLSelectElement>(null);
+  const selectedLabelRef = useRef<HTMLSpanElement | null>(null);
+
+  /* 畳んだ状態を自分で組む。省略するとブラウザが同等のボタンを起こすが、それは author 側の
+     CSS から掴めず、長いプリセット名がチップからはみ出しても省略記号にできない。自前で
+     置けば min-width:0 と text-overflow を効かせられる (見た目は index.css 側)。
+
+     中身はブラウザ任せの <selectedcontent> ではなく自分で描く。あれは選択中の option を
+     複製する要素で、複製が走るのは挿入時と選択が変わったときだけ —— 選択はそのままで
+     option のテキストだけが変わる言語切替では、旧言語の複製が残る (#87 で実測済み)。
+
+     組み立てを JSX に書かず DOM API で行うのは、React の DOM ネスト検証が customizable
+     select を知らないため。<select> の子として通るのは hr / option / optgroup / script /
+     template / テキストだけで、<button> も <selectedcontent> も警告になる (#120)。React に
+     描かせなければ検証を通らずに済み、出来上がる DOM は JSX で書いたときと同じ。
+
+     React が持つ最初の子は常にプレースホルダの <option value=""> なので、option が増減
+     しても React の挿入は insertBefore(プレースホルダ) になり、prepend したこのボタンは
+     先頭に残る。 */
+  useLayoutEffect(() => {
+    const select = selectRef.current;
+    if (!supportsBaseSelect || select === null) return;
+
+    const button = document.createElement('button');
+    const span = document.createElement('span');
+    button.appendChild(span);
+    select.prepend(button);
+    selectedLabelRef.current = span;
+
+    return () => {
+      button.remove();
+      selectedLabelRef.current = null;
+    };
+  }, []);
+
+  // 文字だけを差し替える。useEffect ではなく useLayoutEffect なのは、初回ペイントの前に
+  // 入れるため (上の生成より後に宣言してあるので、初回でも span は既に在る)。
+  useLayoutEffect(() => {
+    if (selectedLabelRef.current !== null) {
+      selectedLabelRef.current.textContent = selectedLabel;
+    }
+  }, [selectedLabel]);
+
   const select = (
     // chip の幅は見出し行の残り幅ではなくブレークポイントごとの固定値にする。
     // 全体 / リム / ハブで隣の見出しが違っても揃い、選択名は内側で省略される。
     <div className={isChip ? 'relative w-32 shrink-0 min-[375px]:w-40 sm:w-64' : 'relative'}>
       <select
+        ref={selectRef}
         id={id}
         value={value}
         onChange={event => onSelect(event.target.value)}
@@ -88,24 +132,7 @@ export function PresetSelect({
         aria-label={isChip ? label : undefined}
         className={selectClass}
       >
-        {/* 畳んだ状態を自分で組む。省略するとブラウザが同等のボタンを起こすが、
-            それは author 側の CSS から掴めず、長いプリセット名がチップから
-            はみ出しても省略記号にできない。自前で置けば min-width:0 と
-            text-overflow を効かせられる。
-
-            中身はブラウザ任せの <selectedcontent> ではなく自分で描く。あれは
-            選択中の option を複製する要素で、複製が走るのは挿入時と選択が
-            変わったときだけ —— 選択はそのままで option のテキストだけが
-            変わる言語切替では、旧言語の複製が残る (実測済み)。
-
-            なお React の DOM ネスト検証は <select> の子に <button> を許さず、
-            開発ビルドで警告を 1 本出す (customizable select がまだ React 側に
-            反映されていないため)。本番ビルドでは出ず、SSR もしていないので実害はない。 */}
-        {supportsBaseSelect && (
-          <button>
-            <span>{selectedLabel}</span>
-          </button>
-        )}
+        {/* 畳んだ状態のボタンはここには無い。上の useLayoutEffect が先頭へ挿す。 */}
         {/* プレースホルダを disabled にしてはいけない。'' は初期状態でも手編集後でも
             起きる常態で、disabled な option は選択対象にならないため、ブラウザが
             代わりに先頭の項目を選んでしまう (入力欄が空なのに部品名が出る)。 */}
