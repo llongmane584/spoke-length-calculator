@@ -307,6 +307,12 @@
        ピッカーが画面を覆うと、その的ごと消えて閉じられなくなる。 */
     max-height: 20rem;
     overflow-y: auto;
+    /* 横幅も画面で頭打ちにする。option を折り返せるようにしただけでは幅は縮まない
+       —— ピッカーの幅はいちばん長い項目の max-content で決まり、UA は画面幅に
+       合わせて縮めてくれない (Chromium 151 で実測)。上の max-height が守っている
+       「ピッカーの外を叩いて閉じる的」は上下の余白のことなので、こちらとは独立。
+       box-sizing は UA 既定が border-box なので書かない。 */
+    max-inline-size: calc(100vw - 1.5rem);
     /* トップレイヤの要素なので、display と overlay も allow-discrete で繋がないと
        閉じるアニメーションが再生されずに消える。 */
     opacity: 0;
@@ -331,6 +337,20 @@
     }
   }
 
+  /* 2 段組みの項目を持つピッカーには幅の下限も与える。上限だけだと、チップの真下の
+     狭い枠 (320px で 141px) に収まってしまい、1 項目が何行にも割れる (同 132px)。
+     下限を入れると 296px 幅・75px 高で収まる。
+
+     `option[data-spec]` で絞るのは、AppDrawer の言語切替が同じ preset-select クラスを
+     共有しているため。あちらは 1 段の短い項目 2 つだけで、下限を当てるとポップアップが
+     無意味に大きくなる。
+
+     UA 既定の下限 anchor-size(self-inline) を上書きすることになるが、data-spec を持つのは
+     チップ変種だけで、その最大幅は sm:w-64 = 256px < 20rem。狭くなる経路は無い。 */
+  .preset-select:has(option[data-spec])::picker(select) {
+    min-inline-size: min(20rem, calc(100vw - 1.5rem));
+  }
+
   .preset-select optgroup {
     padding: 0.5rem 0.5rem 0.25rem;
     font-size: 0.75rem;
@@ -340,13 +360,22 @@
 
   /* ✓ は絶対配置にして本文のフローから外す。グリッドで列に分けると、素のテキストだけの
      option (言語切替やホイール比較) が無名アイテムになって ✓ の列へ落ちてしまう。
-     左の padding が ✓ のぶんの座席。 */
+     左の padding が ✓ のぶんの座席。
+
+     white-space を上書きするのは、option の UA 既定が nowrap だから。そのままだと
+     長いプリセット名が 1 行に居座り、ピッカーごと画面の外へ出る (#122)。デスクトップで
+     再現しないのは余裕が僅かに残っているだけで、幅 360px の実測で右端まで 5px しかない
+     —— 実機の字送りや端末のフォント倍率、ユーザーが保存した長い名前でそれは埋まる。
+     行数の上限は設けない。名前を省略せず全部読ませるのがこのピッカーの主旨。
+     overflow-wrap は、区切りの無い長い型番が 1 語のまま枠を越えないための保険。 */
   .preset-select option {
     position: relative;
     display: block;
     padding: 0.5rem 0.5rem 0.5rem 1.75rem;
     border-radius: 0.5rem;
     color: var(--color-fg);
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .preset-select option:hover,
