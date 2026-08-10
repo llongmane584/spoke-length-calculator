@@ -7,6 +7,7 @@ import {
   FileUp,
   Moon,
   Save,
+  Share2,
   Sun,
   Tag,
   Trash2,
@@ -46,6 +47,7 @@ import {
   type MatchablePreset,
   type PartPresetOption,
 } from './partPresets';
+import { buildShareUrl, hasShareFragment, parseShareFragment } from './shareLink';
 
 // Dynamic import of preset data
 // `*` は `/` をまたがないので、この glob は下の hubs/ rims/ を拾わない。
@@ -581,6 +583,65 @@ const loadSavedCalculations = (): SavedCalculationsLoadResult => {
     };
   }
 };
+
+// 何も共有されていないときの入力値。共有 URL の復元に失敗したときの着地点でもある。
+const DEFAULT_INPUTS: Inputs = {
+  erd: '',
+  rimOffset: '0',
+  pitchCircleLeft: '',
+  pitchCircleRight: '',
+  flangeDistanceLeft: '',
+  flangeDistanceRight: '',
+  spokeHoleDiameter: '2.6', // Hope Pro 5 value as default (author's personal preference)
+  numberOfSpokes: '32', // Generally 32 spokes is common
+  crossingsLeft: '3', // 3-cross is also typical
+  crossingsRight: '3', // 3-cross is also typical
+};
+
+type SharedInputsLoadResult =
+  | { status: 'none' }
+  | { status: 'invalid' }
+  | { status: 'ok'; inputs: Inputs };
+
+// 共有 URL の fragment から入力値を復元する。
+//
+// 検証は専用のものを書かず、保存データや JSON 読み込みと同じ normalizeInputs →
+// getCalculationState を通す。共有 URL は計算結果が出ているときにしか作れないので、
+// 計算できない値が入っているなら途中で壊れたということ —— 読める欄だけ拾って
+// 「それらしく」起動すると、共有した側とされた側で別の条件を見ることになる。
+// だから部分採用はせず、全部捨てて通常の初期状態に落とす。
+//
+// URL は書き換えない。読み込み時に fragment を消すと再読み込みで共有内容が失われ、
+// 逆に入力のたびに書き足すと issue #98 の「通常操作中は URL を更新しない」に反する。
+const loadSharedInputs = (): SharedInputsLoadResult => {
+  if (typeof window === 'undefined') {
+    return { status: 'none' };
+  }
+
+  const fragment = window.location.hash;
+
+  // 共有 URL を名乗っていない fragment (ページ内リンクなど) は黙って無視する。
+  // 逆に名乗っているものは、読めなければ利用者に伝える必要がある (下の invalid)。
+  if (!hasShareFragment(fragment)) {
+    return { status: 'none' };
+  }
+
+  const values = parseShareFragment(fragment);
+
+  if (values === null) {
+    return { status: 'invalid' };
+  }
+
+  const normalizedInputs = normalizeInputs(values);
+
+  if (normalizedInputs === null || getCalculationState(normalizedInputs).results === null) {
+    return { status: 'invalid' };
+  }
+
+  return { status: 'ok', inputs: normalizedInputs };
+};
+
+const INITIAL_SHARED_INPUTS = loadSharedInputs();
 
 const PRESET_LOAD_RESULT = loadPresetOptions();
 // ハブ / リム単体のプリセット。全体プリセットと違い 10 項目すべては持たないので
@@ -1129,18 +1190,9 @@ const SpokeLengthCalculator: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const crossingSegments = useCrossingSegments();
   const [isCompactViewport, setIsCompactViewport] = useState(getIsCompactViewport);
-  const [inputs, setInputs] = useState<Inputs>({
-    erd: '',
-    rimOffset: '0',
-    pitchCircleLeft: '',
-    pitchCircleRight: '',
-    flangeDistanceLeft: '',
-    flangeDistanceRight: '',
-    spokeHoleDiameter: '2.6', // Hope Pro 5 value as default (author's personal preference)
-    numberOfSpokes: '32', // Generally 32 spokes is common,
-    crossingsLeft: '3', // 3-cross is also typical
-    crossingsRight: '3' // 3-cross is also typical
-  });
+  const [inputs, setInputs] = useState<Inputs>(
+    INITIAL_SHARED_INPUTS.status === 'ok' ? INITIAL_SHARED_INPUTS.inputs : DEFAULT_INPUTS,
+  );
 
   const presetOptions = PRESET_LOAD_RESULT.options;
   const hubPresetOptions = HUB_PRESET_LOAD_RESULT.options;
@@ -1331,6 +1383,22 @@ const SpokeLengthCalculator: React.FC = () => {
     };
   }, []);
 
+  // 共有 URL を名乗る fragment を読めなかったことを伝える。画面は通常の初期状態
+  // そのもので、見ただけでは何も起きていないように見える —— 黙っていると
+  // 「相手が送った条件を見ている」と思い込んだまま作業してしまう。
+  //
+  // 起動時の一度きり。StrictMode の二重実行でトーストが 2 枚出ないよう ref で止める。
+  const sharedInputsAlertShownRef = useRef(false);
+
+  useEffect(() => {
+    if (INITIAL_SHARED_INPUTS.status !== 'invalid' || sharedInputsAlertShownRef.current) {
+      return;
+    }
+
+    sharedInputsAlertShownRef.current = true;
+    showToast(t('alerts.shareLinkInvalid'), 'warning');
+  }, [showToast, t]);
+
   // Language switch handler
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang);
@@ -1449,6 +1517,50 @@ const SpokeLengthCalculator: React.FC = () => {
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
     setCalculationToDelete(null);
+  };
+
+  // 今の入力条件を共有する。
+  //
+  // 生成するのはこの操作のときだけで、入力のたびに URL を書き換えることはしない ——
+  // 履歴が入力の打鍵で埋まるし、戻るボタンの意味も壊れる。
+  //
+  // navigator.share() が使える環境では OS の共有シートに任せる。使えない、または
+  // シートが開けなかったときだけクリップボードへ落とす。利用者が共有シートを
+  // 閉じたとき (AbortError) は失敗ではないので、黙って何もしない ——
+  // ここでクリップボードに落とすと、やめたはずの操作が済んだことになってしまう。
+  const shareCalculation = async () => {
+    if (currentResults === null) {
+      showToast(t('alerts.performCalculationFirst'), 'warning');
+      return;
+    }
+
+    const shareUrl = buildShareUrl(window.location.href, inputs);
+
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title: t('title'), url: shareUrl });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+
+        console.error('Failed to open the share sheet:', error);
+      }
+    }
+
+    if (!navigator.clipboard) {
+      showToast(t('alerts.shareLinkCopyFailed'), 'error');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast(t('alerts.shareLinkCopied'), 'success');
+    } catch (error) {
+      console.error('Failed to copy the share link:', error);
+      showToast(t('alerts.shareLinkCopyFailed'), 'error');
+    }
   };
 
   // JSON export
@@ -1887,6 +1999,20 @@ const SpokeLengthCalculator: React.FC = () => {
 
         {/* Save and export */}
         <div className="space-y-4 border-t border-line p-5 sm:p-6">
+          {/* 共有は結果に対する操作なので、保存名より前 —— 結果帯の直下に置く。
+              帯そのものの中には入れない: 帯の高さは BAND_FULL_* / BAND_COMPACT の
+              px 定数でドック変形の一次性を保っており (#58〜#62)、min-h-11 のボタンを
+              足すとその前提が崩れて着地位置がずれる。
+              主要動作は保存なので secondary。無効化の条件も保存と同じ hasValidResults
+              で、正しい計算結果が出ていないリンクは作れない。 */}
+          <button
+            onClick={shareCalculation}
+            disabled={!hasValidResults}
+            className={`${btnSecondary} w-full`}
+          >
+            <Share2 className="w-4 h-4" aria-hidden="true" />
+            {t('buttons.share')}
+          </button>
           <div>
             <label htmlFor="calculationName" className={sectionHeading}>
               <Tag aria-hidden="true" className={sectionHeadingIcon} />

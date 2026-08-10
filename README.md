@@ -33,6 +33,7 @@ Most of the code in this project was created with [Claude Code](https://claude.a
 - **Save calculation results**: Save with custom names to local storage
 - **Manage saved data**: View and delete saved calculation results
 - **JSON export/import**: Backup and share calculation data
+- **Share inputs by URL**: Turn the current inputs into a link that opens with the same conditions
 - **Responsive design**: Compatible from smartphones to desktop
 
 ## Tech Stack
@@ -87,7 +88,13 @@ text renders in Inter rather than a fallback face.
    - Save calculation results with custom names
    - Saved data can be recalled later
 
-4. **Data management**
+4. **Share the inputs**
+   - "Share These Inputs" builds a URL that carries the current input conditions
+   - Devices with a share sheet open it; elsewhere the link is copied to the clipboard
+   - Opening the URL starts with the same inputs (a link that cannot be read starts normally)
+   - Only the inputs travel in the URL — results and saved data do not
+
+5. **Data management**
    - Export as JSON file
    - Import from JSON file
    - Delete saved data
@@ -106,6 +113,8 @@ text renders in Inter rather than a fallback face.
 │   ├── rimOffset.test.ts          # Rim offset unit tests
 │   ├── partPresets.ts             # Hub / rim part preset loading and matching
 │   ├── presetData.test.ts         # Keeps whole-wheel presets in sync with the parts
+│   ├── shareLink.ts               # Puts the inputs in a URL fragment and reads them back
+│   ├── shareLink.test.ts          # Share link unit tests
 │   ├── spokeCompare.ts            # Wheel comparison logic
 │   ├── vite-env.d.ts              # Vite environment types
 │   ├── assets/                    # Static assets

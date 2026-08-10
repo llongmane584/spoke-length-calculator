@@ -112,6 +112,7 @@
     "jsonShort": "JSON",
     "loadJson": "Load JSON File",
     "load": "Load",
+    "share": "Share These Inputs",
     "copyToClipboard": "Copy to Clipboard",
     "downloadJson": "Download JSON",
     "close": "Close"
@@ -144,6 +145,9 @@
     "invalidJsonFormat": "Invalid JSON file format",
     "jsonLoadFailed": "Failed to load JSON file",
     "jsonDownloaded": "JSON file downloaded successfully",
+    "shareLinkCopied": "Share link copied to clipboard",
+    "shareLinkCopyFailed": "Could not copy the share link",
+    "shareLinkInvalid": "Could not read the inputs from the share link. Starting from the usual initial state",
     "savedDataLoadFailed": "Some saved data could not be loaded",
     "presetLoadError": "Failed to load some preset files. Check console for details.",
     "presetValidationError": "Preset data validation error: {{details}}"

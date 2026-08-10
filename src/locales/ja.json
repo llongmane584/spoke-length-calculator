@@ -112,6 +112,7 @@
     "jsonShort": "JSON",
     "loadJson": "JSONファイル読込",
     "load": "読込",
+    "share": "この条件を共有",
     "copyToClipboard": "クリップボードにコピー",
     "downloadJson": "JSONダウンロード",
     "close": "閉じる"
@@ -144,6 +145,9 @@
     "invalidJsonFormat": "無効なJSONファイル形式です",
     "jsonLoadFailed": "JSONファイルの読み込みに失敗しました",
     "jsonDownloaded": "JSONファイルのダウンロードが完了しました",
+    "shareLinkCopied": "共有リンクをクリップボードにコピーしました",
+    "shareLinkCopyFailed": "共有リンクをコピーできませんでした",
+    "shareLinkInvalid": "共有リンクの入力条件を読み込めませんでした。通常の初期状態で開始します",
     "savedDataLoadFailed": "保存データの一部を読み込めませんでした",
     "presetLoadError": "一部のプリセットファイルの読み込みに失敗しました。詳細はコンソールを確認してください。",
     "presetValidationError": "プリセットデータの検証エラー: {{details}}"
