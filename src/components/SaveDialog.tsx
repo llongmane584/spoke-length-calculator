@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useId, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Trash2 } from 'lucide-react'
 import { Modal } from './Modal'
@@ -22,6 +22,8 @@ interface SaveDialogProps {
   name: string
   onNameChange: (name: string) => void
   onSave: () => void
+  /** 保存できるか (= 有効な計算結果があるか)。false の間は保存欄だけを閉ざす。 */
+  canSave: boolean
   savedCalculations: SavedCalculationItem[]
   /** 起動時に保存データを読み切れなかったときだけ渡す。 */
   loadFailure?: 'warning' | 'error'
@@ -38,6 +40,9 @@ const formatLength = (value: number | null): string =>
  * 保存に関する全機能をここに集約する (#102)。計算名を付けて保存することと、
  * 保存済みを読み込む・削除することは同じ引き出しの中身なので、常設の区画を
  * 2 つに分けず 1 枚のダイアログにまとめている。
+ *
+ * 開く条件は「保存できること」ではなく「保存できるか保存済みがあるか」。結果が
+ * 無い状態で開いたときは保存欄だけを閉ざし、読み込み・削除はそのまま使える。
  */
 export const SaveDialog: React.FC<SaveDialogProps> = ({
   isOpen,
@@ -45,6 +50,7 @@ export const SaveDialog: React.FC<SaveDialogProps> = ({
   name,
   onNameChange,
   onSave,
+  canSave,
   savedCalculations,
   loadFailure,
   onLoad,
@@ -54,6 +60,7 @@ export const SaveDialog: React.FC<SaveDialogProps> = ({
 }) => {
   const { t } = useTranslation()
   const nameInputRef = useRef<HTMLInputElement>(null)
+  const noResultsId = useId()
 
   return (
     <Modal
@@ -61,7 +68,9 @@ export const SaveDialog: React.FC<SaveDialogProps> = ({
       onClose={onClose}
       title={t('dialog.save.title')}
       widthClass="max-w-lg"
-      initialFocusRef={nameInputRef}
+      // 名前欄が disabled のときは Modal の既定 (× ボタン) に任せる ——
+      // フォーカスできない要素を指すと開いた直後の行き先が消える
+      initialFocusRef={canSave ? nameInputRef : undefined}
     >
       <div className="space-y-6">
         {/* form にしておくと、名前を打った流れのまま Enter で保存できる */}
@@ -83,10 +92,19 @@ export const SaveDialog: React.FC<SaveDialogProps> = ({
               value={name}
               onChange={(e) => onNameChange(e.target.value)}
               placeholder={t('results.namePlaceholder')}
-              className="w-full min-h-11 rounded-md border border-line-strong bg-surface px-3 py-2 text-fg transition-colors placeholder:text-fg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              disabled={!canSave}
+              aria-describedby={canSave ? undefined : noResultsId}
+              className="w-full min-h-11 rounded-md border border-line-strong bg-surface px-3 py-2 text-fg transition-colors placeholder:text-fg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:bg-sunken disabled:text-fg-subtle"
             />
           </div>
-          <button type="submit" className={`${btnPrimary} w-full`}>
+          {/* 保存できない理由はその場に出す。ボタンが淡いだけでは、なぜ押せないのかが
+              分からない —— 押せてしまってトーストで断るのは一手遅い */}
+          {!canSave && (
+            <p id={noResultsId} className="text-sm text-fg-subtle">
+              {t('alerts.performCalculationFirst')}
+            </p>
+          )}
+          <button type="submit" disabled={!canSave} className={`${btnPrimary} w-full`}>
             {t('buttons.save')}
           </button>
         </form>
