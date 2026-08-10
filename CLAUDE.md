@@ -26,6 +26,16 @@ Think in English, respond in Japanese.
 - Do not add unnecessary trailing whitespace at the end of lines.
 - Must avoid over-engineering
 - A fake fallback that merely creates the illusion of successful completion is "swallowing an exception" and does not constitute a true fallback. Such fake fallbacks are strictly prohibited. Ensure thorough early notification of errors.
+- コンソールに出るものは、エラーも警告も、重要度に関わらず解消する。
+  「本番ビルドでは出ない」「SSR していないので出ない」「実害はない」は免罪符にならない ——
+  開発ビルドだけの警告も対象。警告を無視することに慣れると、いずれ重大なエラーも見落とす。
+  すぐに直せないものは、コードコメントで正当化せず issue として起票する。
+  - 有害な記録の実例 (#120)。React の DOM ネスト警告について、`PresetSelect.tsx` に
+    こう書いて放置していた —— 「なお React の DOM ネスト検証は `<select>` の子に
+    `<button>` を許さず、開発ビルドで警告を 1 本出す（customizable select がまだ
+    React 側に反映されていないため）。本番ビルドでは出ず、SSR もしていないので実害はない」。
+    警告を消す手 (React の管理外で組み立てる) は実際にはあり、この記述は調査を打ち切らせる
+    だけの有害な記録だった。同じ形の「実害はない」を二度と書かないこと
 
 ## Other Guidelines
 
@@ -65,4 +75,5 @@ Think in English, respond in Japanese.
 - クソダサい青紫系配色禁止
 - GitHub へのテキスト送信は、 ./tmp/ 以下に issue 番号のサブディレクトリに一時ファイルを生成し、 `--body-file` で行うこと
 - オープンPRの修正の場合、新規ブランチを作成せず、新規Issueを起票しない
-- 実装完了後、ブラウザーのコンソールにエラーが出ていないことを確認する
+- 実装完了後、ブラウザーのコンソールにエラーも警告も出ていないことを確認する
+  (Code Style Guidelines のコンソールの項を参照)
