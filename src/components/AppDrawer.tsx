@@ -92,7 +92,7 @@ export function AppDrawer({ isOpen, onClose }: AppDrawerProps) {
           aria-labelledby={titleId}
           className="ml-auto flex h-full w-full flex-col bg-surface shadow-lg focus:outline-none sm:max-w-sm sm:border-l sm:border-line"
         >
-          <div className="flex flex-none items-center justify-between gap-4 border-b border-line p-5 sm:p-6">
+          <div className="flex flex-none items-center justify-between gap-4 border-b border-line px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-8">
             <h2 id={titleId} className="text-lg font-semibold text-fg sm:text-xl">
               {t('menu.title')}
             </h2>
@@ -101,7 +101,7 @@ export function AppDrawer({ isOpen, onClose }: AppDrawerProps) {
               type="button"
               onClick={onClose}
               aria-label={t('menu.close')}
-              className={`${btnGhost} -mr-2`}
+              className={`${btnGhost} -mr-1 sm:-mr-6`}
             >
               <X className={btnIcon} aria-hidden="true" />
             </button>
