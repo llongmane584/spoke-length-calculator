@@ -8,16 +8,28 @@
 
 import type { PointerEvent } from 'react';
 
+// 横 padding は持たない。ラベル付きは px-4、アイコンだけのものは正方形にしたいので、
+// 幅の決め方は variant 側の裁量にする —— 同じ要素に px-4 と px-3 を重ねても、
+// どちらが効くかは生成された CSS の順序が決めるのでクラスの後付けでは上書きできない。
 const btnBase =
-  'inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-4 py-2 font-medium transition-colors ' +
+  'inline-flex min-h-11 items-center justify-center gap-2 rounded-md py-2 font-medium transition-colors ' +
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ' +
   'disabled:cursor-not-allowed disabled:bg-sunken disabled:text-fg-subtle';
 
 /** 主要動作。1 画面に 1 つを原則とする。 */
-export const btnPrimary = `${btnBase} bg-accent text-on-accent hover:bg-accent-hover`;
+export const btnPrimary = `${btnBase} px-4 bg-accent text-on-accent hover:bg-accent-hover`;
 
 /** 副次動作。塗りではなくアウトラインにして、primary との階層を保つ。 */
-export const btnSecondary = `${btnBase} border border-line-strong bg-surface text-fg hover:bg-sunken`;
+export const btnSecondary = `${btnBase} px-4 border border-line-strong bg-surface text-fg hover:bg-sunken`;
+
+/**
+ * アイコンだけの副次動作 (保存ダイアログの保存ボタンなど)。btnSecondary の横 padding を
+ * 落として 44×44 の正方形にしたもの。ghost と違って枠を持つのは、入力欄の隣に並べたとき
+ * 同じ border-line-strong の枠で行が揃うため。
+ *
+ * ラベルが見えないので、使う側は必ず aria-label で名前を与えること。
+ */
+export const btnSecondaryIcon = `${btnBase} w-11 border border-line-strong bg-surface text-fg hover:bg-sunken`;
 
 /** アイコンボタンや控えめなリンク的操作。 */
 export const btnGhost =
@@ -26,7 +38,7 @@ export const btnGhost =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus';
 
 /** 破壊的動作。 */
-export const btnDanger = `${btnBase} bg-danger text-on-danger hover:bg-danger-hover`;
+export const btnDanger = `${btnBase} px-4 bg-danger text-on-danger hover:bg-danger-hover`;
 
 /**
  * 計算結果の下に並ぶアクションバーの 1 つ。5 つを均等割りするので btnBase とは

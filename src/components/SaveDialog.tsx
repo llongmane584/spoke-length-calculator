@@ -1,9 +1,9 @@
 import { useId, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Trash2 } from 'lucide-react'
+import { Save, Trash2 } from 'lucide-react'
 import { Modal } from './Modal'
 import { InitialDataAlert } from './InitialDataAlert'
-import { btnGhost, btnPrimary } from '../styles'
+import { btnGhost, btnSecondaryIcon, fieldLabel } from '../styles'
 
 /**
  * 一覧に出すのに必要なぶんだけ。App の SavedCalculation はこれを満たす上位互換で、
@@ -82,20 +82,38 @@ export const SaveDialog: React.FC<SaveDialogProps> = ({
           className="space-y-3"
         >
           <div>
-            <label htmlFor="calculationName" className="mb-1 block text-sm font-medium text-fg-muted">
+            <label htmlFor="calculationName" className={fieldLabel}>
               {t('results.calculationName')}
             </label>
-            <input
-              ref={nameInputRef}
-              id="calculationName"
-              type="text"
-              value={name}
-              onChange={(e) => onNameChange(e.target.value)}
-              placeholder={t('results.namePlaceholder')}
-              disabled={!canSave}
-              aria-describedby={canSave ? undefined : noResultsId}
-              className="w-full min-h-11 rounded-md border border-line-strong bg-surface px-3 py-2 text-fg transition-colors placeholder:text-fg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:bg-sunken disabled:text-fg-subtle"
-            />
+            {/* 名前を書くことと保存することは一続きの動作なので 1 行に収める (#106)。
+                items-* を付けないのは既定の stretch に任せるため —— 入力欄とボタンの
+                高さが自動で揃う */}
+            <div className="flex gap-2">
+              <input
+                ref={nameInputRef}
+                id="calculationName"
+                type="text"
+                value={name}
+                onChange={(e) => onNameChange(e.target.value)}
+                placeholder={t('results.namePlaceholder')}
+                disabled={!canSave}
+                aria-describedby={canSave ? undefined : noResultsId}
+                // min-w-0 が要る。input の既定の min-width は auto で、狭い画面では
+                // 入力欄が縮まずボタンを枠の外へ押し出す
+                className="min-w-0 flex-1 min-h-11 rounded-md border border-line-strong bg-surface px-3 py-2 text-fg transition-colors placeholder:text-fg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:bg-sunken disabled:text-fg-subtle"
+              />
+              {/* ラベルは常に見えないので、ActionBar の sr-only ではなく aria-label で
+                  名前を与える (Modal の × や下の削除ボタンと同じ扱い) */}
+              <button
+                type="submit"
+                disabled={!canSave}
+                aria-label={t('buttons.save')}
+                title={t('buttons.save')}
+                className={`${btnSecondaryIcon} shrink-0`}
+              >
+                <Save className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </div>
           </div>
           {/* 保存できない理由はその場に出す。ボタンが淡いだけでは、なぜ押せないのかが
               分からない —— 押せてしまってトーストで断るのは一手遅い */}
@@ -104,9 +122,6 @@ export const SaveDialog: React.FC<SaveDialogProps> = ({
               {t('alerts.performCalculationFirst')}
             </p>
           )}
-          <button type="submit" disabled={!canSave} className={`${btnPrimary} w-full`}>
-            {t('buttons.save')}
-          </button>
         </form>
 
         <div className="space-y-3 border-t border-line pt-5">
