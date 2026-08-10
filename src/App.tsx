@@ -706,15 +706,15 @@ const FieldWarning: React.FC<{ id: string; message: string }> = ({ id, message }
 // 結果帯の 2 つの姿。--dock 0 が本来の姿、1 が簡易表示で、間はすべて線形補間。
 // 数値は現行の Tailwind クラスの実寸をそのまま px にしたもの:
 //   pad        … p-5 / p-6
-//   headingLine… 見出し (text-sm) の行高
+//   headingLine… 見出し (text-xl) の行高
 //   headingGap … 見出しの mb-4
 //   gridMin    … 数値グリッドの min-h-24 / sm:min-h-20
 //   label      … text-sm / sm:text-base
 //   value      … text-2xl / sm:text-3xl
 // クラスではなくインラインの数値で持つのは、中間値がユーティリティの
 // スケール上に存在しないため。補間する以上リテラルにするしかない。
-const BAND_FULL_NARROW = { pad: 20, headingLine: 20, headingGap: 16, gridMin: 96, label: 14, value: 24 };
-const BAND_FULL_WIDE = { pad: 24, headingLine: 20, headingGap: 16, gridMin: 80, label: 16, value: 30 };
+const BAND_FULL_NARROW = { pad: 20, headingLine: 28, headingGap: 16, gridMin: 96, label: 14, value: 24 };
+const BAND_FULL_WIDE = { pad: 24, headingLine: 28, headingGap: 16, gridMin: 80, label: 16, value: 30 };
 
 // 簡易表示。画面下端に貼り付くので、見出しもラベルも畳んで数値だけを残す。
 // 横の余白 (pad) は畳まない —— 数値の x 座標が動くと「同じものが縮んだ」
@@ -730,9 +730,11 @@ const BAND_FULL_WIDE = { pad: 24, headingLine: 20, headingGap: 16, gridMin: 80, 
 // どちらも「見えている間は切り落とさない」ことを守る。
 const BAND_COMPACT = { pad: 10, headingLine: 0, headingGap: 0, gridMin: 26, label: 12, value: 18 };
 
-// 見出しの文字サイズ (#59 の text-sm と同じ)。行高は headingLine / これ の比で持つので、
-// 箱の高さは文字サイズに比例して縮む —— 切り落とさずに畳めるのはこの比のおかげ。
-const BAND_HEADING_FONT = 14;
+// 見出しの文字サイズ。入力値の見出し (下の text-xl) と同値にする —— 同じ階層の見出しなので
+// 揃っていないとおかしい。#43 でここだけ 14px に落ちて以降ずれていた (#116)。
+// 行高は headingLine / これ の比で持つので、箱の高さは文字サイズに比例して縮む ——
+// 切り落とさずに畳めるのはこの比のおかげ。
+const BAND_HEADING_FONT = 20;
 
 // ラベルの行高。#59 はここを指定せず preflight の 1.5 を継承していたので、
 // 明示しても本来の姿の見た目は変わらない。文字サイズに比例することが要点で、
@@ -883,7 +885,7 @@ const ResultBand: React.FC<{
             : 'bg-overlay border-overlay-line',
         ].join(' ')}
       >
-        {/* 見出しの段。高さは見出しの箱 (headingLine = 20px) が決める。
+        {/* 見出しの段。高さは見出しの箱 (headingLine = 28px) が決める。
             帯は高さがそのまま変形量になる区画なので、ここに行を足してはいけない ——
             足したぶんだけ本来の姿が高くなり、着地までのスクロール距離まで伸びる。
             共有ボタンはこの段に同居していたが、#102 で下のアクションバーへ移した。 */}
@@ -907,7 +909,7 @@ const ResultBand: React.FC<{
               fontSize: dockPx(BAND_HEADING_FONT, 0),
               lineHeight: full.headingLine / BAND_HEADING_FONT,
             }}
-            className="min-w-0 overflow-hidden font-medium text-fg-muted"
+            className="min-w-0 overflow-hidden font-semibold text-fg"
           >
             {heading}
           </h2>
