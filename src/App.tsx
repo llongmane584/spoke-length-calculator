@@ -2003,16 +2003,21 @@ const SpokeLengthCalculator: React.FC = () => {
               帯そのものの中には入れない: 帯の高さは BAND_FULL_* / BAND_COMPACT の
               px 定数でドック変形の一次性を保っており (#58〜#62)、min-h-11 のボタンを
               足すとその前提が崩れて着地位置がずれる。
-              主要動作は保存なので secondary。無効化の条件も保存と同じ hasValidResults
-              で、正しい計算結果が出ていないリンクは作れない。 */}
-          <button
-            onClick={shareCalculation}
-            disabled={!hasValidResults}
-            className={`${btnSecondary} w-full`}
-          >
-            <Share2 className="w-4 h-4" aria-hidden="true" />
-            {t('buttons.share')}
-          </button>
+              フルワイドの枠付きボタンにはしない。ここの主要動作は保存で、共有は
+              結果に添える控えめな操作 —— 幅いっぱいの箱にすると保存や読込と同じ
+              重さになり、画面の主役が 3 つに増えてしまう。ghost + 右寄せで一段引かせる。
+              無効化の条件は保存と同じ hasValidResults。正しい計算結果が出ていない
+              リンクは作れない。 */}
+          <div className="flex justify-end">
+            <button
+              onClick={shareCalculation}
+              disabled={!hasValidResults}
+              className={`${btnGhost} text-sm`}
+            >
+              <Share2 className="w-4 h-4" aria-hidden="true" />
+              {t('buttons.share')}
+            </button>
+          </div>
           <div>
             <label htmlFor="calculationName" className={sectionHeading}>
               <Tag aria-hidden="true" className={sectionHeadingIcon} />
