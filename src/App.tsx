@@ -2,7 +2,8 @@ import React, { useState, useEffect, useId, useMemo, useRef } from 'react';
 import {
   ChevronDown,
   Circle,
-  FileJson,
+  Copy,
+  Download,
   Moon,
   Sun,
   TriangleAlert,
@@ -24,7 +25,6 @@ import CompareWheels, { type WheelOption } from './components/CompareWheels';
 import { SegmentedControl, type SegmentedOption } from './components/SegmentedControl';
 import { PresetSelect, type PresetSelectGroup } from './components/PresetSelect';
 import {
-  btnPrimary,
   btnSecondary,
   btnGhost,
   customizableSelect,
@@ -2024,23 +2024,34 @@ const SpokeLengthCalculator: React.FC = () => {
         </div>
       </div>
 
-      {/* JSON 出力。中身は textarea 1 枚で、書き出し先はフッタの 2 つが決める */}
+      {/* JSON 出力。中身は textarea 1 枚で、書き出し先はフッタの 2 つが決める。
+          閉じるボタンは持たない —— 見出しの × と Escape で足りているものを
+          フッタにもう 1 つ置くと、去就と道具立てが同じ列に混ざる (#107)。
+          残る 2 つはラベルを持たないアイコンボタンなので、名前は aria-label が与える
+          (ActionBar の sr-only span 方式は、あちらが sm 以上でラベルを見せるためのもの) */}
       <Modal
         isOpen={showJsonOutput}
         onClose={() => setShowJsonOutput(false)}
         title={t('results.jsonOutput')}
         widthClass="max-w-2xl"
+        footerAlign="start"
         footer={
           <>
-            <button onClick={() => setShowJsonOutput(false)} className={btnSecondary}>
-              {t('buttons.close')}
+            <button
+              onClick={copyToClipboard}
+              aria-label={t('buttons.copyToClipboard')}
+              title={t('buttons.copyToClipboard')}
+              className={btnSecondary}
+            >
+              <Copy className="h-5 w-5" aria-hidden="true" />
             </button>
-            <button onClick={copyToClipboard} className={btnSecondary}>
-              {t('buttons.copyToClipboard')}
-            </button>
-            <button onClick={downloadJSON} className={btnPrimary}>
-              <FileJson className="w-4 h-4" aria-hidden="true" />
-              {t('buttons.downloadJson')}
+            <button
+              onClick={downloadJSON}
+              aria-label={t('buttons.downloadJson')}
+              title={t('buttons.downloadJson')}
+              className={btnSecondary}
+            >
+              <Download className="h-5 w-5" aria-hidden="true" />
             </button>
           </>
         }

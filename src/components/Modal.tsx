@@ -25,6 +25,8 @@ interface ModalProps {
   footer?: ReactNode
   /** ダイアログの最大幅。 */
   widthClass?: string
+  /** 操作列の寄せ。道具立てを並べるだけの列は 'start'。 */
+  footerAlign?: 'start' | 'end'
   /** 見出し行の × を出すか。去就を footer のボタンで決めるものは false。 */
   showClose?: boolean
   /** 開いた直後にフォーカスする要素。省略時は × ボタン、それも無ければ本体。 */
@@ -38,6 +40,7 @@ export function Modal({
   children,
   footer,
   widthClass = 'max-w-lg',
+  footerAlign = 'end',
   showClose = true,
   initialFocusRef,
 }: ModalProps) {
@@ -133,9 +136,15 @@ export function Modal({
         </div>
         {/* 操作列。縦積みにはしない —— 削除確認のように破壊的動作を含む列で順序が
             反転すると、以前は右端にあったボタンが親指の下に来る。
-            入りきらないぶんは折り返して右へ寄せる */}
+            入りきらないぶんは折り返して右へ寄せる。
+            既定が右寄せなのは去就を決めるボタンを親指側に置くため。中身に対する
+            道具立てを並べるだけの列 (JSON 出力のコピー/ダウンロード) は左に寄せる */}
         {footer !== undefined && (
-          <div className="flex flex-wrap items-center justify-end gap-3 border-t border-line p-5 sm:p-6">
+          <div
+            className={`flex flex-wrap items-center gap-3 border-t border-line p-5 sm:p-6 ${
+              footerAlign === 'start' ? 'justify-start' : 'justify-end'
+            }`}
+          >
             {footer}
           </div>
         )}
