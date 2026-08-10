@@ -124,7 +124,9 @@ export const SaveDialog: React.FC<SaveDialogProps> = ({
           )}
         </form>
 
-        <div className="space-y-3 border-t border-line pt-5">
+        {/* 区切り線は置かない。区画の切れ目は h3 の見出しが示しているので、
+            線はもう一度同じことを言うだけ (#113)。間隔は外側の space-y-6 が持つ */}
+        <div className="space-y-3">
           <h3 className="text-base font-semibold text-fg">{t('results.savedCalculations')}</h3>
 
           {loadFailure !== undefined && (

@@ -29,6 +29,8 @@ interface ModalProps {
   footerAlign?: 'start' | 'end'
   /** 見出し行の × を出すか。去就を footer のボタンで決めるものは false。 */
   showClose?: boolean
+  /** 操作列の上の区切り線を出すか。中身が既に枠を持っていて二重線になるものは false。 */
+  showFooterDivider?: boolean
   /** 開いた直後にフォーカスする要素。省略時は × ボタン、それも無ければ本体。 */
   initialFocusRef?: RefObject<HTMLElement | null>
 }
@@ -42,6 +44,7 @@ export function Modal({
   widthClass = 'max-w-lg',
   footerAlign = 'end',
   showClose = true,
+  showFooterDivider = true,
   initialFocusRef,
 }: ModalProps) {
   const { t } = useTranslation()
@@ -138,12 +141,14 @@ export function Modal({
             反転すると、以前は右端にあったボタンが親指の下に来る。
             入りきらないぶんは折り返して右へ寄せる。
             既定が右寄せなのは去就を決めるボタンを親指側に置くため。中身に対する
-            道具立てを並べるだけの列 (JSON 出力のコピー/ダウンロード) は左に寄せる */}
+            道具立てを並べるだけの列 (JSON 出力のコピー/ダウンロード) は左に寄せる。
+            線を伏せたときは上 padding も落とす —— 本文側が pb-5 を持っているので、
+            線だけ消すと 2 つぶんの padding が積まれた死んだ帯が残る */}
         {footer !== undefined && (
           <div
-            className={`flex flex-wrap items-center gap-3 border-t border-line p-5 sm:p-6 ${
-              footerAlign === 'start' ? 'justify-start' : 'justify-end'
-            }`}
+            className={`flex flex-wrap items-center gap-3 p-5 sm:p-6 ${
+              showFooterDivider ? 'border-t border-line' : 'pt-0 sm:pt-0'
+            } ${footerAlign === 'start' ? 'justify-start' : 'justify-end'}`}
           >
             {footer}
           </div>
