@@ -346,7 +346,12 @@
      無意味に大きくなる。
 
      UA 既定の下限 anchor-size(self-inline) を上書きすることになるが、data-spec を持つのは
-     チップ変種だけで、その最大幅は sm:w-64 = 256px < 20rem。狭くなる経路は無い。 */
+     チップ変種だけで、その最大幅は sm:w-64 = 256px < 20rem。狭くなる経路は無い。
+
+     代わりに、中身が短いピッカーはこの下限まで広がる。デスクトップ 1440px の実測で
+     リムが 246px → 310px、ハブが 252px → 294px (どちらもピッカー幅 20rem に揃った。
+     差は optgroup の左右余白)。ホイールは元から 20rem より広く不動。これは承知のうえで、
+     同じ画面に並ぶ 3 つのピッカーの幅が揃うほうを取っている。 */
   .preset-select:has(option[data-spec])::picker(select) {
     min-inline-size: min(20rem, calc(100vw - 1.5rem));
   }
