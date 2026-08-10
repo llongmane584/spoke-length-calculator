@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, CheckCircle, AlertCircle, Info, XCircle } from 'lucide-react';
+import { ghostIconBox } from '../styles';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -61,10 +62,18 @@ const Toast: React.FC<ToastProps> = ({ toast, onRemove }) => {
     >
       <div className="shrink-0">{getIcon()}</div>
       <p className="flex-1 text-sm font-medium">{toast.message}</p>
+      {/* btnGhost ではなく寸法だけの ghostIconBox に自前の色を足す。btnGhost の
+          text-fg-muted / hover:bg-sunken / outline-focus は、色付きの soft 背景に
+          載るこの × では全部間違いになる —— × は行の text-ok-ink などを継承し、
+          フォーカスリングも outline-current で背景に追従させている。
+          -m-2.5 は 36 のタップ領域をレイアウト上 16 に戻すぶん (36 − 10×2)。
+          行の高さも本文との間隔も変わらない。
+          glyph が btnIcon (20px) ではなく 16px なのは、本文と同じ行に収める
+          ためで、px-3 の行を押し広げない (#110) */}
       <button
         onClick={() => onRemove(toast.id)}
         aria-label={closeLabel}
-        className="shrink-0 rounded-md hover:opacity-70 transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+        className={`${ghostIconBox} -m-2.5 shrink-0 rounded-md hover:opacity-70 transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current`}
       >
         <X className="w-4 h-4" />
       </button>

@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
-import { btnGhost } from '../styles'
+import { btnGhost, btnIcon } from '../styles'
 
 // 開いているダイアログの重なり順。入れ子 (保存ダイアログの上に削除確認) のために要る。
 //
@@ -125,7 +125,7 @@ export function Modal({
               aria-label={t('buttons.close')}
               className={`${btnGhost} -mt-1 -mr-2`}
             >
-              <X className="h-5 w-5" aria-hidden="true" />
+              <X className={btnIcon} aria-hidden="true" />
             </button>
           )}
         </div>

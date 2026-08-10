@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
-import { btnGhost } from '../styles'
+import { btnGhost, btnIcon } from '../styles'
 
 export type HelpTopic =
   | 'erd'
@@ -276,7 +276,7 @@ export function HelpModal({ topic, onClose }: HelpModalProps) {
             aria-label={t('buttons.close')}
             className={`${btnGhost} -mt-1 -mr-2`}
           >
-            <X className="w-5 h-5" aria-hidden="true" />
+            <X className={btnIcon} aria-hidden="true" />
           </button>
         </div>
         <div className="px-6 flex justify-center bg-sunken border border-line mx-6 rounded-md py-4">

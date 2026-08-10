@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { ArrowLeftRight, FileJson, FileUp, Save, Share2 } from 'lucide-react'
-import { btnAction } from '../styles'
+import { btnAction, btnIcon } from '../styles'
 
 interface ActionBarProps {
   onShare: () => void
@@ -54,7 +54,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
         title={unavailable ?? t('buttons.share')}
         className={btnAction}
       >
-        <Share2 aria-hidden="true" className="h-5 w-5 shrink-0" />
+        <Share2 aria-hidden="true" className={btnIcon} />
         <span className="sr-only sm:not-sr-only">{t('buttons.share')}</span>
       </button>
 
@@ -65,7 +65,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
         title={saveTitle}
         className={btnAction}
       >
-        <Save aria-hidden="true" className="h-5 w-5 shrink-0" />
+        <Save aria-hidden="true" className={btnIcon} />
         <span className="sr-only sm:not-sr-only">{t('buttons.save')}</span>
         {/* 保存済みの件数。一覧はダイアログの中に入って常時は見えないので、
             「何件あるか」だけは外に出しておく。読み上げ名には混ぜない */}
@@ -86,7 +86,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
         title={unavailable ?? t('buttons.jsonExport')}
         className={btnAction}
       >
-        <FileJson aria-hidden="true" className="h-5 w-5 shrink-0" />
+        <FileJson aria-hidden="true" className={btnIcon} />
         <span className="sr-only sm:not-sr-only">{t('buttons.jsonExport')}</span>
       </button>
 
@@ -96,7 +96,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
         title={t('buttons.jsonImport')}
         className={btnAction}
       >
-        <FileUp aria-hidden="true" className="h-5 w-5 shrink-0" />
+        <FileUp aria-hidden="true" className={btnIcon} />
         <span className="sr-only sm:not-sr-only">{t('buttons.jsonImport')}</span>
       </button>
 
@@ -106,7 +106,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
         title={t('compare.toggle')}
         className={btnAction}
       >
-        <ArrowLeftRight aria-hidden="true" className="h-5 w-5 shrink-0" />
+        <ArrowLeftRight aria-hidden="true" className={btnIcon} />
         <span className="sr-only sm:not-sr-only">{t('compare.short')}</span>
       </button>
     </div>
