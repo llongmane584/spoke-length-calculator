@@ -46,7 +46,9 @@ export const useDialogLayer = (
     setDepth(openDialogs.length - 1);
 
     const focusTarget = initialFocusRef?.current ?? dialogRef.current;
-    focusTarget?.focus();
+    // 開いた直後のパネルは transform 中なので、ブラウザにクリップ領域を
+    // 自動スクロールさせると、スライド位置と競合して停止位置がずれる。
+    focusTarget?.focus({ preventScroll: true });
 
     const handleKeyDown = (event: KeyboardEvent) => {
       // 最前面でなければ何もしない。下の 1 枚が上の 1 枚の代わりに反応しないため

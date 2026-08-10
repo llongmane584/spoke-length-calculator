@@ -54,8 +54,9 @@ interface AppDrawerProps {
  * いる。右寄せ・全高・左だけの枠はどの幅でも別物なので、共有できるのは見た目ではなく
  * 覆うときの作法だけ。それは useDialogLayer に出してある。
  *
- * 開閉のアニメーションは付けない。このリポジトリには @keyframes が 1 つも無く、
- * 既存のオーバーレイ (Modal / HelpModal) も transition-colors しか持たない。
+ * 開閉は CSS の transform だけで横にスライドする。閉じるときも同じ軌道を逆向きに
+ * 辿れるよう、閉じた直後にはアンマウントしない。動きを望まない環境では CSS 側の
+ * prefers-reduced-motion で即時切替になる。
  */
 export function AppDrawer({ isOpen, onClose }: AppDrawerProps) {
   const { t, i18n } = useTranslation()
@@ -75,14 +76,18 @@ export function AppDrawer({ isOpen, onClose }: AppDrawerProps) {
     }
   }
 
-  if (!isOpen) return null
-
   return (
-    <div style={{ zIndex }} className="fixed inset-0" onClick={onClose}>
-      <div className="mx-auto h-full w-full sm:max-w-3xl sm:px-6">
-        {/* 配置ラッパー内で ml-auto にして描画領域の右端へ。狭い画面では w-full が効いて
-            画面全部を覆うので、枠と角丸は sm 以上だけに置く —— 全画面のときに左枠が
-            1 本走ると、画面の端に意味のない線が出る */}
+    <div
+      style={{ zIndex }}
+      className={`fixed inset-0 ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+      onClick={onClose}
+      aria-hidden={!isOpen}
+      inert={!isOpen}
+    >
+      <div className="mx-auto h-full w-full overflow-clip sm:w-[calc(100%_-_3rem)] sm:max-w-[45rem]">
+        {/* 3f6a4c7 の描画領域 (sm 以上はアプリ本体の左右 padding を除いた幅) だけを
+            クリップする。パネルがスライド中にこの領域の外へ出ても、視認できるピクセルは
+            ここから出ない。狭い画面では w-full が効いて画面全体を覆う。 */}
         <div
           ref={dialogRef}
           tabIndex={-1}
@@ -90,7 +95,8 @@ export function AppDrawer({ isOpen, onClose }: AppDrawerProps) {
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="ml-auto flex h-full w-full flex-col bg-surface shadow-lg focus:outline-none sm:max-w-sm sm:border-l sm:border-line"
+          data-state={isOpen ? 'open' : 'closed'}
+          className="drawer-panel-motion ml-auto flex h-full w-full flex-col bg-surface shadow-lg focus:outline-none sm:max-w-sm sm:border-l sm:border-line"
         >
           <div className="flex flex-none items-center justify-between gap-4 border-b border-line px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-8">
             <h2 id={titleId} className="text-lg font-semibold text-fg sm:text-xl">
