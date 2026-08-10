@@ -34,6 +34,9 @@ GitHub pages: https://llongmane584.github.io/spoke-length-calculator/
 - **保存データの管理**: 保存した計算結果の一覧表示・削除
 - **JSONエクスポート/インポート**: 計算データのバックアップと共有
 - **URLで条件を共有**: 現在の入力条件を URL にして共有（受け取った側は同じ条件で起動）
+- **メニュードロワー**: 右上のハンバーガーから「このアプリについて」「使い方」「ライセンス」
+  「更新履歴」へ。デスクトップは右サイドドロワー、スマートフォンは全画面カバーで、
+  最下部にバージョン番号を表示
 - **レスポンシブデザイン**: スマートフォンからデスクトップまで対応
 
 ## 技術スタック
@@ -42,6 +45,9 @@ GitHub pages: https://llongmane584.github.io/spoke-length-calculator/
 - **Vite**: 高速な開発サーバーとビルドツール
 - **Tailwind CSS v4**: ユーティリティファーストのCSSフレームワーク。設定は `src/index.css` に CSS-first で置く
 - **Lucide React**: アイコンライブラリ
+- **React Router**: 情報ページのルーティング。ハッシュルーター (`#/about`) を使うので
+  GitHub Pages に 404 フォールバックを足さずに直リンクとリロードが動く。共有 URL は
+  `#/?v=1&…` の形でルート配下の search に載る（ルーター導入前の `#v=1&…` も読める）
 
 ## セットアップ
 
@@ -103,11 +109,14 @@ pnpm lint
 ```
 /spoke-length-calculator/
 ├── src/
-│   ├── App.tsx                    # メインアプリケーションコンポーネント
-│   ├── main.tsx                   # エントリーポイント
+│   ├── App.tsx                    # シェル。ヘッダー / ルーティング / ドロワー
+│   ├── main.tsx                   # エントリーポイント (HashRouter はここ)
 │   ├── index.css                  # Tailwind v4 エントリ + デザイントークン
-│   ├── styles.ts                  # ボタン / select の共通クラス文字列
+│   ├── styles.ts                  # ボタン / select / リンクの共通クラス文字列
 │   ├── i18n.ts                    # 多言語化設定
+│   ├── changelog.ts               # バージョン番号と更新履歴の骨組み
+│   ├── changelog.test.ts          # バージョンと更新履歴の食い違いを検出
+│   ├── locales.test.ts            # en.json と ja.json のキーが同じ形か検証
 │   ├── rimOffset.ts               # リムオフセットのロジック
 │   ├── rimOffset.test.ts          # リムオフセットの単体テスト
 │   ├── partPresets.ts             # ハブ / リム部品プリセットの読み込みと一致判定
@@ -115,23 +124,44 @@ pnpm lint
 │   ├── shareLink.ts               # 入力条件を URL fragment に載せる / 戻す
 │   ├── shareLink.test.ts          # 共有 URL の単体テスト
 │   ├── spokeCompare.ts            # ホイール比較のロジック
+│   ├── thirdPartyNotices.test.ts  # 同梱の Lucide 表記が原本と一致しているか検証
 │   ├── vite-env.d.ts              # Vite 環境型定義
 │   ├── assets/                    # 静的アセット
 │   │   └── react.svg
+│   ├── pages/                     # ルート 1 つにコンポーネント 1 つ
+│   │   ├── CalculatorPage.tsx     # 計算機本体
+│   │   ├── AboutPage.tsx          # このアプリについて
+│   │   ├── UsagePage.tsx          # 使い方
+│   │   ├── LicensePage.tsx        # ルートの LICENSE をそのまま表示
+│   │   ├── ChangelogPage.tsx      # 最新 1 件 + すべての更新履歴への導線
+│   │   ├── ChangelogAllPage.tsx   # 最新の年 + 他の年へのリンク
+│   │   ├── ChangelogYearPage.tsx  # 年別
+│   │   └── NotFoundPage.tsx       # 知らないハッシュルート
 │   ├── components/                # 再利用可能なコンポーネント
+│   │   ├── AppHeader.tsx          # タイトル + ハンバーガー
+│   │   ├── AppDrawer.tsx          # メニュードロワー (ナビ / 言語 / テーマ / バージョン)
+│   │   ├── PageShell.tsx          # 情報ページの共通枠
+│   │   ├── ChangelogSections.tsx  # 更新履歴のエントリ一覧と年ナビ
+│   │   ├── ActionBar.tsx          # 計算結果の下のアクション列
 │   │   ├── CompareWheels.tsx      # ホイール比較パネル
 │   │   ├── ConfirmDialog.tsx      # 確認ダイアログ
 │   │   ├── HelpButton.tsx         # インラインヘルプの起動ボタン
 │   │   ├── HelpModal.tsx          # SVG 図解つきヘルプモーダル
+│   │   ├── InitialDataAlert.tsx   # 警告 / エラーのバナー
+│   │   ├── Modal.tsx              # 汎用ダイアログ (Tab トラップ / Escape / 重ね順)
 │   │   ├── PresetSelect.tsx       # プリセット選択 (CSS customisable select)
+│   │   ├── SaveDialog.tsx         # 計算結果の保存と管理
 │   │   ├── SegmentedControl.tsx   # セグメントコントロール
-│   │   └── Toast.tsx              # トースト通知コンポーネント
+│   │   ├── Toast.tsx              # トースト通知コンポーネント
+│   │   └── icons/MtbHubIcon.tsx   # Lucide に合わせた自作アイコン
 │   ├── contexts/                  # React コンテキスト
 │   │   ├── ThemeContext.tsx       # テーマコンテキストの実装
 │   │   ├── themeContextValue.ts
 │   │   ├── ToastContext.tsx       # トーストコンテキストの実装
 │   │   └── ToastContextDefinition.ts
 │   ├── hooks/                     # カスタムフック
+│   │   ├── useDialogLayer.ts      # オーバーレイの重ね順 / Escape / Tab トラップ
+│   │   ├── useDockMorph.ts        # ドックする結果帯のための --dock 書き込み
 │   │   ├── useTheme.ts            # テーマフック
 │   │   └── useToast.ts            # トーストフック
 │   ├── locales/                   # 翻訳ファイル
