@@ -5,8 +5,12 @@
 .DS_Store
 .AppleDouble
 .LSOverride
-Icon[
-]
+# macOS のカスタムフォルダアイコン: 実体は "Icon" + CR という名前のファイル。
+# upstream (github/gitignore) は Icon[<CR>] と行中に生の CR を置くが、
+# それが LF に正規化されて壊れたのが #111。CLAUDE.md の LF 方針とも噛み合わないので、
+# CR を書かずに「Icon + 英数字以外の 1 文字」で拾う。
+# Icon? は不可 —— core.ignorecase が有効な macOS/Windows では icons/ にもマッチする。
+Icon[!a-zA-Z0-9]
 
 # Thumbnails
 ._*
