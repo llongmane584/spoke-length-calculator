@@ -2032,13 +2032,16 @@ const SpokeLengthCalculator: React.FC = () => {
           (ActionBar の sr-only span 方式は、あちらが sm 以上でラベルを見せるためのもの)。
           クラスが btnSecondary ではなく btnSecondaryIcon なのはそのため —— ラベルの
           無い箱に px-4 を残すと、20px のアイコン 1 つに対して 54px 幅の枠だけが
-          大きい箱になり、基準の ActionBar より一回り大きく見える (#110) */}
+          大きい箱になり、基準の ActionBar より一回り大きく見える (#110)。
+          区切り線も伏せる —— textarea が自前の枠を持っているので、そのすぐ下に
+          もう 1 本引くと二重線になる (#113) */}
       <Modal
         isOpen={showJsonOutput}
         onClose={() => setShowJsonOutput(false)}
         title={t('results.jsonOutput')}
         widthClass="max-w-2xl"
         footerAlign="start"
+        showFooterDivider={false}
         footer={
           <>
             <button
