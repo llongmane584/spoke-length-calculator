@@ -25,8 +25,9 @@ import CompareWheels, { type WheelOption } from './components/CompareWheels';
 import { SegmentedControl, type SegmentedOption } from './components/SegmentedControl';
 import { PresetSelect, type PresetSelectGroup } from './components/PresetSelect';
 import {
-  btnSecondary,
   btnGhost,
+  btnIcon,
+  btnSecondaryIcon,
   customizableSelect,
   dismissOpenPicker,
   nativeSelect,
@@ -1705,9 +1706,9 @@ const SpokeLengthCalculator: React.FC = () => {
               aria-label={t('theme.toggle')}
             >
               {theme === 'dark' ? (
-                <Sun className="w-5 h-5" aria-hidden="true" />
+                <Sun className={btnIcon} aria-hidden="true" />
               ) : (
-                <Moon className="w-5 h-5" aria-hidden="true" />
+                <Moon className={btnIcon} aria-hidden="true" />
               )}
             </button>
           </div>
@@ -2028,7 +2029,10 @@ const SpokeLengthCalculator: React.FC = () => {
           閉じるボタンは持たない —— 見出しの × と Escape で足りているものを
           フッタにもう 1 つ置くと、去就と道具立てが同じ列に混ざる (#107)。
           残る 2 つはラベルを持たないアイコンボタンなので、名前は aria-label が与える
-          (ActionBar の sr-only span 方式は、あちらが sm 以上でラベルを見せるためのもの) */}
+          (ActionBar の sr-only span 方式は、あちらが sm 以上でラベルを見せるためのもの)。
+          クラスが btnSecondary ではなく btnSecondaryIcon なのはそのため —— ラベルの
+          無い箱に px-4 を残すと、20px のアイコン 1 つに対して 54px 幅の枠だけが
+          大きい箱になり、基準の ActionBar より一回り大きく見える (#110) */}
       <Modal
         isOpen={showJsonOutput}
         onClose={() => setShowJsonOutput(false)}
@@ -2041,17 +2045,17 @@ const SpokeLengthCalculator: React.FC = () => {
               onClick={copyToClipboard}
               aria-label={t('buttons.copyToClipboard')}
               title={t('buttons.copyToClipboard')}
-              className={btnSecondary}
+              className={btnSecondaryIcon}
             >
-              <Copy className="h-5 w-5" aria-hidden="true" />
+              <Copy className={btnIcon} aria-hidden="true" />
             </button>
             <button
               onClick={downloadJSON}
               aria-label={t('buttons.downloadJson')}
               title={t('buttons.downloadJson')}
-              className={btnSecondary}
+              className={btnSecondaryIcon}
             >
-              <Download className="h-5 w-5" aria-hidden="true" />
+              <Download className={btnIcon} aria-hidden="true" />
             </button>
           </>
         }

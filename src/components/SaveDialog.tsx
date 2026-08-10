@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Save, Trash2 } from 'lucide-react'
 import { Modal } from './Modal'
 import { InitialDataAlert } from './InitialDataAlert'
-import { btnGhost, btnSecondaryIcon, fieldLabel } from '../styles'
+import { btnGhost, btnIcon, btnSecondaryIcon, fieldLabel } from '../styles'
 
 /**
  * 一覧に出すのに必要なぶんだけ。App の SavedCalculation はこれを満たす上位互換で、
@@ -111,7 +111,7 @@ export const SaveDialog: React.FC<SaveDialogProps> = ({
                 title={t('buttons.save')}
                 className={`${btnSecondaryIcon} shrink-0`}
               >
-                <Save className="h-5 w-5" aria-hidden="true" />
+                <Save className={btnIcon} aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -161,7 +161,7 @@ export const SaveDialog: React.FC<SaveDialogProps> = ({
                       aria-label={t('dialog.confirm')}
                       className={`${btnGhost} text-danger-ink hover:text-danger`}
                     >
-                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      <Trash2 className={btnIcon} aria-hidden="true" />
                     </button>
                   </div>
                 </li>

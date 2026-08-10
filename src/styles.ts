@@ -8,6 +8,46 @@
 
 import type { PointerEvent } from 'react';
 
+/*
+ * アイコン付きボタンの寸法は次の 2 段しかない。ここ以外で決めないこと (#110)。
+ *
+ * - 44 段 (min-h-11、アイコンだけなら w-11 の正方形) —— 枠を持つ操作ボタン。
+ *   btnPrimary / btnSecondary / btnSecondaryIcon / btnDanger / btnAction。
+ *   計算結果下のアクションバーがこの段で、アプリ全体の基準になっている
+ * - 36 段 (min-h-9 min-w-9) —— 枠を持たないゴースト。btnGhost と ghostIconBox。
+ *   モーダルの ×、ヘッダーのテーマ切替、保存済みの削除など
+ *
+ * ゴーストを 44 に上げて 1 段にはしない。ヘッダーの言語 select が min-h-9 + text-sm で
+ * 一段小さく、そこだけボタンが 44 になると行が合わない。モーダルの見出し行も同じ。
+ *
+ * 中の glyph は段によらず btnIcon (20px)。箱の大小より glyph の不揃いのほうが
+ * 「サイズがバラバラ」に見えるので、こちらは 1 種類に絞る。
+ */
+
+/**
+ * アイコンボタンの中の glyph。20px に固定する。
+ *
+ * 16px のままにしてあるのは Toast の × とラベル横の ? の 2 つだけで、どちらも
+ * 文字の行の中に居座るもの。理由は各コンポーネント側に書いてある。それ以外で
+ * h-4 w-4 のアイコンをボタンに入れないこと。
+ *
+ * 見出しに添える装飾アイコンはボタンではないので、こちらではなく
+ * sectionHeadingIcon を使う。
+ */
+export const btnIcon = 'h-5 w-5 shrink-0';
+
+/**
+ * 36 段のタップ領域だけを取り出したもの。色も角丸も padding も持たない。
+ *
+ * 色や角丸を btnGhost と別に持ちたいボタン (Toast の ×、ラベル横の ?) の土台。
+ * btnGhost に rounded-full を後付けで重ねる手は使えない —— どちらが効くかは
+ * 生成された CSS の順序が決めるので、そもそも同じ要素に載せない。
+ *
+ * 見た目のサイズを変えずにタップ領域だけ広げたいときは、これに負マージンを添えて
+ * レイアウト上の占有を元に戻す (36 − 10×2 = 16 なので -m-2.5)。
+ */
+export const ghostIconBox = 'inline-flex min-h-9 min-w-9 items-center justify-center';
+
 // 横 padding は持たない。ラベル付きは px-4、アイコンだけのものは正方形にしたいので、
 // 幅の決め方は variant 側の裁量にする —— 同じ要素に px-4 と px-3 を重ねても、
 // どちらが効くかは生成された CSS の順序が決めるのでクラスの後付けでは上書きできない。
@@ -31,9 +71,15 @@ export const btnSecondary = `${btnBase} px-4 border border-line-strong bg-surfac
  */
 export const btnSecondaryIcon = `${btnBase} w-11 border border-line-strong bg-surface text-fg hover:bg-sunken`;
 
-/** アイコンボタンや控えめなリンク的操作。 */
+/**
+ * アイコンボタンや控えめなリンク的操作 (36 段)。
+ *
+ * px-2 を残すのはテキストを持つゴースト (保存済みの「読み込む」) のため。
+ * アイコンだけなら px-2×2 + 20 = 36 でちょうど min-w-9 と一致するので、
+ * 別に正方形版を持たなくてよい。
+ */
 export const btnGhost =
-  'inline-flex min-h-9 min-w-9 items-center justify-center gap-2 rounded-md px-2 font-medium transition-colors ' +
+  `${ghostIconBox} gap-2 rounded-md px-2 font-medium transition-colors ` +
   'text-fg-muted hover:bg-sunken hover:text-fg ' +
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus';
 
