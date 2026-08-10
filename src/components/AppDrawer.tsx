@@ -96,7 +96,7 @@ export function AppDrawer({ isOpen, onClose }: AppDrawerProps) {
           aria-modal="true"
           aria-labelledby={titleId}
           data-state={isOpen ? 'open' : 'closed'}
-          className="drawer-panel-motion ml-auto flex h-full w-full flex-col bg-surface shadow-lg focus:outline-none sm:max-w-sm sm:border-l sm:border-line"
+          className="drawer-panel-motion ml-auto flex h-full w-full flex-col bg-surface shadow-lg focus:outline-none sm:max-w-[19.2rem] sm:border-l sm:border-line"
         >
           <div className="flex flex-none items-center justify-between gap-4 border-b border-line px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-8">
             <h2 id={titleId} className="text-lg font-semibold text-fg sm:text-xl">

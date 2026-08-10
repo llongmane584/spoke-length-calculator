@@ -234,5 +234,5 @@ export const link =
 // ドロワーの本文は overflow-y-auto で、overflow-y を付けると overflow-x も auto に
 // なるため、枠の縁に置いた行の outline-offset-2 が切られる。
 export const menuRow =
-  'flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-left font-medium ' +
+  'flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-base font-medium ' +
   'transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus';
