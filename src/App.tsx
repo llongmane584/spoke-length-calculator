@@ -7,6 +7,7 @@ import {
   FileUp,
   Moon,
   Save,
+  Share2,
   Sun,
   Tag,
   Trash2,
@@ -46,6 +47,7 @@ import {
   type MatchablePreset,
   type PartPresetOption,
 } from './partPresets';
+import { buildShareUrl, hasShareFragment, parseShareFragment } from './shareLink';
 
 // Dynamic import of preset data
 // `*` は `/` をまたがないので、この glob は下の hubs/ rims/ を拾わない。
@@ -582,6 +584,65 @@ const loadSavedCalculations = (): SavedCalculationsLoadResult => {
   }
 };
 
+// 何も共有されていないときの入力値。共有 URL の復元に失敗したときの着地点でもある。
+const DEFAULT_INPUTS: Inputs = {
+  erd: '',
+  rimOffset: '0',
+  pitchCircleLeft: '',
+  pitchCircleRight: '',
+  flangeDistanceLeft: '',
+  flangeDistanceRight: '',
+  spokeHoleDiameter: '2.6', // Hope Pro 5 value as default (author's personal preference)
+  numberOfSpokes: '32', // Generally 32 spokes is common
+  crossingsLeft: '3', // 3-cross is also typical
+  crossingsRight: '3', // 3-cross is also typical
+};
+
+type SharedInputsLoadResult =
+  | { status: 'none' }
+  | { status: 'invalid' }
+  | { status: 'ok'; inputs: Inputs };
+
+// 共有 URL の fragment から入力値を復元する。
+//
+// 検証は専用のものを書かず、保存データや JSON 読み込みと同じ normalizeInputs →
+// getCalculationState を通す。共有 URL は計算結果が出ているときにしか作れないので、
+// 計算できない値が入っているなら途中で壊れたということ —— 読める欄だけ拾って
+// 「それらしく」起動すると、共有した側とされた側で別の条件を見ることになる。
+// だから部分採用はせず、全部捨てて通常の初期状態に落とす。
+//
+// URL は書き換えない。読み込み時に fragment を消すと再読み込みで共有内容が失われ、
+// 逆に入力のたびに書き足すと issue #98 の「通常操作中は URL を更新しない」に反する。
+const loadSharedInputs = (): SharedInputsLoadResult => {
+  if (typeof window === 'undefined') {
+    return { status: 'none' };
+  }
+
+  const fragment = window.location.hash;
+
+  // 共有 URL を名乗っていない fragment (ページ内リンクなど) は黙って無視する。
+  // 逆に名乗っているものは、読めなければ利用者に伝える必要がある (下の invalid)。
+  if (!hasShareFragment(fragment)) {
+    return { status: 'none' };
+  }
+
+  const values = parseShareFragment(fragment);
+
+  if (values === null) {
+    return { status: 'invalid' };
+  }
+
+  const normalizedInputs = normalizeInputs(values);
+
+  if (normalizedInputs === null || getCalculationState(normalizedInputs).results === null) {
+    return { status: 'invalid' };
+  }
+
+  return { status: 'ok', inputs: normalizedInputs };
+};
+
+const INITIAL_SHARED_INPUTS = loadSharedInputs();
+
 const PRESET_LOAD_RESULT = loadPresetOptions();
 // ハブ / リム単体のプリセット。全体プリセットと違い 10 項目すべては持たないので
 // getCalculationState では検証できず、専用のローダーを通す。
@@ -694,6 +755,16 @@ const BAND_COMPACT = { pad: 10, headingLine: 0, headingGap: 0, gridMin: 26, labe
 // 見出しの文字サイズ (#59 の text-sm と同じ)。行高は headingLine / これ の比で持つので、
 // 箱の高さは文字サイズに比例して縮む —— 切り落とさずに畳めるのはこの比のおかげ。
 const BAND_HEADING_FONT = 14;
+
+// 共有ボタンの文字サイズ。見出しより一段小さくして、同じ行に居ながら主張しない。
+// 行高は見出しと同じく headingLine / これ の比で与えるので、箱は見出しと同じ
+// headingLine (20px) から 0 へ。つまり共有を足しても帯の高さは 1px も増えない。
+const BAND_SHARE_FONT = 12;
+
+// 共有ボタンの当たり判定を広げる量。padding とその符号違いの margin で、
+// 見た目と行の高さを変えずに押せる範囲だけを外へ出す (HelpButton の p-2 -m-2 と
+// 同じ作法)。20px の箱 + 8px × 2 で 36px 角の当たり判定になる。
+const BAND_SHARE_HIT_PAD = 8;
 
 // ラベルの行高。#59 はここを指定せず preflight の 1.5 を継承していたので、
 // 明示しても本来の姿の見た目は変わらない。文字サイズに比例することが要点で、
@@ -821,8 +892,10 @@ const ResultBand: React.FC<{
   placeholder: string;
   leftLabel: string;
   rightLabel: string;
+  shareLabel: string;
+  onShare: () => void;
   isCompactViewport: boolean;
-}> = ({ results, heading, placeholder, leftLabel, rightLabel, isCompactViewport }) => {
+}> = ({ results, heading, placeholder, leftLabel, rightLabel, shareLabel, onShare, isCompactViewport }) => {
   const { full, travel } = bandMetrics(isCompactViewport);
 
   return (
@@ -844,26 +917,59 @@ const ResultBand: React.FC<{
             : 'bg-overlay border-overlay-line',
         ].join(' ')}
       >
-        {/* 見出しは畳むだけで消さない (max-height ではなく文字サイズを縮めるので
-            読み上げ順からも外れない)。
-            切り落とし (max-height) ではなく font-size を縮めるのが要点 —— 見出しの箱は
-            帯の高さそのものなので全区間に線形で分散させる必要があり、そこで切り落としを
-            使うと文字が見えている間ずっと刻まれてしまう (#62)。行高を headingLine /
-            BAND_HEADING_FONT の比で持てば、箱は文字サイズに比例して縮むので高さの
-            一次性は保たれ、しかもどの瞬間も文字は切れない。
-            overflow-hidden は保険 —— 翻訳が伸びて 2 行になると箱が headingLine の想定を
-            超え、fullHeight がずれて着地位置が狂う。現行の 2 言語では起きない。 */}
-        <h2
+        {/* 見出しの段。共有はここに右寄せで同居させる —— 帯は高さがそのまま変形量に
+            なる区画なので、操作のために独立した行を足すと、その分だけ本来の姿が高く
+            なり、着地までのスクロール距離まで伸びる。同じ段に入れれば増分は 0。
+            段の高さは今までどおり見出しの箱 (headingLine = 20px) が決める。共有ボタンも
+            同じ 20px の箱に収めてあるので、この flex 行の高さは片方だけのときと変わらない。
+            不透明度は段ごと落とす —— 見出しと共有は同時に消えてよい。 */}
+        <div
           style={{
-            fontSize: dockPx(BAND_HEADING_FONT, 0),
-            lineHeight: full.headingLine / BAND_HEADING_FONT,
             marginBottom: dockPx(full.headingGap, BAND_COMPACT.headingGap),
             opacity: dockFadeIn,
           }}
-          className="overflow-hidden font-medium text-fg-muted"
+          className="flex items-center justify-between gap-3"
         >
-          {heading}
-        </h2>
+          {/* 見出しは畳むだけで消さない (max-height ではなく文字サイズを縮めるので
+              読み上げ順からも外れない)。
+              切り落とし (max-height) ではなく font-size を縮めるのが要点 —— 見出しの箱は
+              帯の高さそのものなので全区間に線形で分散させる必要があり、そこで切り落としを
+              使うと文字が見えている間ずっと刻まれてしまう (#62)。行高を headingLine /
+              BAND_HEADING_FONT の比で持てば、箱は文字サイズに比例して縮むので高さの
+              一次性は保たれ、しかもどの瞬間も文字は切れない。
+              overflow-hidden は保険 —— 翻訳が伸びて 2 行になると箱が headingLine の想定を
+              超え、fullHeight がずれて着地位置が狂う。現行の 2 言語では起きない。 */}
+          <h2
+            style={{
+              fontSize: dockPx(BAND_HEADING_FONT, 0),
+              lineHeight: full.headingLine / BAND_HEADING_FONT,
+            }}
+            className="min-w-0 overflow-hidden font-medium text-fg-muted"
+          >
+            {heading}
+          </h2>
+          {/* 共有。見出しと同じ縮み方 (font-size と、それに比例する行高) をするので、
+              段の高さを 1px も増やさない。押せる範囲だけは padding と符号違いの margin で
+              外へ出す —— HelpButton の p-2 -m-2 と同じで、見た目も段の高さも変わらない。
+              どちらも --dock で 0 へ畳むので、簡易表示では跡形もなくなる。
+              ドック中は帯ごと pointer-events を切ってあるので押せないが、そのとき
+              画面には押す対象が見えていないので齟齬はない。 */}
+          <button
+            type="button"
+            onClick={onShare}
+            disabled={results === null}
+            style={{
+              fontSize: dockPx(BAND_SHARE_FONT, 0),
+              lineHeight: full.headingLine / BAND_SHARE_FONT,
+              padding: dockPx(BAND_SHARE_HIT_PAD, 0),
+              margin: dockPx(-BAND_SHARE_HIT_PAD, 0),
+            }}
+            className="inline-flex shrink-0 items-center gap-[0.35em] rounded-md font-medium text-fg-subtle transition-colors hover:text-accent-ink disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-fg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            <Share2 aria-hidden="true" className="h-[1.2em] w-[1.2em] shrink-0" />
+            {shareLabel}
+          </button>
+        </div>
         <div
           style={{ minHeight: dockPx(full.gridMin, BAND_COMPACT.gridMin) }}
           className="grid w-full grid-cols-2 items-center gap-3 text-center sm:gap-4"
@@ -1129,18 +1235,9 @@ const SpokeLengthCalculator: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const crossingSegments = useCrossingSegments();
   const [isCompactViewport, setIsCompactViewport] = useState(getIsCompactViewport);
-  const [inputs, setInputs] = useState<Inputs>({
-    erd: '',
-    rimOffset: '0',
-    pitchCircleLeft: '',
-    pitchCircleRight: '',
-    flangeDistanceLeft: '',
-    flangeDistanceRight: '',
-    spokeHoleDiameter: '2.6', // Hope Pro 5 value as default (author's personal preference)
-    numberOfSpokes: '32', // Generally 32 spokes is common,
-    crossingsLeft: '3', // 3-cross is also typical
-    crossingsRight: '3' // 3-cross is also typical
-  });
+  const [inputs, setInputs] = useState<Inputs>(
+    INITIAL_SHARED_INPUTS.status === 'ok' ? INITIAL_SHARED_INPUTS.inputs : DEFAULT_INPUTS,
+  );
 
   const presetOptions = PRESET_LOAD_RESULT.options;
   const hubPresetOptions = HUB_PRESET_LOAD_RESULT.options;
@@ -1331,6 +1428,22 @@ const SpokeLengthCalculator: React.FC = () => {
     };
   }, []);
 
+  // 共有 URL を名乗る fragment を読めなかったことを伝える。画面は通常の初期状態
+  // そのもので、見ただけでは何も起きていないように見える —— 黙っていると
+  // 「相手が送った条件を見ている」と思い込んだまま作業してしまう。
+  //
+  // 起動時の一度きり。StrictMode の二重実行でトーストが 2 枚出ないよう ref で止める。
+  const sharedInputsAlertShownRef = useRef(false);
+
+  useEffect(() => {
+    if (INITIAL_SHARED_INPUTS.status !== 'invalid' || sharedInputsAlertShownRef.current) {
+      return;
+    }
+
+    sharedInputsAlertShownRef.current = true;
+    showToast(t('alerts.shareLinkInvalid'), 'warning');
+  }, [showToast, t]);
+
   // Language switch handler
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang);
@@ -1449,6 +1562,50 @@ const SpokeLengthCalculator: React.FC = () => {
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
     setCalculationToDelete(null);
+  };
+
+  // 今の入力条件を共有する。
+  //
+  // 生成するのはこの操作のときだけで、入力のたびに URL を書き換えることはしない ——
+  // 履歴が入力の打鍵で埋まるし、戻るボタンの意味も壊れる。
+  //
+  // navigator.share() が使える環境では OS の共有シートに任せる。使えない、または
+  // シートが開けなかったときだけクリップボードへ落とす。利用者が共有シートを
+  // 閉じたとき (AbortError) は失敗ではないので、黙って何もしない ——
+  // ここでクリップボードに落とすと、やめたはずの操作が済んだことになってしまう。
+  const shareCalculation = async () => {
+    if (currentResults === null) {
+      showToast(t('alerts.performCalculationFirst'), 'warning');
+      return;
+    }
+
+    const shareUrl = buildShareUrl(window.location.href, inputs);
+
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title: t('title'), url: shareUrl });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+
+        console.error('Failed to open the share sheet:', error);
+      }
+    }
+
+    if (!navigator.clipboard) {
+      showToast(t('alerts.shareLinkCopyFailed'), 'error');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast(t('alerts.shareLinkCopied'), 'success');
+    } catch (error) {
+      console.error('Failed to copy the share link:', error);
+      showToast(t('alerts.shareLinkCopyFailed'), 'error');
+    }
   };
 
   // JSON export
@@ -1882,6 +2039,8 @@ const SpokeLengthCalculator: React.FC = () => {
           placeholder={t('results.placeholder')}
           leftLabel={resultsLeftText}
           rightLabel={resultsRightText}
+          shareLabel={t('buttons.share')}
+          onShare={shareCalculation}
           isCompactViewport={isCompactViewport}
         />
 
