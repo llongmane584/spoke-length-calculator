@@ -48,7 +48,7 @@ interface AppDrawerProps {
 }
 
 /**
- * メニュードロワー。狭い画面では画面全体を覆い、`sm` 以上では右端から出る。
+ * メニュードロワー。狭い画面では画面全体を覆い、`sm` 以上では描画領域の右端から出る。
  *
  * Modal は流用しない —— あちらは中央に置く小窓で、幅も高さの上限もその前提で決まって
  * いる。右寄せ・全高・左だけの枠はどの幅でも別物なので、共有できるのは見た目ではなく
@@ -79,107 +79,109 @@ export function AppDrawer({ isOpen, onClose }: AppDrawerProps) {
 
   return (
     <div style={{ zIndex }} className="fixed inset-0 bg-scrim" onClick={onClose}>
-      {/* ml-auto で右端へ。狭い画面では w-full が効いて画面全部を覆うので、
-          枠と角丸は sm 以上だけに置く —— 全画面のときに左枠が 1 本走ると、
-          画面の端に意味のない線が出る */}
-      <div
-        ref={dialogRef}
-        tabIndex={-1}
-        onClick={event => event.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        className="ml-auto flex h-full w-full flex-col bg-surface shadow-lg focus:outline-none sm:max-w-sm sm:border-l sm:border-line"
-      >
-        <div className="flex flex-none items-center justify-between gap-4 border-b border-line p-5 sm:p-6">
-          <h2 id={titleId} className="text-lg font-semibold text-fg sm:text-xl">
-            {t('menu.title')}
-          </h2>
-          <button
-            ref={closeButtonRef}
-            type="button"
-            onClick={onClose}
-            aria-label={t('menu.close')}
-            className={`${btnGhost} -mr-2`}
-          >
-            <X className={btnIcon} aria-hidden="true" />
-          </button>
-        </div>
-
-        {/* 行が増えたときに送るのはここだけ。overscroll-contain は全画面のときに、
-            端まで送った続きで裏の計算機が動いてしまうのを止める */}
-        <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6">
-          <ul className="-mx-3 flex flex-col gap-1">
-            {SECTIONS.map(({ path, labelKey, Icon }) => {
-              // 更新履歴は下に 2 階層 (/all と /:year) を持つので、前方一致でも見る
-              const isCurrent = pathname === path || pathname.startsWith(`${path}/`)
-
-              return (
-                <li key={path}>
-                  <Link
-                    to={path}
-                    onClick={onClose}
-                    aria-current={isCurrent ? 'page' : undefined}
-                    className={`${menuRow} ${
-                      isCurrent ? 'bg-accent-soft text-accent-ink' : 'text-fg hover:bg-sunken'
-                    }`}
-                  >
-                    <Icon
-                      className={`${btnIcon} ${isCurrent ? 'text-accent-ink' : 'text-accent'}`}
-                      aria-hidden="true"
-                    />
-                    <span className="flex-1">{t(labelKey)}</span>
-                    <ChevronRight className={`${btnIcon} text-fg-subtle`} aria-hidden="true" />
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        </nav>
-
-        {/* 送らない帯なので、言語の select を置いてもポップアップが枠に切られない */}
-        <div className="flex-none space-y-3 border-t border-line p-5 sm:p-6">
-          <div className="flex items-center justify-between gap-3">
-            <label htmlFor={languageId} className="text-sm font-medium text-fg">
-              {t('menu.language')}
-            </label>
-            <div className="relative">
-              <select
-                id={languageId}
-                value={i18n.language}
-                onChange={event => handleLanguageChange(event.target.value)}
-                onPointerDown={supportsBaseSelect ? dismissOpenPicker : undefined}
-                className={languageSelectClass}
-              >
-                <option value="en-GB">English</option>
-                <option value="ja">日本語</option>
-              </select>
-              {!supportsBaseSelect && (
-                <ChevronDown aria-hidden="true" className={`${selectChevron} right-2.5`} />
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-sm font-medium text-fg">{t('menu.theme')}</span>
+      <div className="mx-auto h-full w-full sm:max-w-3xl sm:px-6">
+        {/* 配置ラッパー内で ml-auto にして描画領域の右端へ。狭い画面では w-full が効いて
+            画面全部を覆うので、枠と角丸は sm 以上だけに置く —— 全画面のときに左枠が
+            1 本走ると、画面の端に意味のない線が出る */}
+        <div
+          ref={dialogRef}
+          tabIndex={-1}
+          onClick={event => event.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          className="ml-auto flex h-full w-full flex-col bg-surface shadow-lg focus:outline-none sm:max-w-sm sm:border-l sm:border-line"
+        >
+          <div className="flex flex-none items-center justify-between gap-4 border-b border-line p-5 sm:p-6">
+            <h2 id={titleId} className="text-lg font-semibold text-fg sm:text-xl">
+              {t('menu.title')}
+            </h2>
             <button
+              ref={closeButtonRef}
               type="button"
-              onClick={toggleTheme}
+              onClick={onClose}
+              aria-label={t('menu.close')}
               className={`${btnGhost} -mr-2`}
-              title={t('theme.toggle')}
-              aria-label={t('theme.toggle')}
             >
-              {theme === 'dark' ? (
-                <Sun className={btnIcon} aria-hidden="true" />
-              ) : (
-                <Moon className={btnIcon} aria-hidden="true" />
-              )}
+              <X className={btnIcon} aria-hidden="true" />
             </button>
           </div>
 
-          <p className="text-xs tabular-nums text-fg-subtle">
-            {t('menu.version', { version: APP_VERSION })}
-          </p>
+          {/* 行が増えたときに送るのはここだけ。overscroll-contain は全画面のときに、
+              端まで送った続きで裏の計算機が動いてしまうのを止める */}
+          <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6">
+            <ul className="-mx-3 flex flex-col gap-1">
+              {SECTIONS.map(({ path, labelKey, Icon }) => {
+                // 更新履歴は下に 2 階層 (/all と /:year) を持つので、前方一致でも見る
+                const isCurrent = pathname === path || pathname.startsWith(`${path}/`)
+
+                return (
+                  <li key={path}>
+                    <Link
+                      to={path}
+                      onClick={onClose}
+                      aria-current={isCurrent ? 'page' : undefined}
+                      className={`${menuRow} ${
+                        isCurrent ? 'bg-accent-soft text-accent-ink' : 'text-fg hover:bg-sunken'
+                      }`}
+                    >
+                      <Icon
+                        className={`${btnIcon} ${isCurrent ? 'text-accent-ink' : 'text-accent'}`}
+                        aria-hidden="true"
+                      />
+                      <span className="flex-1">{t(labelKey)}</span>
+                      <ChevronRight className={`${btnIcon} text-fg-subtle`} aria-hidden="true" />
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          </nav>
+
+          {/* 送らない帯なので、言語の select を置いてもポップアップが枠に切られない */}
+          <div className="flex-none space-y-3 border-t border-line p-5 sm:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <label htmlFor={languageId} className="text-sm font-medium text-fg">
+                {t('menu.language')}
+              </label>
+              <div className="relative">
+                <select
+                  id={languageId}
+                  value={i18n.language}
+                  onChange={event => handleLanguageChange(event.target.value)}
+                  onPointerDown={supportsBaseSelect ? dismissOpenPicker : undefined}
+                  className={languageSelectClass}
+                >
+                  <option value="en-GB">English</option>
+                  <option value="ja">日本語</option>
+                </select>
+                {!supportsBaseSelect && (
+                  <ChevronDown aria-hidden="true" className={`${selectChevron} right-2.5`} />
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-medium text-fg">{t('menu.theme')}</span>
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className={`${btnGhost} -mr-2`}
+                title={t('theme.toggle')}
+                aria-label={t('theme.toggle')}
+              >
+                {theme === 'dark' ? (
+                  <Sun className={btnIcon} aria-hidden="true" />
+                ) : (
+                  <Moon className={btnIcon} aria-hidden="true" />
+                )}
+              </button>
+            </div>
+
+            <p className="text-xs tabular-nums text-fg-subtle">
+              {t('menu.version', { version: APP_VERSION })}
+            </p>
+          </div>
         </div>
       </div>
     </div>
