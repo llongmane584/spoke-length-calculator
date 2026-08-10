@@ -107,7 +107,7 @@ export function AppDrawer({ isOpen, onClose }: AppDrawerProps) {
               type="button"
               onClick={onClose}
               aria-label={t('menu.close')}
-              className={`${btnGhost} -mr-1 sm:-mr-6`}
+              className={`${btnGhost} -mr-1 sm:-mr-2`}
             >
               <X className={btnIcon} aria-hidden="true" />
             </button>

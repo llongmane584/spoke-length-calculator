@@ -33,7 +33,7 @@ export function AppHeader({ isMenuOpen, onOpenMenu, menuButtonRef }: AppHeaderPr
         ref={menuButtonRef}
         type="button"
         onClick={onOpenMenu}
-        className={btnGhost}
+        className={`${btnGhost} sm:mr-4`}
         title={t('menu.title')}
         aria-label={t('menu.title')}
         aria-haspopup="dialog"
