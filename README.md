@@ -89,7 +89,7 @@ text renders in Inter rather than a fallback face.
    - Saved data can be recalled later
 
 4. **Share the inputs**
-   - "Share", below the results, builds a URL that carries the current input conditions
+   - "Share", on the Calculation Results heading row, builds a URL that carries the current input conditions
    - Devices with a share sheet open it; elsewhere the link is copied to the clipboard
    - Opening the URL starts with the same inputs (a link that cannot be read starts normally)
    - Only the inputs travel in the URL — results and saved data do not

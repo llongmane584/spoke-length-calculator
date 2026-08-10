@@ -19,22 +19,11 @@ export const btnPrimary = `${btnBase} bg-accent text-on-accent hover:bg-accent-h
 /** 副次動作。塗りではなくアウトラインにして、primary との階層を保つ。 */
 export const btnSecondary = `${btnBase} border border-line-strong bg-surface text-fg hover:bg-sunken`;
 
-/**
- * アイコンボタンや控えめなリンク的操作。
- *
- * 無効時は面を塗らない (btnBase の disabled:bg-sunken と違う) —— ghost は枠も面も
- * 持たないことで一段引いているので、無効のときだけ箱が現れると逆に目立つ。
- * 代わりに不透明度を落とす: fg-muted と fg-subtle の差は L で 0.05 しかなく、
- * 色だけでは無効に見えない (押しても何も起きないボタンが押せる顔をしてしまう)。
- * hover も明示的に打ち消す: 効かないボタンが指を乗せたときだけ光ると、
- * やはり押せるように見える。
- */
+/** アイコンボタンや控えめなリンク的操作。 */
 export const btnGhost =
   'inline-flex min-h-9 min-w-9 items-center justify-center gap-2 rounded-md px-2 font-medium transition-colors ' +
   'text-fg-muted hover:bg-sunken hover:text-fg ' +
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ' +
-  'disabled:cursor-not-allowed disabled:opacity-55 disabled:text-fg-subtle ' +
-  'disabled:hover:bg-transparent disabled:hover:text-fg-subtle';
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus';
 
 /** 破壊的動作。 */
 export const btnDanger = `${btnBase} bg-danger text-on-danger hover:bg-danger-hover`;

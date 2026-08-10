@@ -756,6 +756,16 @@ const BAND_COMPACT = { pad: 10, headingLine: 0, headingGap: 0, gridMin: 26, labe
 // 箱の高さは文字サイズに比例して縮む —— 切り落とさずに畳めるのはこの比のおかげ。
 const BAND_HEADING_FONT = 14;
 
+// 共有ボタンの文字サイズ。見出しより一段小さくして、同じ行に居ながら主張しない。
+// 行高は見出しと同じく headingLine / これ の比で与えるので、箱は見出しと同じ
+// headingLine (20px) から 0 へ。つまり共有を足しても帯の高さは 1px も増えない。
+const BAND_SHARE_FONT = 12;
+
+// 共有ボタンの当たり判定を広げる量。padding とその符号違いの margin で、
+// 見た目と行の高さを変えずに押せる範囲だけを外へ出す (HelpButton の p-2 -m-2 と
+// 同じ作法)。20px の箱 + 8px × 2 で 36px 角の当たり判定になる。
+const BAND_SHARE_HIT_PAD = 8;
+
 // ラベルの行高。#59 はここを指定せず preflight の 1.5 を継承していたので、
 // 明示しても本来の姿の見た目は変わらない。文字サイズに比例することが要点で、
 // 箱が font-size と一緒に縮むので、こちらも切り落とす必要がない。
@@ -882,8 +892,10 @@ const ResultBand: React.FC<{
   placeholder: string;
   leftLabel: string;
   rightLabel: string;
+  shareLabel: string;
+  onShare: () => void;
   isCompactViewport: boolean;
-}> = ({ results, heading, placeholder, leftLabel, rightLabel, isCompactViewport }) => {
+}> = ({ results, heading, placeholder, leftLabel, rightLabel, shareLabel, onShare, isCompactViewport }) => {
   const { full, travel } = bandMetrics(isCompactViewport);
 
   return (
@@ -905,26 +917,59 @@ const ResultBand: React.FC<{
             : 'bg-overlay border-overlay-line',
         ].join(' ')}
       >
-        {/* 見出しは畳むだけで消さない (max-height ではなく文字サイズを縮めるので
-            読み上げ順からも外れない)。
-            切り落とし (max-height) ではなく font-size を縮めるのが要点 —— 見出しの箱は
-            帯の高さそのものなので全区間に線形で分散させる必要があり、そこで切り落としを
-            使うと文字が見えている間ずっと刻まれてしまう (#62)。行高を headingLine /
-            BAND_HEADING_FONT の比で持てば、箱は文字サイズに比例して縮むので高さの
-            一次性は保たれ、しかもどの瞬間も文字は切れない。
-            overflow-hidden は保険 —— 翻訳が伸びて 2 行になると箱が headingLine の想定を
-            超え、fullHeight がずれて着地位置が狂う。現行の 2 言語では起きない。 */}
-        <h2
+        {/* 見出しの段。共有はここに右寄せで同居させる —— 帯は高さがそのまま変形量に
+            なる区画なので、操作のために独立した行を足すと、その分だけ本来の姿が高く
+            なり、着地までのスクロール距離まで伸びる。同じ段に入れれば増分は 0。
+            段の高さは今までどおり見出しの箱 (headingLine = 20px) が決める。共有ボタンも
+            同じ 20px の箱に収めてあるので、この flex 行の高さは片方だけのときと変わらない。
+            不透明度は段ごと落とす —— 見出しと共有は同時に消えてよい。 */}
+        <div
           style={{
-            fontSize: dockPx(BAND_HEADING_FONT, 0),
-            lineHeight: full.headingLine / BAND_HEADING_FONT,
             marginBottom: dockPx(full.headingGap, BAND_COMPACT.headingGap),
             opacity: dockFadeIn,
           }}
-          className="overflow-hidden font-medium text-fg-muted"
+          className="flex items-center justify-between gap-3"
         >
-          {heading}
-        </h2>
+          {/* 見出しは畳むだけで消さない (max-height ではなく文字サイズを縮めるので
+              読み上げ順からも外れない)。
+              切り落とし (max-height) ではなく font-size を縮めるのが要点 —— 見出しの箱は
+              帯の高さそのものなので全区間に線形で分散させる必要があり、そこで切り落としを
+              使うと文字が見えている間ずっと刻まれてしまう (#62)。行高を headingLine /
+              BAND_HEADING_FONT の比で持てば、箱は文字サイズに比例して縮むので高さの
+              一次性は保たれ、しかもどの瞬間も文字は切れない。
+              overflow-hidden は保険 —— 翻訳が伸びて 2 行になると箱が headingLine の想定を
+              超え、fullHeight がずれて着地位置が狂う。現行の 2 言語では起きない。 */}
+          <h2
+            style={{
+              fontSize: dockPx(BAND_HEADING_FONT, 0),
+              lineHeight: full.headingLine / BAND_HEADING_FONT,
+            }}
+            className="min-w-0 overflow-hidden font-medium text-fg-muted"
+          >
+            {heading}
+          </h2>
+          {/* 共有。見出しと同じ縮み方 (font-size と、それに比例する行高) をするので、
+              段の高さを 1px も増やさない。押せる範囲だけは padding と符号違いの margin で
+              外へ出す —— HelpButton の p-2 -m-2 と同じで、見た目も段の高さも変わらない。
+              どちらも --dock で 0 へ畳むので、簡易表示では跡形もなくなる。
+              ドック中は帯ごと pointer-events を切ってあるので押せないが、そのとき
+              画面には押す対象が見えていないので齟齬はない。 */}
+          <button
+            type="button"
+            onClick={onShare}
+            disabled={results === null}
+            style={{
+              fontSize: dockPx(BAND_SHARE_FONT, 0),
+              lineHeight: full.headingLine / BAND_SHARE_FONT,
+              padding: dockPx(BAND_SHARE_HIT_PAD, 0),
+              margin: dockPx(-BAND_SHARE_HIT_PAD, 0),
+            }}
+            className="inline-flex shrink-0 items-center gap-[0.35em] rounded-md font-medium text-fg-subtle transition-colors hover:text-accent-ink disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-fg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            <Share2 aria-hidden="true" className="h-[1.2em] w-[1.2em] shrink-0" />
+            {shareLabel}
+          </button>
+        </div>
         <div
           style={{ minHeight: dockPx(full.gridMin, BAND_COMPACT.gridMin) }}
           className="grid w-full grid-cols-2 items-center gap-3 text-center sm:gap-4"
@@ -1994,30 +2039,13 @@ const SpokeLengthCalculator: React.FC = () => {
           placeholder={t('results.placeholder')}
           leftLabel={resultsLeftText}
           rightLabel={resultsRightText}
+          shareLabel={t('buttons.share')}
+          onShare={shareCalculation}
           isCompactViewport={isCompactViewport}
         />
 
         {/* Save and export */}
         <div className="space-y-4 border-t border-line p-5 sm:p-6">
-          {/* 共有は結果に対する操作なので、保存名より前 —— 結果帯の直下に置く。
-              帯そのものの中には入れない: 帯の高さは BAND_FULL_* / BAND_COMPACT の
-              px 定数でドック変形の一次性を保っており (#58〜#62)、min-h-11 のボタンを
-              足すとその前提が崩れて着地位置がずれる。
-              フルワイドの枠付きボタンにはしない。ここの主要動作は保存で、共有は
-              結果に添える控えめな操作 —— 幅いっぱいの箱にすると保存や読込と同じ
-              重さになり、画面の主役が 3 つに増えてしまう。ghost + 右寄せで一段引かせる。
-              無効化の条件は保存と同じ hasValidResults。正しい計算結果が出ていない
-              リンクは作れない。 */}
-          <div className="flex justify-end">
-            <button
-              onClick={shareCalculation}
-              disabled={!hasValidResults}
-              className={`${btnGhost} text-sm`}
-            >
-              <Share2 className="w-4 h-4" aria-hidden="true" />
-              {t('buttons.share')}
-            </button>
-          </div>
           <div>
             <label htmlFor="calculationName" className={sectionHeading}>
               <Tag aria-hidden="true" className={sectionHeadingIcon} />
