@@ -28,3 +28,13 @@
 
 - クソダサいグラデーション禁止
 - クソダサい青紫系配色禁止
+- GitHub へのテキスト送信は、 ./tmp/ 以下に issue 番号のサブディレクトリに一時ファイルを生成し、 `--body-file` で行うこと
+- オープンPRの修正の場合、新規ブランチを作成せず、新規Issueを起票しない
+- 実装完了後、ブラウザーのコンソールにエラーが出ていないことを確認する
+
+## ドロワーのモーション再発防止
+
+- ドロワーの最終位置は PR 119 / commit `3f6a4c7` の描画領域を基準にする。画面全体を基準にしない。
+- 表示中の transform は `overflow-clip` の領域内に閉じ、閉じたままフォーカスする要素には `focus({ preventScroll: true })` を使う。フォーカスによる自動横スクロールと transform を競合させない。
+- 開閉は `translateX(100%)` ↔ `translateX(0)` の単純な単調スライドだけ。scale / opacity / overshoot easing / bounce は追加しない。
+- `playwright-cli` で開閉中の clip ancestor の `scrollLeft` が 0 であること、パネル位置が単調に終点へ向かうことを確認する。
