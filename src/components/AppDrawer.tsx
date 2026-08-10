@@ -78,7 +78,7 @@ export function AppDrawer({ isOpen, onClose }: AppDrawerProps) {
   if (!isOpen) return null
 
   return (
-    <div style={{ zIndex }} className="fixed inset-0 bg-scrim" onClick={onClose}>
+    <div style={{ zIndex }} className="fixed inset-0" onClick={onClose}>
       <div className="mx-auto h-full w-full sm:max-w-3xl sm:px-6">
         {/* 配置ラッパー内で ml-auto にして描画領域の右端へ。狭い画面では w-full が効いて
             画面全部を覆うので、枠と角丸は sm 以上だけに置く —— 全画面のときに左枠が
