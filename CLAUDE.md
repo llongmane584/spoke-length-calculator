@@ -13,8 +13,8 @@ Think in English, respond in Japanese.
 2. **Documentation Phase**: IMPORTANT - Once approved, add detailed implementation plan as comment to the issue using `gh issue comment`
 3. **Branching Phase**: Create appropriately named feature branch
 4. **Implementation Phase**: Write code following project standards
-5. **Testing Phase**: Validate functionality (本プロジェクトは `pnpm` で lint / build を実行する)
-6. **Integration Phase**: Commit, push, and create pull request for review
+5. **Testing Phase**: Validate functionality (This project uses `pnpm` to run lint and build)
+6. **Integration Phase**: Commit, push, and create pull request for review (Link the related issue using `close:` when creating a PR)
 
 ### VIOLATION CONSEQUENCES:
 - Changes will be rejected if workflow not followed
