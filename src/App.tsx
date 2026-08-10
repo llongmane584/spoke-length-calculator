@@ -2059,6 +2059,7 @@ const SpokeLengthCalculator: React.FC = () => {
         name={calculationName}
         onNameChange={setCalculationName}
         onSave={handleSaveRequest}
+        canSave={hasValidResults}
         savedCalculations={savedCalculations}
         loadFailure={savedDataLoadStatus === 'ok' ? undefined : savedDataLoadStatus}
         onLoad={handleLoadRequest}

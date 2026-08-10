@@ -8,7 +8,7 @@ interface ActionBarProps {
   onExportJson: () => void
   onImportJson: () => void
   onCompare: () => void
-  /** 有効な計算結果があるか。共有・保存・JSON 出力はこれが false の間押せない。 */
+  /** 有効な計算結果があるか。共有・JSON 出力はこれが false の間押せない。 */
   hasResults: boolean
   savedCount: number
 }
@@ -35,6 +35,16 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   // アイコンだけの見た目では disabled の色以外に手がかりが無いため
   const unavailable = hasResults ? undefined : t('alerts.performCalculationFirst')
 
+  // 保存ダイアログは「保存する」場所であると同時に「保存済みを読む・消す」場所でもある。
+  // 開ける条件を保存できるかどうかだけで決めると、保存済みがあるのに結果が無いとき
+  // —— 件数バッジは出ているのにボタンは押せない、という手の届かない状態になる (#104)
+  const canOpenSave = hasResults || savedCount > 0
+  const saveTitle = hasResults
+    ? t('buttons.save')
+    : canOpenSave
+      ? t('results.savedCalculations')
+      : unavailable
+
   return (
     <div className="grid grid-cols-5 gap-2 border-t border-line p-4 sm:p-5">
       <button
@@ -51,8 +61,8 @@ export const ActionBar: React.FC<ActionBarProps> = ({
       <button
         type="button"
         onClick={onSave}
-        disabled={!hasResults}
-        title={unavailable ?? t('buttons.save')}
+        disabled={!canOpenSave}
+        title={saveTitle}
         className={btnAction}
       >
         <Save aria-hidden="true" className="h-5 w-5 shrink-0" />
