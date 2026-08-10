@@ -4,11 +4,6 @@
 
 スポーク長計算Webアプリケーション。自転車ホイール組みに必要なスポーク長を計算する。
 
-> 以下の「MANDATORY Issue based development Workflow」から「GitHub CLI Usage」までは、
-> ローカルの `~/.claude/CLAUDE.md` に置いていた共通ルールの転記。クラウド開発では
-> ローカルのグローバル設定が読み込まれないため、リポジトリ側にも同じ内容を持たせている。
-> グローバル設定を変更したときは、この範囲も合わせて更新すること。
-
 ## MANDATORY Issue based development Workflow - YOU MUST FOLLOW THIS
 
 Think in English, respond in Japanese.
