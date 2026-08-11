@@ -1224,7 +1224,25 @@ const SpokeLengthCalculator: React.FC = () => {
     : undefined;
   const hasValidResults = currentResults !== null;
 
+  // 比較の選択肢。プリセットと保存済みに加え、今の入力で計算できているなら
+  // それも 1 件として先頭に置く —— 試算のために名前を付けて保存する必要をなくす (#124)。
+  // deps に inputs 全体を入れないこと。1 文字打つたびに配列の参照が変わり、
+  // memo(CompareWheels) が毎回落ちる。currentResults は useMemo 由来で参照は安定。
+  // t は必須 —— 抜くと言語を切り替えてもラベルが旧言語のまま残る (#87)。
   const wheelOptions = useMemo((): WheelOption[] => {
+    // 結果が出ている時点で numberOfSpokes は spokeCountOptions のいずれかだと
+    // validateInputs が保証しているので、|| 32 のような穴埋めは要らない。
+    const currentItems: WheelOption[] = currentResults === null ? [] : [{
+      id: 'current',
+      label: t('compare.currentInput'),
+      group: 'current',
+      spec: {
+        label: t('compare.currentInput'),
+        leftLength: currentResults.left,
+        rightLength: currentResults.right,
+        spokeCount: Number(inputs.numberOfSpokes),
+      },
+    }];
     const presetItems: WheelOption[] = presetOptions.map(p => ({
       id: `preset:${p.id}`,
       label: p.name,
@@ -1247,8 +1265,8 @@ const SpokeLengthCalculator: React.FC = () => {
         spokeCount: parseInt(s.inputs.numberOfSpokes, 10) || 32,
       },
     }));
-    return [...presetItems, ...savedItems];
-  }, [presetOptions, savedCalculations]);
+    return [...currentItems, ...presetItems, ...savedItems];
+  }, [currentResults, inputs.numberOfSpokes, presetOptions, savedCalculations, t]);
 
   // プリセットの select は選択状態を state で覚えない。今の入力値に一致する定義を
   // 毎回探して value にする —— これだけで「ホイールを選ぶとハブ / リムの欄も点く」

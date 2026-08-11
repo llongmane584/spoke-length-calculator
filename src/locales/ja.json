@@ -178,6 +178,8 @@
     "placeholder": "ホイールを選択",
     "groupPresets": "プリセット",
     "groupSaved": "保存済み計算",
+    "currentInput": "現在の入力（未保存）",
+    "selectionUnavailable": "選択したホイールが見つかりません — 入力を変えたか、保存済み計算を削除した可能性があります。選び直してください。",
     "totalNeeded": "必要本数（B）",
     "reuseCount": "現状ホイールから流用できる本数",
     "leftoverCount": "流用後に余る本数",
