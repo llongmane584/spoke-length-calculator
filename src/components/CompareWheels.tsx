@@ -7,7 +7,7 @@ import { PresetSelect, type PresetSelectGroup } from './PresetSelect';
 export interface WheelOption {
   id: string;
   label: string;
-  group: 'preset' | 'saved';
+  group: 'current' | 'preset' | 'saved';
   spec: WheelSpec;
 }
 
@@ -22,11 +22,13 @@ interface Props {
 const CompareWheels: React.FC<Props> = ({ options, selectedA, selectedB, onChangeA, onChangeB }) => {
   const { t } = useTranslation();
 
-  const presets = options.filter(o => o.group === 'preset');
-  const saved = options.filter(o => o.group === 'saved');
-
   const specA = options.find(o => o.id === selectedA)?.spec ?? null;
   const specB = options.find(o => o.id === selectedB)?.spec ?? null;
+
+  // 選んだ id が options に無い状態。現在の入力が計算できなくなった、あるいは
+  // 選んでいた保存済み計算を消したときに起きる。PresetSelect は黙って
+  // プレースホルダに倒れるので、下の案内文で「選び直しが要る」ことを伝える。
+  const unresolved = (selectedA !== '' && specA === null) || (selectedB !== '' && specB === null);
 
   const result = useMemo(() => {
     if (specA === null || specB === null) return null;
@@ -35,10 +37,21 @@ const CompareWheels: React.FC<Props> = ({ options, selectedA, selectedB, onChang
 
   // optgroup が要るのでネイティブ select のまま。見た目は PresetSelect が
   // 入力欄側のプリセット選択と揃える (対応ブラウザでは appearance: base-select)。
-  const groups = useMemo((): PresetSelectGroup[] => [
-    { label: t('compare.groupPresets'), items: presets.map(o => ({ id: o.id, name: o.label })) },
-    { label: t('compare.groupSaved'), items: saved.map(o => ({ id: o.id, name: o.label })) },
-  ].filter(group => group.items.length > 0), [presets, saved, t]);
+  //
+  // 3 グループを 1 つの useMemo で組む。options から filter した中間配列を外に出すと
+  // 毎レンダー新しい参照になり、deps に載せた useMemo が何もメモしない。
+  // 現在の入力だけ label を持たない —— 1 件しかないものに見出しを立てても情報が
+  // 増えず、PresetSelect は label 無しのグループを optgroup 抜きで素に並べる。
+  const groups = useMemo((): PresetSelectGroup[] => {
+    const itemsOf = (group: WheelOption['group']) =>
+      options.filter(o => o.group === group).map(o => ({ id: o.id, name: o.label }));
+
+    return [
+      { items: itemsOf('current') },
+      { label: t('compare.groupPresets'), items: itemsOf('preset') },
+      { label: t('compare.groupSaved'), items: itemsOf('saved') },
+    ].filter(group => group.items.length > 0);
+  }, [options, t]);
 
   const renderSelect = (
     id: string,
@@ -64,10 +77,20 @@ const CompareWheels: React.FC<Props> = ({ options, selectedA, selectedB, onChang
         {renderSelect('compareWheelB', selectedB, onChangeB, t('compare.wheelB'))}
       </div>
 
+      {/* 比較できない理由を 1 つに丸めない。選んだホイールが消えたのに
+          「両方選択してください」と出すと、選んだ側は何が起きたか分からない。
+          アイコンは下の allNew と同じ組み方 —— 色だけで状態を伝えない */}
       {result === null ? (
-        <p className="text-sm text-fg-subtle text-center py-4">
-          {t('compare.selectBoth')}
-        </p>
+        unresolved ? (
+          <p className="flex items-start justify-center gap-1.5 py-4 text-sm text-warn-ink">
+            <TriangleAlert aria-hidden="true" className="shrink-0 mt-0.5 h-4 w-4" />
+            <span>{t('compare.selectionUnavailable')}</span>
+          </p>
+        ) : (
+          <p className="text-sm text-fg-subtle text-center py-4">
+            {t('compare.selectBoth')}
+          </p>
+        )
       ) : (
         <div className="rounded-lg border bg-accent-soft border-accent-line p-5 space-y-4">
           {/* キャプションの行数は言語と語長でばらつく (日本語は 1〜3 行)。

@@ -178,6 +178,8 @@
     "placeholder": "Select a wheel",
     "groupPresets": "Presets",
     "groupSaved": "Saved Calculations",
+    "currentInput": "Current input (unsaved)",
+    "selectionUnavailable": "The selected wheel is no longer available — the inputs changed or the saved calculation was deleted. Please select it again.",
     "totalNeeded": "Spokes needed (B)",
     "reuseCount": "Reusable from current wheel",
     "leftoverCount": "Leftover spokes from current wheel",
