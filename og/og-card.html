@@ -12,15 +12,15 @@
          node og/serve.mjs                     # 別ターミナルで起動したままにする
          playwright-cli -s=og open "http://127.0.0.1:8787/og/og-card.html"
          playwright-cli -s=og resize 1320 760
-         playwright-cli -s=og eval "() => document.fonts.ready.then(() => [...document.fonts].some(f => f.family === 'Inter' && f.status === 'loaded'))"
+         playwright-cli -s=og eval "() => document.fonts.ready.then(() => [...document.fonts].some(f => f.family === 'Sora' && f.status === 'loaded'))"
          # ↑ true が返らなければ中断する。スクリーンショットは撮らない
          playwright-cli -s=og screenshot "#card" --filename="<ABS>/public/og-image-4.png"
          playwright-cli -s=og close
 
        -s=og は省かない。既定セッションは人が開いているブラウザに繋がる。
 
-       関門に document.fonts.check('700 84px Inter') を使ってはいけない (#148)。check() が
-       見るのは「読み込み待ちの FontFace が残っていないか」であって「Inter で描かれるか」
+       関門に document.fonts.check() を使ってはいけない (#148)。check() が見るのは
+       「読み込み待ちの FontFace が残っていないか」であって「その書体で描かれるか」
        ではないので、fonts.googleapis.com へ到達できず @font-face が 1 本も生成されなかった
        場合、待つものが無いので素通しで true を返す。#146 ではこれを true で通過して、fallback で
        描かれたカードができた。上の式は face が実在して loaded であることを見るため、
@@ -29,7 +29,7 @@
        残るので、every ではなく some で見る。
 
        関門は true なのに字送りが怪しい、というときは実際に使われた書体名を CDP で引く。
-       正常なら familyName が Inter、isCustomFont が true になる:
+       正常なら familyName が Sora、isCustomFont が true になる:
 
          playwright-cli -s=og run-code "async page => { const c = await page.context().newCDPSession(page); const { root } = await c.send('DOM.getDocument'); await c.send('CSS.enable'); const { nodeId } = await c.send('DOM.querySelector', { nodeId: root.nodeId, selector: '.title' }); return (await c.send('CSS.getPlatformFontsForNode', { nodeId })).fonts }"
 
@@ -41,8 +41,8 @@
        何もコミットされない。resize の 1320x760 はカードが切れないための余裕で、
        要素スクショなので余白は写らない。
 
-       出力後は 1200x630 / 300KB 未満であることを確認する。書体が Inter かどうかは
-       上の関門と CDP で見る —— カード単体を目で見て Inter と fallback は見分けられない
+       出力後は 1200x630 / 300KB 未満であることを確認する。書体が Sora かどうかは
+       上の関門と CDP で見る —— カード単体を目で見て Sora と fallback は見分けられない
        (#146 は旧画像と字送りを並べて測って、ようやく気づいた)。 -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -54,7 +54,7 @@
        ただしスタイルシート自体が届かなければ block は効かない。@font-face が 1 本も
        無いので、待つものが無く最初から fallback で静かに描かれる —— #146 で実際に
        そうなった。block だけでは足りないので、上の手順に関門がある。 -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=block" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400..600&display=block" rel="stylesheet" />
   <style>
     /* 色は src/index.css のライトテーマ値を写したもの。ここはアプリの CSS ではなく
        Tailwind も通らないので、セマンティックトークンではなく生の hex で書く。
@@ -79,10 +79,6 @@
        padding-bottom が top より大きいのは、フローから外した .url の場所を空けておく
        ため。ここを top と揃えると、中央寄せされた本文の下端が .url に重なる。 */
     #card {
-      /* 見出しの 1 行あたりのサイズと行送り。アイコンの高さもここから導く
-         (.lockup img)。片方だけ触って高さが揃わなくなるのを防ぐため。 */
-      --title-size: 72px;
-      --title-line: 1.08;
       position: relative;
       width: 1200px;
       height: 630px;
@@ -92,7 +88,7 @@
       justify-content: center;
       gap: 44px;
       background: #f6fbfc;
-      font-family: "Inter", sans-serif;
+      font-family: "Sora", sans-serif;
       color: #0a2225;
       -webkit-font-smoothing: antialiased;
       overflow: hidden;
@@ -115,10 +111,19 @@
       gap: 36px;
     }
 
-    /* 高さは見出し 3 段ぶん (72px x 1.08 x 3 = 233.28px) と同じにする。
+    /* アイコンは見出しの「字面」に合わせる —— 上端が The のキャップトップ、下端が
+       Calculator のベースライン。行ボックス (72px x 1.08 x 3 = 233.28px) に合わせると、
+       字面は行ボックスの中で上下に偏っているぶん、アイコンだけ 22px 大きく見える。
+
+       211px と 10px は描画結果から測った値で、書体・--title-size・line-height の
+       どれかを変えたら合わなくなる。変えたときは撮り直して og/ink.mjs で測り直すこと
+       (使い方はそのファイルの冒頭)。両方の ink の高さと y 範囲が一致すれば正しい。
+
        width は viewBox (822x834) から導かせる —— 数値で置くと比率がずれる。 */
     .lockup img {
-      height: calc(var(--title-size) * var(--title-line) * 3);
+      align-self: flex-start;
+      margin-top: 10px;
+      height: 211px;
       width: auto;
       display: block;
     }
@@ -126,16 +131,10 @@
     /* 3 段組みなので 1 行あたりは 84px から落としてある。84px のままだと見出しの
        高さが 272px になり、下の本文と URL に回す余白が残らない。 */
     .title {
-      font-size: var(--title-size);
-      font-weight: 700;
-      line-height: var(--title-line);
+      font-size: 72px;
+      font-weight: 600;
+      line-height: 1.08;
       letter-spacing: -0.02em;
-    }
-
-    /* 冠詞なので本体より一段小さく。行送りを決めるのは .title の strut
-       (72px x 1.08) なので、ここを小さくしても 3 段合計の高さは変わらない。 */
-    .title .article {
-      font-size: 56px;
     }
 
     .sub {
@@ -172,7 +171,7 @@
       <!-- file:// から file:// の <img> は Chromium で読める (塞がれるのは fetch/XHR)。
            空白で出た場合は public/icons/icon-512.png に差し替える。同じ図案。 -->
       <img src="../public/calculator.svg" alt="" />
-      <div class="title"><span class="article">The</span><br />Spoke<br />Calculator</div>
+      <div class="title">The<br />Spoke<br />Calculator</div>
     </div>
     <div>
       <div class="sub">Calculate bicycle spoke lengths for wheel building</div>
