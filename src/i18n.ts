@@ -24,6 +24,9 @@ i18n
     resources,
     lng: savedLanguage,
     fallbackLng: 'en-GB',
+    // init() が本番でもコンソールに 1 本出す Locize の宣伝を止める。
+    // i18next 側の比較が `!== false` なので、false を明示した時だけ黙る。
+    showSupportNotice: false,
     interpolation: {
       escapeValue: false
     }
