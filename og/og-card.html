@@ -79,6 +79,10 @@
        padding-bottom が top より大きいのは、フローから外した .url の場所を空けておく
        ため。ここを top と揃えると、中央寄せされた本文の下端が .url に重なる。 */
     #card {
+      /* 見出しの 1 行あたりのサイズと行送り。アイコンの高さもここから導く
+         (.lockup img)。片方だけ触って高さが揃わなくなるのを防ぐため。 */
+      --title-size: 72px;
+      --title-line: 1.08;
       position: relative;
       width: 1200px;
       height: 630px;
@@ -111,19 +115,27 @@
       gap: 36px;
     }
 
+    /* 高さは見出し 3 段ぶん (72px x 1.08 x 3 = 233.28px) と同じにする。
+       width は viewBox (822x834) から導かせる —— 数値で置くと比率がずれる。 */
     .lockup img {
-      width: 160px;
-      height: 162px;
+      height: calc(var(--title-size) * var(--title-line) * 3);
+      width: auto;
       display: block;
     }
 
     /* 3 段組みなので 1 行あたりは 84px から落としてある。84px のままだと見出しの
-       高さが 272px になり、160px のアイコンとの釣り合いも崩れる。 */
+       高さが 272px になり、下の本文と URL に回す余白が残らない。 */
     .title {
-      font-size: 72px;
+      font-size: var(--title-size);
       font-weight: 700;
-      line-height: 1.08;
+      line-height: var(--title-line);
       letter-spacing: -0.02em;
+    }
+
+    /* 冠詞なので本体より一段小さく。行送りを決めるのは .title の strut
+       (72px x 1.08) なので、ここを小さくしても 3 段合計の高さは変わらない。 */
+    .title .article {
+      font-size: 56px;
     }
 
     .sub {
@@ -160,7 +172,7 @@
       <!-- file:// から file:// の <img> は Chromium で読める (塞がれるのは fetch/XHR)。
            空白で出た場合は public/icons/icon-512.png に差し替える。同じ図案。 -->
       <img src="../public/calculator.svg" alt="" />
-      <div class="title">The<br />Spoke<br />Calculator</div>
+      <div class="title"><span class="article">The</span><br />Spoke<br />Calculator</div>
     </div>
     <div>
       <div class="sub">Calculate bicycle spoke lengths for wheel building</div>
