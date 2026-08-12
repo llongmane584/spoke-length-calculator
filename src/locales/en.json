@@ -228,7 +228,11 @@
         },
         "share": {
           "title": "Share the inputs",
-          "body": "\"Share\", on the Calculation Results heading row, builds a URL carrying the current input conditions. Devices with a share sheet open it; elsewhere the link is copied to the clipboard.\nOnly the inputs travel in the URL — results and saved data do not."
+          "body": "\"Share\", in the action bar under the results, builds a URL carrying the current input conditions. Devices with a share sheet open it; elsewhere the link is copied to the clipboard.\nOnly the inputs travel in the URL — results and saved data do not."
+        },
+        "compare": {
+          "title": "Compare wheels",
+          "body": "\"Compare\", in the action bar, opens the comparison over the wheel you have and the one you want to build. Either side can be a preset, a saved calculation or the current inputs, so nothing has to be saved first.\nThe result is how many spokes can be reused, how many are left over, and what to buy for each side."
         },
         "manage": {
           "title": "Manage your data",
