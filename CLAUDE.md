@@ -20,6 +20,13 @@ Think in English, respond in Japanese.
 - Changes will be rejected if workflow not followed
 - Process must restart from planning phase
 
+## Branching and Releases
+
+- `dev` が統合ブランチ。機能追加も修正も PR は `dev` 宛てに出す。
+- `main` は本番そのもの。push した瞬間 GitHub Pages へデプロイされる。
+- リリース (version++ / タグ / GitHub Release / アプリ内更新履歴) は
+  [`docs/RELEASE.md`](docs/RELEASE.md) の手順で行う。リリース作業では issue もブランチも立てない。
+
 ## Code Style Guidelines
 
 - Source code line endings must always use LF (Unix-style).

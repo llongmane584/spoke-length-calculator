@@ -4,10 +4,10 @@
 // Vite にも DOM にも依存しないので rimOffset.ts / shareLink.ts と同じく
 // node --test から素で読める。
 //
-// tagging / version++ / リリースノート生成のスクリプト化は別 issue。そのスクリプトが
-// 触るのは 3 箇所だけになる —— 下の CHANGELOG の先頭に 1 エントリ、package.json の
-// "version"、そして両 locale の pages.changelog.releases に 1 節。バージョン番号が
-// 重複するのは前 2 箇所だけで、食い違いは changelog.test.ts が落とす。
+// version++ / tagging / GitHub Release の手順は docs/RELEASE.md にある。触るのは 3 箇所
+// だけ —— 下の CHANGELOG の先頭に 1 エントリ、package.json の "version"、そして両 locale の
+// pages.changelog.releases に 1 節。バージョン番号が重複するのは前 2 箇所だけで、
+// 食い違いは changelog.test.ts が落とす。
 
 export interface ChangelogEntry {
   /** SemVer。 */

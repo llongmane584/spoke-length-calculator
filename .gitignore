@@ -239,7 +239,6 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-docs/
 .claude/settings.local.json
 .claude/worktrees
 

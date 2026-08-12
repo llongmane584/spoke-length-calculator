@@ -4,6 +4,13 @@
 
 スポーク長計算Webアプリケーション。自転車ホイール組みに必要なスポーク長を計算する。
 
+## Branching and Releases
+
+- `dev` が統合ブランチ。機能追加も修正も PR は `dev` 宛てに出す。
+- `main` は本番そのもの。push した瞬間 GitHub Pages へデプロイされる。
+- リリース (version++ / タグ / GitHub Release / アプリ内更新履歴) は
+  [`docs/RELEASE.md`](docs/RELEASE.md) の手順で行う。リリース作業では issue もブランチも立てない。
+
 ## Key Conventions
 
 - Tailwind CSS v4 でスタイリング。設定は JS ではなく `src/index.css` に置く (CSS-first)

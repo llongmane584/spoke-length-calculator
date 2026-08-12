@@ -208,6 +208,8 @@ pnpm test
 ├── og/                            # 共有カードのソース。ビルド対象ではない
 │   ├── og-card.html               # カード本体。再生成の手順は冒頭のコメント
 │   └── serve.mjs                  # 再生成に使う依存ゼロの静的サーバー
+├── docs/
+│   └── RELEASE.md                 # リリース手順 (version++ / タグ / Release / 更新履歴)
 ├── .github/
 │   └── workflows/deploy.yml       # main への push で GitHub Pages へビルド & デプロイ
 ├── dist/                          # ビルド出力
@@ -238,7 +240,10 @@ pnpm test
   同梱の Lucide 表記と `node_modules` の原本の一致を見張る
 - `pnpm install` で lefthook が入る。pre-commit で staged な `.ts`/`.tsx` に ESLint、
   プロジェクト全体に `tsc -b` が走る
-- `main` への push で GitHub Pages へビルド & デプロイされる
+- `dev` が統合ブランチで、PR は `dev` 宛てに出す。`main` は本番そのもので、
+  `main` への push で GitHub Pages へビルド & デプロイされる
+- リリースとは `dev` を `main` へ昇格させること。バージョン更新・タグ・GitHub Release・
+  アプリ内の更新履歴は [`docs/RELEASE.md`](docs/RELEASE.md) の手順で行う
 - データはブラウザのlocalStorageに保存（保存した計算結果・言語・テーマ）
 
 ## ライセンス

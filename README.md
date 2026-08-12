@@ -209,6 +209,8 @@ text renders in Sora rather than a fallback face.
 ├── og/                            # Source of the share card; not part of the build
 │   ├── og-card.html               # The card itself; its header comment holds the commands
 │   └── serve.mjs                  # Zero-dependency static server used while regenerating
+├── docs/
+│   └── RELEASE.md                 # Release runbook: version++, tag, GitHub Release, changelog
 ├── .github/
 │   └── workflows/deploy.yml       # Build and deploy to GitHub Pages on push to main
 ├── dist/                          # Build output
@@ -238,7 +240,10 @@ text renders in Sora rather than a fallback face.
   The suite also guards the data: version against changelog, `en.json` against `ja.json`, the whole-wheel
   presets against the hub / rim parts, and the shipped Lucide notice against the copy in `node_modules`
 - `pnpm install` sets up lefthook; pre-commit runs ESLint over staged `.ts`/`.tsx` and `tsc -b` over the project
-- Pushing to `main` builds and deploys to GitHub Pages
+- `dev` is the integration branch; open pull requests against it. `main` is production —
+  pushing to `main` builds and deploys to GitHub Pages
+- A release is the promotion of `dev` to `main`. Version bump, tag, GitHub Release and the
+  in-app changelog all follow [`docs/RELEASE.md`](docs/RELEASE.md)
 - Data stored in browser localStorage (saved calculations, language, theme)
 
 ## License
