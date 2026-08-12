@@ -3,8 +3,15 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
-export default defineConfig(({ command }) => ({
-  base: command === 'serve' ? '/' : '/spoke-length-calculator/',
+export default defineConfig(({ command, isPreview }) => ({
+  // GitHub Pages はリポジトリ名のサブパスで配信するので、ビルド成果物の base はそこに合わせる。
+  // `/` でよいのは開発サーバーだけ。
+  //
+  // preview を isPreview で拾うのは、`vite preview` の command が 'build' ではなく 'serve' で
+  // 来るため (Vite は preview の設定を resolveConfig(inlineConfig, 'serve', …, true) で解決する)。
+  // command だけで分けると、preview サーバーは `/` で配信する一方、配信する dist/index.html は
+  // `/spoke-length-calculator/assets/*` を指したままになり、アプリが起動しない (#140)。
+  base: command === 'build' || isPreview ? '/spoke-length-calculator/' : '/',
   plugins: [react(), tailwindcss()],
   server: {
     host: '0.0.0.0',
