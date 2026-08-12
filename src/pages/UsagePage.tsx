@@ -3,7 +3,7 @@ import { PageShell } from '../components/PageShell'
 
 // 手順は番号ではなく名前で持つ。input.help.<topic> と同じ書き方にして、順番を
 // 入れ替えても翻訳キーが動かないようにする。
-const STEPS = ['input', 'result', 'save', 'share', 'manage'] as const
+const STEPS = ['input', 'result', 'save', 'share', 'compare', 'manage'] as const
 
 export function UsagePage() {
   const { t } = useTranslation()
