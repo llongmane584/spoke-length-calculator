@@ -232,25 +232,37 @@
    クリップ領域の心配も要らない。translate / scale は足さない —— AGENTS.md の
    「ドロワーのモーション再発防止」が言う単調・単純をモーダルにも通す。
 
-   入場に JS は要らない。@starting-style がマウント直後の初期値を持つので、
-   requestAnimationFrame で class を差し替える二段レンダリングを書かずに済む
-   (下の picker と同じ手)。対応していないブラウザはこのルールだけを無視し、
-   入場が即時・退場はフェードになる。壊れはしない。
+   入場はアニメーションで書く。@starting-style は使わない —— WebKit には
+   「後から DOM に追加された要素には効かず、読み込み時点で既に居る要素にしか
+   適用されない」穴があり (mdn/browser-compat-data#25643、iOS Safari 26.6 で実機確認)、
+   Modal.tsx は開くたびに要素をマウントするので真正面から当たる。
+   非対応なら無視されるだけ、では済まない —— 対応と公称するブラウザで動かない。
+   下の picker が @starting-style のままなのは、あちらが @supports の中で
+   Chromium だけが入るブロックだから (iOS Safari は CSS.supports が false)。
+
+   マウント時に 1 度走らせたいだけなので data-state では切り替えない。切り替えると、
+   退場の途中で開き直したときに animation-name が変わって replay し、0 へ飛んでから
+   入り直す不連続が出る。名前を据え置けば下の transition がその場から 1 へ戻す。
+   animation-fill-mode も要らない —— 素の状態が既に終点 (open は 1 / closed は 0) で、
+   終わった瞬間の値が動かない。付ければ退場の transition と綱引きになる。
 
    退場は Modal.tsx がアンマウントを遅らせて data-state='closed' を描く。
    transition: none だと transitionend が発火しないので、reduced-motion のときは
-   待たずに落とす —— その判定は Modal.tsx 側にある。 */
+   待たずに落とす —— その判定は Modal.tsx 側にある。だから reduced-motion では
+   animation も一緒に落とすこと。transition だけ消すと入場は動いたままになり、
+   「待たずに落とす」側と食い違う。 */
 .modal-motion {
   opacity: 1;
   transition: opacity 160ms ease;
+  animation: modal-fade-in 160ms ease;
 }
 
 .modal-motion[data-state='closed'] {
   opacity: 0;
 }
 
-@starting-style {
-  .modal-motion[data-state='open'] {
+@keyframes modal-fade-in {
+  from {
     opacity: 0;
   }
 }
@@ -258,6 +270,7 @@
 @media (prefers-reduced-motion: reduce) {
   .modal-motion {
     transition: none;
+    animation: none;
   }
 }
 
