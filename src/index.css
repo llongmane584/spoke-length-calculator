@@ -97,12 +97,14 @@
   --color-overlay: var(--color-sunken);
   --color-overlay-line: var(--color-line);
 
-  /* Inter に CJK グリフは無いのでグリフ単位のフォールバックが働く:
-     ラテンと数字は Inter、かな漢字と全角約物は Noto Sans JP。
+  /* Sora に CJK グリフは無いのでグリフ単位のフォールバックが働く:
+     ラテンと数字は Sora、かな漢字と全角約物は Noto Sans JP。
      これで :lang(ja) 別指定が不要になる。
-     Inter を先頭に置く実利は tabular-nums —— Noto Sans JP のラテン数字は
-     tnum の挙動が一貫しないが Inter は素直で、lang に関係なく桁が揃う。 */
-  --font-sans: "Inter", "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
+     Sora を先頭に置く実利は tabular-nums —— Noto Sans JP のラテン数字は
+     tnum の挙動が一貫しないが Sora は素直で、lang に関係なく桁が揃う。
+     Chromium で実測 (40px、数字 1 文字の送り幅): 指定なしだと 16.813–29.734 と
+     ばらつくが、tabular-nums で全桁 27.047 に揃う。 */
+  --font-sans: "Sora", "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 }
 
