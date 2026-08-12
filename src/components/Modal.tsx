@@ -1,8 +1,14 @@
-import { useId, useRef, type ReactNode, type RefObject } from 'react'
+import { useId, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import { useDialogLayer } from '../hooks/useDialogLayer'
 import { btnGhost, btnIcon } from '../styles'
+
+// 退場を待ってよいか。動きを減らす設定では index.css が transition: none にするので、
+// transitionend が発火しない —— 待つと消えかけのノードが DOM に残り続ける。
+// CSS の 160ms を JS 側にも書いてタイマーで保険を掛ける手は採らない。発火しない条件が
+// これ 1 つに特定できている以上、二重管理を作るより条件そのものを見るほうが正確。
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 interface ModalProps {
   isOpen: boolean
@@ -21,6 +27,8 @@ interface ModalProps {
   showFooterDivider?: boolean
   /** 開いた直後にフォーカスする要素。省略時は × ボタン、それも無ければ本体。 */
   initialFocusRef?: RefObject<HTMLElement | null>
+  /** 中身の説明文の id。渡すと aria-describedby でダイアログに結び付ける。 */
+  descriptionId?: string
 }
 
 export function Modal({
@@ -34,6 +42,7 @@ export function Modal({
   showClose = true,
   showFooterDivider = true,
   initialFocusRef,
+  descriptionId,
 }: ModalProps) {
   const { t } = useTranslation()
   const titleId = useId()
@@ -45,13 +54,47 @@ export function Modal({
   // 差は出ないが、null になり得る ref を渡すときはここを踏まえること。
   const { dialogRef, zIndex } = useDialogLayer(isOpen, onClose, initialFocusRef ?? closeButtonRef)
 
-  if (!isOpen) return null
+  // 閉じた瞬間に消すとフェードアウトを描く相手が居なくなるので、退場のあいだだけ
+  // 自分の判断で DOM に残る。呼び出し側は 5 つとも常時この JSX を置いて isOpen で
+  // 制御しているので (CalculatorPage.tsx)、遅らせても親の契約は変わらない。
+  //
+  // ドロワーのように常時マウントはしない —— children が居座り、JSON の textarea や
+  // 比較の選択、保存ダイアログの入力が閉じても生き続ける。ドロワーがそれで済むのは
+  // 中身が静的なリンク列だから。
+  //
+  // レンダリング中に state を直すのは React の「props の変化に合わせて state を調整する」
+  // 形。effect を挟まないので StrictMode の二度がけでも辻褄が合う。
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen)
+  const [isExiting, setIsExiting] = useState(false)
+
+  if (prevIsOpen !== isOpen) {
+    setPrevIsOpen(isOpen)
+    // 閉じ始めたら退場へ。退場の途中で開き直されたら (!isOpen が false) 打ち切る。
+    setIsExiting(!isOpen && !prefersReducedMotion())
+  }
+
+  if (!isOpen && !isExiting) return null
 
   return (
     <div
       style={{ zIndex }}
-      className="fixed inset-0 flex items-center justify-center bg-scrim p-4"
+      // 退場中は誰にも触らせない。消えかけの scrim がクリックを拾うと、閉じた直後の
+      // 一押しが下の要素ではなく onClose に吸われる。読み上げからも外す。
+      // zIndex は useDialogLayer の depth が最後の値のまま残るので、重なっていた
+      // 1 枚は下の 1 枚の上で消えていく。
+      className={`modal-motion fixed inset-0 flex items-center justify-center bg-scrim p-4 ${
+        isOpen ? '' : 'pointer-events-none'
+      }`}
+      data-state={isOpen ? 'open' : 'closed'}
+      aria-hidden={!isOpen}
+      inert={!isOpen}
       onClick={onClose}
+      onTransitionEnd={(event) => {
+        // 中身のボタンは transition-colors を持っている (styles.ts)。自分自身の
+        // opacity 以外は退場の合図ではない。
+        if (event.target !== event.currentTarget || event.propertyName !== 'opacity') return
+        if (!isOpen) setIsExiting(false)
+      }}
     >
       <div
         ref={dialogRef}
@@ -60,6 +103,7 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        aria-describedby={descriptionId}
         className={`flex max-h-[90vh] w-full ${widthClass} flex-col rounded-xl border border-line bg-surface shadow-lg focus:outline-none`}
       >
         <div className="flex items-start justify-between gap-4 p-5 pb-3 sm:p-6 sm:pb-3">

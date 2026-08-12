@@ -227,6 +227,40 @@
   }
 }
 
+/* モーダルの開閉。動かすのは scrim (一番外の fixed inset-0) の opacity 1 つだけで、
+   パネルはその子なので一緒にフェードする。透ける先が変わるだけなので、ドロワーと違って
+   クリップ領域の心配も要らない。translate / scale は足さない —— AGENTS.md の
+   「ドロワーのモーション再発防止」が言う単調・単純をモーダルにも通す。
+
+   入場に JS は要らない。@starting-style がマウント直後の初期値を持つので、
+   requestAnimationFrame で class を差し替える二段レンダリングを書かずに済む
+   (下の picker と同じ手)。対応していないブラウザはこのルールだけを無視し、
+   入場が即時・退場はフェードになる。壊れはしない。
+
+   退場は Modal.tsx がアンマウントを遅らせて data-state='closed' を描く。
+   transition: none だと transitionend が発火しないので、reduced-motion のときは
+   待たずに落とす —— その判定は Modal.tsx 側にある。 */
+.modal-motion {
+  opacity: 1;
+  transition: opacity 160ms ease;
+}
+
+.modal-motion[data-state='closed'] {
+  opacity: 0;
+}
+
+@starting-style {
+  .modal-motion[data-state='open'] {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-motion {
+    transition: none;
+  }
+}
+
 /* CSS customizable select。ネイティブ <select> の意味論・キーボード操作・
    スクリーンリーダ・モバイルの UI をそのまま保ったまま、ポップアップの中身だけを
    自前で描く。独自コンボボックスを書かずに済むので ARIA を手で組む必要がない
