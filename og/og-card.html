@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>OG card source</title>
-  <!-- public/og-image-3.png のソース。配信物ではないので public/ には置かない
+  <!-- public/og-image-4.png のソース。配信物ではないので public/ には置かない
        (置くと dist/ に混ざる)。
 
        再生成手順 — リポジトリルートで実行する。<ABS> はリポジトリの絶対パスに置き換える:
@@ -14,7 +14,7 @@
          playwright-cli -s=og resize 1320 760
          playwright-cli -s=og eval "() => document.fonts.ready.then(() => [...document.fonts].some(f => f.family === 'Inter' && f.status === 'loaded'))"
          # ↑ true が返らなければ中断する。スクリーンショットは撮らない
-         playwright-cli -s=og screenshot "#card" --filename="<ABS>/public/og-image-3.png"
+         playwright-cli -s=og screenshot "#card" --filename="<ABS>/public/og-image-4.png"
          playwright-cli -s=og close
 
        -s=og は省かない。既定セッションは人が開いているブラウザに繋がる。
@@ -58,9 +58,8 @@
   <style>
     /* 色は src/index.css のライトテーマ値を写したもの。ここはアプリの CSS ではなく
        Tailwind も通らないので、セマンティックトークンではなく生の hex で書く。
-         #ffffff  --color-surface      #f6fbfc  --color-page
-         #e9f5f6  --color-accent-soft  #0a2225  --color-fg
-         #4a5f62  --color-fg-muted     #006a72  --color-accent */
+         #f6fbfc  --color-page      #0a2225  --color-fg
+         #4a5f62  --color-fg-muted  #006a72  --color-accent */
     * {
       margin: 0;
       padding: 0;
@@ -74,20 +73,21 @@
       padding: 40px;
     }
 
-    /* 背景は縦一方向のグラデーションに限定する。斜めや放射状にすると
-       PNG の行フィルタが効かなくなり、1200x630 でもファイルサイズが跳ね上がる。 */
-    /* 本文は縦中央に寄せ、URL だけ下端に固定する。space-between だと 3 ブロックの
-       間に均等な空白ができて中央が間延びする。 */
+    /* 背景は単色。グラデーションは付けない。
+       本文は縦中央に寄せ、URL だけ下端に固定する。space-between だと 3 ブロックの
+       間に均等な空白ができて中央が間延びする。
+       padding-bottom が top より大きいのは、フローから外した .url の場所を空けておく
+       ため。ここを top と揃えると、中央寄せされた本文の下端が .url に重なる。 */
     #card {
       position: relative;
       width: 1200px;
       height: 630px;
-      padding: 76px 88px;
+      padding: 76px 88px 132px;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 48px;
-      background: linear-gradient(180deg, #ffffff 0%, #f6fbfc 58%, #e9f5f6 100%);
+      gap: 44px;
+      background: #f6fbfc;
       font-family: "Inter", sans-serif;
       color: #0a2225;
       -webkit-font-smoothing: antialiased;
@@ -117,8 +117,10 @@
       display: block;
     }
 
+    /* 3 段組みなので 1 行あたりは 84px から落としてある。84px のままだと見出しの
+       高さが 272px になり、160px のアイコンとの釣り合いも崩れる。 */
     .title {
-      font-size: 84px;
+      font-size: 72px;
       font-weight: 700;
       line-height: 1.08;
       letter-spacing: -0.02em;
@@ -158,7 +160,7 @@
       <!-- file:// から file:// の <img> は Chromium で読める (塞がれるのは fetch/XHR)。
            空白で出た場合は public/icons/icon-512.png に差し替える。同じ図案。 -->
       <img src="../public/calculator.svg" alt="" />
-      <div class="title">Spoke<br />Calculator</div>
+      <div class="title">The<br />Spoke<br />Calculator</div>
     </div>
     <div>
       <div class="sub">Calculate bicycle spoke lengths for wheel building</div>
