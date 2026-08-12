@@ -240,6 +240,12 @@
    下の picker が @starting-style のままなのは、あちらが @supports の中で
    Chromium だけが入るブロックだから (iOS Safari は CSS.supports が false)。
 
+   尺は入場 240ms / 退場 160ms と分ける。出るものはゆっくり、消えるものは素早く ——
+   開くときだけふわっとさせ、閉じる操作のあとには待たせない。240ms はドロワーと
+   同じ値で、新しい数字は増やしていない。easing はどちらも ease のまま置く。
+   入場を ease-out 系にすると立ち上がりが速くなり、尺を伸ばしても「パッと出る」
+   印象のほうが戻ってくる。
+
    マウント時に 1 度走らせたいだけなので data-state では切り替えない。切り替えると、
    退場の途中で開き直したときに animation-name が変わって replay し、0 へ飛んでから
    入り直す不連続が出る。名前を据え置けば下の transition がその場から 1 へ戻す。
@@ -254,7 +260,7 @@
 .modal-motion {
   opacity: 1;
   transition: opacity 160ms ease;
-  animation: modal-fade-in 160ms ease;
+  animation: modal-fade-in 240ms ease;
 }
 
 .modal-motion[data-state='closed'] {
