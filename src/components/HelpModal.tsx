@@ -1,7 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { X } from 'lucide-react'
-import { btnGhost, btnIcon } from '../styles'
+import { Modal } from './Modal'
 
 export type HelpTopic =
   | 'erd'
@@ -209,86 +208,42 @@ const DIAGRAMS: Record<HelpTopic, () => React.ReactElement> = {
   crossings: CrossingsDiagram,
 }
 
+// 外枠・見出し行・× ボタン・Escape / Tab の輪・フォーカスの出入り・重ね順は
+// すべて Modal (と、その下の useDialogLayer) が持つ。ここが持つのは中身だけ。
 export function HelpModal({ topic, onClose }: HelpModalProps) {
   const { t } = useTranslation()
-  const dialogRef = useRef<HTMLDivElement>(null)
-  const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const descriptionId = useId()
 
-  useEffect(() => {
-    if (!topic) return
+  // topic が開閉状態を兼ねているので、閉じた瞬間に見出しも図解も行き先を失う。
+  // Modal は退場のあいだ中身を描き続けるから、そこに何を出すかをここが覚えておく。
+  // 他のモーダルは表示するものが別の state に載っていて消えないので、この手当ては
+  // ここだけに要る。
+  const [shownTopic, setShownTopic] = useState(topic)
 
-    closeButtonRef.current?.focus()
+  if (topic !== null && topic !== shownTopic) setShownTopic(topic)
 
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
+  // 一度も開いていないあいだは何も描かない。以降は Modal が isOpen で決める。
+  if (shownTopic === null) return null
 
-    const handleTab = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab' || !dialogRef.current) return
-      const focusableElements = dialogRef.current.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      )
-      const firstElement = focusableElements[0]
-      const lastElement = focusableElements[focusableElements.length - 1]
-
-      if (e.shiftKey && document.activeElement === firstElement) {
-        e.preventDefault()
-        lastElement?.focus()
-      } else if (!e.shiftKey && document.activeElement === lastElement) {
-        e.preventDefault()
-        firstElement?.focus()
-      }
-    }
-
-    document.addEventListener('keydown', handleEscape)
-    document.addEventListener('keydown', handleTab)
-    return () => {
-      document.removeEventListener('keydown', handleEscape)
-      document.removeEventListener('keydown', handleTab)
-    }
-  }, [topic, onClose])
-
-  if (!topic) return null
-
-  const Diagram = DIAGRAMS[topic]
+  const Diagram = DIAGRAMS[shownTopic]
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-scrim p-4"
-      onClick={onClose}
+    <Modal
+      isOpen={topic !== null}
+      onClose={onClose}
+      title={t(`input.help.${shownTopic}.title`)}
+      descriptionId={descriptionId}
     >
-      <div
-        ref={dialogRef}
-        className="bg-surface border border-line rounded-xl shadow-lg max-w-lg w-full max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="help-dialog-title"
-        aria-describedby="help-dialog-description"
-      >
-        <div className="flex items-start justify-between gap-4 p-6 pb-2">
-          <h2 id="help-dialog-title" className="text-xl font-semibold text-fg">
-            {t(`input.help.${topic}.title`)}
-          </h2>
-          <button
-            ref={closeButtonRef}
-            onClick={onClose}
-            aria-label={t('buttons.close')}
-            className={`${btnGhost} -mt-1 -mr-2`}
-          >
-            <X className={btnIcon} aria-hidden="true" />
-          </button>
-        </div>
-        <div className="px-6 flex justify-center bg-sunken border border-line mx-6 rounded-md py-4">
-          <Diagram />
-        </div>
-        <p
-          id="help-dialog-description"
-          className="px-6 pt-4 pb-6 text-sm text-fg-muted whitespace-pre-line leading-relaxed"
-        >
-          {t(`input.help.${topic}.description`)}
-        </p>
+      {/* 左右の余白は Modal の本体が持つので、ここは箱の中の padding だけを持つ */}
+      <div className="flex justify-center rounded-md border border-line bg-sunken px-6 py-4">
+        <Diagram />
       </div>
-    </div>
+      <p
+        id={descriptionId}
+        className="pt-4 text-sm text-fg-muted whitespace-pre-line leading-relaxed"
+      >
+        {t(`input.help.${shownTopic}.description`)}
+      </p>
+    </Modal>
   )
 }
