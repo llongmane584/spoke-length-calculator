@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { useId, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import { useDialogLayer } from '../hooks/useDialogLayer'
@@ -6,9 +6,28 @@ import { btnGhost, btnIcon } from '../styles'
 
 // 退場を待ってよいか。動きを減らす設定では index.css が transition: none にするので、
 // transitionend が発火しない —— 待つと消えかけのノードが DOM に残り続ける。
-// CSS の 160ms を JS 側にも書いてタイマーで保険を掛ける手は採らない。発火しない条件が
-// これ 1 つに特定できている以上、二重管理を作るより条件そのものを見るほうが正確。
+// CSS の 160ms を JS 側にも書いてタイマーで保険を掛ける手は採らない。二重管理を作るより
+// 発火しない条件そのものを見るほうが正確 —— ただし「条件は 1 つ」ではない (#131)。
+// 下の 2 つがあり、ここが見るのは 1 つ目:
+//   1. reduced-motion —— transition ごと無いので変化が起きない
+//   2. 起点と終点が同値で transition が始まらない —— 'entering' のまま閉じる経路。
+//      下の phase の分岐が受け持つ
+// 入場が CSS アニメーションだった間は 3 つ目 (アニメーションが opacity を握っていて
+// 退場の transition が始まらない) があり、そこが #131 だった。入場も transition へ
+// 戻したので条件ごと消えている。
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+/**
+ * 描画上の段階。呼び出し側の意思 (isOpen) とは別に、CSS へ渡す見た目の状態を持つ。
+ * 入場と退場を 1 つの状態機械にまとめるためのもので、どちらの向きも transition 1 本で
+ * 動く —— 途中で向きが変われば、その場の opacity から折り返す。
+ *
+ * - null … DOM に居ない
+ * - 'entering' … マウント直後の 1 度だけ描く起点 (opacity 0)。次のコミットで 'open' へ
+ * - 'open' … 開いている / 開きに向かっている
+ * - 'exiting' … 閉じに向かっている。transitionend で null へ落ちる
+ */
+type Phase = 'entering' | 'open' | 'exiting'
 
 interface ModalProps {
   isOpen: boolean
@@ -47,6 +66,9 @@ export function Modal({
   const { t } = useTranslation()
   const titleId = useId()
   const closeButtonRef = useRef<HTMLButtonElement>(null)
+  // 入場の起点を確定させるために読む。dialogRef は中のパネル用なので流用しない ——
+  // opacity を持つのは一番外の scrim。
+  const scrimRef = useRef<HTMLDivElement>(null)
   // 落としどころの既定は見出しの ×。showClose が false のときは current が null なので、
   // フックがそのまま本体へ落とす。
   // 選ぶのは ref オブジェクトであって .current ではない —— 渡した ref の中身が null でも
@@ -64,19 +86,41 @@ export function Modal({
   //
   // レンダリング中に state を直すのは React の「props の変化に合わせて state を調整する」
   // 形。effect を挟まないので StrictMode の二度がけでも辻褄が合う。
+  //
+  // 初期値を 'open' にしないのは HelpModal のため。あちらは一度も開いていない間 null を
+  // 返すので、初回だけ Modal が isOpen=true でマウントされる —— ここで起点を飛ばすと
+  // その 1 回だけ入場フェードが出ない。
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen)
-  const [isExiting, setIsExiting] = useState(false)
+  const [phase, setPhase] = useState<Phase | null>(isOpen ? 'entering' : null)
 
   if (prevIsOpen !== isOpen) {
     setPrevIsOpen(isOpen)
-    // 閉じ始めたら退場へ。退場の途中で開き直されたら (!isOpen が false) 打ち切る。
-    setIsExiting(!isOpen && !prefersReducedMotion())
+    if (isOpen) {
+      // 退場の途中で開き直したときは既に描かれている。起点は要らず、その場から 1 へ折り返す。
+      setPhase(phase === null ? 'entering' : 'open')
+    } else {
+      // 'entering' のまま閉じられたら動かす差が無く、transitionend も来ないので即落とす。
+      setPhase(phase === 'open' && !prefersReducedMotion() ? 'exiting' : null)
+    }
   }
 
-  if (!isOpen && !isExiting) return null
+  // 起点を描いた次のコミットで開きへ返す。paint の前に走るので、opacity 0 の 1 フレームが
+  // 画面に出ることはない。
+  useLayoutEffect(() => {
+    if (phase !== 'entering') return
+    // 読むこと自体が仕事。マウントと data-state の変更が 1 度のスタイル計算にまとまると
+    // 起点が生まれず、transition が始まらないまま opacity 1 でいきなり出る。
+    // @starting-style は使えない —— WebKit には「後から DOM に追加された要素には効かない」
+    // 穴があり (mdn/browser-compat-data#25643)、開くたびにマウントするここは真正面から当たる。
+    scrimRef.current?.getBoundingClientRect()
+    setPhase('open')
+  }, [phase])
+
+  if (phase === null) return null
 
   return (
     <div
+      ref={scrimRef}
       style={{ zIndex }}
       // 退場中は誰にも触らせない。消えかけの scrim がクリックを拾うと、閉じた直後の
       // 一押しが下の要素ではなく onClose に吸われる。読み上げからも外す。
@@ -85,7 +129,10 @@ export function Modal({
       className={`modal-motion fixed inset-0 flex items-center justify-center bg-scrim p-4 ${
         isOpen ? '' : 'pointer-events-none'
       }`}
-      data-state={isOpen ? 'open' : 'closed'}
+      // data-state だけが phase を見る。aria-hidden / inert / pointer-events は isOpen の
+      // ままにする —— 'entering' の 1 フレームで inert になると、useDialogLayer が入れる
+      // 初期フォーカスが弾かれる。
+      data-state={phase === 'open' ? 'open' : 'closed'}
       aria-hidden={!isOpen}
       inert={!isOpen}
       onClick={onClose}
@@ -93,7 +140,7 @@ export function Modal({
         // 中身のボタンは transition-colors を持っている (styles.ts)。自分自身の
         // opacity 以外は退場の合図ではない。
         if (event.target !== event.currentTarget || event.propertyName !== 'opacity') return
-        if (!isOpen) setIsExiting(false)
+        if (phase === 'exiting') setPhase(null)
       }}
     >
       <div

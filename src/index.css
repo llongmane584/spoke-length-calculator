@@ -232,51 +232,45 @@
    クリップ領域の心配も要らない。translate / scale は足さない —— AGENTS.md の
    「ドロワーのモーション再発防止」が言う単調・単純をモーダルにも通す。
 
-   入場はアニメーションで書く。@starting-style は使わない —— WebKit には
-   「後から DOM に追加された要素には効かず、読み込み時点で既に居る要素にしか
-   適用されない」穴があり (mdn/browser-compat-data#25643、iOS Safari 26.6 で実機確認)、
-   Modal.tsx は開くたびに要素をマウントするので真正面から当たる。
-   非対応なら無視されるだけ、では済まない —— 対応と公称するブラウザで動かない。
-   下の picker が @starting-style のままなのは、あちらが @supports の中で
-   Chromium だけが入るブロックだから (iOS Safari は CSS.supports が false)。
+   入場も退場も transition 1 本で動かす。どちらの向きも同じ 1 つの遷移なので、
+   途中で向きが変わればその場の opacity から折り返す —— 入場の途中で閉じても
+   0 へ飛ばず、退場の途中で開き直しても 0 へ落ちない (#131)。
+   入場をアニメーションで書くと、opacity を握っている間は退場の transition が
+   始まらず、瞬時に消えて transitionend も出ない。
+
+   起点の opacity 0 は Modal.tsx がマウント直後の 1 コミットだけ data-state='closed' を
+   描いて作る。@starting-style は使わない —— WebKit には「後から DOM に追加された
+   要素には効かず、読み込み時点で既に居る要素にしか適用されない」穴があり
+   (mdn/browser-compat-data#25643、iOS Safari 26.6 で実機確認)、Modal.tsx は開くたびに
+   要素をマウントするので真正面から当たる。非対応なら無視されるだけ、では済まない ——
+   対応と公称するブラウザで動かない。下の picker が @starting-style のままなのは、
+   あちらが @supports の中で Chromium だけが入るブロックだから (iOS Safari は
+   CSS.supports が false)。
 
    尺は入場 240ms / 退場 160ms と分ける。出るものはゆっくり、消えるものは素早く ——
    開くときだけふわっとさせ、閉じる操作のあとには待たせない。240ms はドロワーと
    同じ値で、新しい数字は増やしていない。easing はどちらも ease のまま置く。
    入場を ease-out 系にすると立ち上がりが速くなり、尺を伸ばしても「パッと出る」
    印象のほうが戻ってくる。
-
-   マウント時に 1 度走らせたいだけなので data-state では切り替えない。切り替えると、
-   退場の途中で開き直したときに animation-name が変わって replay し、0 へ飛んでから
-   入り直す不連続が出る。名前を据え置けば下の transition がその場から 1 へ戻す。
-   animation-fill-mode も要らない —— 素の状態が既に終点 (open は 1 / closed は 0) で、
-   終わった瞬間の値が動かない。付ければ退場の transition と綱引きになる。
+   尺の出し分けは closed 側の transition-duration が持つ。transition-* は変化後の
+   状態のものが読まれるので、open へ向かうときだけ 240ms になる。
 
    退場は Modal.tsx がアンマウントを遅らせて data-state='closed' を描く。
    transition: none だと transitionend が発火しないので、reduced-motion のときは
-   待たずに落とす —— その判定は Modal.tsx 側にある。だから reduced-motion では
-   animation も一緒に落とすこと。transition だけ消すと入場は動いたままになり、
-   「待たずに落とす」側と食い違う。 */
+   待たずに落とす —— その判定は Modal.tsx 側にある。 */
 .modal-motion {
   opacity: 1;
-  transition: opacity 160ms ease;
-  animation: modal-fade-in 240ms ease;
+  transition: opacity 240ms ease;
 }
 
 .modal-motion[data-state='closed'] {
   opacity: 0;
-}
-
-@keyframes modal-fade-in {
-  from {
-    opacity: 0;
-  }
+  transition-duration: 160ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .modal-motion {
     transition: none;
-    animation: none;
   }
 }
 
