@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 're
 
 // 画面を覆うもの (ダイアログ / ドロワー) が共通で要る作法。Modal.tsx から出したもので、
 // 新しい規則は足していない —— メニューのドロワーは Modal と形が違う (右寄せ・全高) ので
-// 見た目は共有できないが、下の 4 つを 3 度目に書き写すのは避けたかった。
+// 見た目は共有できないが、下の 5 つを 3 度目に書き写すのは避けたかった。
 //
 // - 重ね順 … 後から開いたものを上に出す。DOM の並び順に賭けない —— 並びは JSX の
 //   都合で変わるが、どちらが上かは「どちらを後に開いたか」で決まるべきもの。
@@ -10,12 +10,65 @@ import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 're
 //   自分が最前面かを見ないと、下に隠れている 1 枚まで一緒に閉じてしまう。
 // - Tab … 開いている間はフォーカスを中に閉じる。
 // - 初期フォーカス … 開いた直後に中の要素へ移す。
+// - 背景のスクロール … 覆っている間は裏のページを送らせない (下の lock)。
 //
 // 実体は開いている間だけ積まれる token の配列。閉じるときに自分のぶんだけ抜く。
 const openDialogs: symbol[] = [];
 
 const BASE_Z = 50;
 const Z_STEP = 10;
+
+// 背景のスクロール止め。覆っている間は裏のページを動かさない ——
+// 覆うものが「見えているだけ」なら、ホイールもスワイプも裏へ素通りする。
+//
+// ここが受け持つのはホイール / トラックパッド / キーボード (Space・PageDown・矢印)。
+// iOS のタッチは root の overflow: hidden を取りこぼすので (WebKit #153852)、そちらは
+// 覆う要素自身を overscroll-behavior: contain のスクロールコンテナにして止める
+// (Modal.tsx と AppDrawer.tsx の一番外側)。保険の重ね掛けではなく担当が違う。
+//
+// position: fixed で body を流れから外す iOS 定番の手は採らない —— スクロール位置を
+// JS で復元することになり、ドロワーのリンクで遷移したときに PageShell の
+// window.scrollTo(0, 0) と順番を争う。結果帯が position: sticky なのも噛み合わない。
+// overflow: hidden はレイアウトを変えずに止まるので、戻す作業そのものが要らない。
+//
+// 数えるのは開いている枚数。真偽値だと、保存ダイアログの上の削除確認を閉じた時点で
+// 背景が動き出す。
+let lockCount = 0;
+let unlock: (() => void) | null = null;
+
+const lockBackgroundScroll = (): void => {
+  lockCount += 1;
+
+  if (lockCount > 1) return;
+
+  const root = document.documentElement;
+  // スクロールバーが占めていた幅。overflow: hidden で消えると、そのぶん背景が右へ
+  // 広がって、開いた瞬間に裏のページ全体がずれる。重ね型のスクロールバー
+  // (macOS の既定、タッチ端末) では 0 になるので、そのときは何も足さない。
+  const scrollbarWidth = window.innerWidth - root.clientWidth;
+  const previousOverflow = root.style.overflow;
+  const previousPaddingRight = root.style.paddingRight;
+
+  root.style.overflow = 'hidden';
+
+  if (scrollbarWidth > 0) {
+    root.style.paddingRight = `${scrollbarWidth}px`;
+  }
+
+  unlock = () => {
+    root.style.overflow = previousOverflow;
+    root.style.paddingRight = previousPaddingRight;
+  };
+};
+
+const unlockBackgroundScroll = (): void => {
+  lockCount -= 1;
+
+  if (lockCount > 0) return;
+
+  unlock?.();
+  unlock = null;
+};
 
 interface DialogLayer {
   /** 覆う本体に付ける ref。Tab の輪もフォーカスの落としどころもこの中で決まる。 */
@@ -59,6 +112,7 @@ export const useDialogLayer = (
     const token = Symbol('dialog');
     openDialogs.push(token);
     setDepth(openDialogs.length - 1);
+    lockBackgroundScroll();
 
     const handleKeyDown = (event: KeyboardEvent) => {
       // 最前面でなければ何もしない。下の 1 枚が上の 1 枚の代わりに反応しないため
@@ -94,6 +148,7 @@ export const useDialogLayer = (
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       openDialogs.splice(openDialogs.indexOf(token), 1);
+      unlockBackgroundScroll();
     };
   }, [isOpen]);
 

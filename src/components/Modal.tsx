@@ -126,7 +126,14 @@ export function Modal({
       // 一押しが下の要素ではなく onClose に吸われる。読み上げからも外す。
       // zIndex は useDialogLayer の depth が最後の値のまま残るので、重なっていた
       // 1 枚は下の 1 枚の上で消えていく。
-      className={`modal-motion fixed inset-0 flex items-center justify-center bg-scrim p-4 ${
+      //
+      // overflow-y-auto + overscroll-contain は背景を止めるためのもの。素の scrim は
+      // スクロールコンテナではないので、その上のスワイプがそのまま裏のページへ流れる。
+      // ルート要素の overflow: hidden は useDialogLayer が掛けるが、iOS のタッチは
+      // それを取りこぼす (WebKit #153852) ので、ここで受けて止める。
+      // overscroll-behavior はスクロールコンテナにしか効かないため overflow-y-auto と
+      // 対で置く —— パネルは max-h-[90vh] に収まるので、スクロールバーは出ない。
+      className={`modal-motion fixed inset-0 flex items-center justify-center overflow-y-auto overscroll-contain bg-scrim p-4 ${
         isOpen ? '' : 'pointer-events-none'
       }`}
       // data-state だけが phase を見る。aria-hidden / inert / pointer-events は isOpen の
