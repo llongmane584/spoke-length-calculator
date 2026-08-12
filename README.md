@@ -99,7 +99,7 @@ command sequence, which uses the globally installed `playwright-cli` plus the
 zero-dependency static server in [`og/serve.mjs`](og/serve.mjs).
 
 After regenerating, confirm the PNG is exactly 1200×630, under 300 KB, and that the
-text renders in Inter rather than a fallback face.
+text renders in Sora rather than a fallback face.
 
 ## Usage
 
