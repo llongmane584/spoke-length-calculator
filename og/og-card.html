@@ -10,12 +10,28 @@
        再生成手順 — リポジトリルートで実行する。<ABS> はリポジトリの絶対パスに置き換える:
 
          node og/serve.mjs                     # 別ターミナルで起動したままにする
-         playwright-cli open "http://127.0.0.1:8787/og/og-card.html"
-         playwright-cli resize 1320 760
-         playwright-cli eval "() => document.fonts.ready.then(() => document.fonts.check('700 84px Inter'))"
+         playwright-cli -s=og open "http://127.0.0.1:8787/og/og-card.html"
+         playwright-cli -s=og resize 1320 760
+         playwright-cli -s=og eval "() => document.fonts.ready.then(() => [...document.fonts].some(f => f.family === 'Inter' && f.status === 'loaded'))"
          # ↑ true が返らなければ中断する。スクリーンショットは撮らない
-         playwright-cli screenshot "#card" --filename="<ABS>/public/og-image-3.png"
-         playwright-cli close
+         playwright-cli -s=og screenshot "#card" --filename="<ABS>/public/og-image-3.png"
+         playwright-cli -s=og close
+
+       -s=og は省かない。既定セッションは人が開いているブラウザに繋がる。
+
+       関門に document.fonts.check('700 84px Inter') を使ってはいけない (#148)。check() が
+       見るのは「読み込み待ちの FontFace が残っていないか」であって「Inter で描かれるか」
+       ではないので、fonts.googleapis.com へ到達できず @font-face が 1 本も生成されなかった
+       場合、待つものが無いので素通しで true を返す。#146 ではこれを true で通過して、fallback で
+       描かれたカードができた。上の式は face が実在して loaded であることを見るため、
+       スタイルシートが落ちても woff2 だけが落ちても false になる (両方 503 で実測)。
+       Google Fonts は subset ごとに @font-face を吐き、使わない subset は unloaded のまま
+       残るので、every ではなく some で見る。
+
+       関門は true なのに字送りが怪しい、というときは実際に使われた書体名を CDP で引く。
+       正常なら familyName が Inter、isCustomFont が true になる:
+
+         playwright-cli -s=og run-code "async page => { const c = await page.context().newCDPSession(page); const { root } = await c.send('DOM.getDocument'); await c.send('CSS.enable'); const { nodeId } = await c.send('DOM.querySelector', { nodeId: root.nodeId, selector: '.title' }); return (await c.send('CSS.getPlatformFontsForNode', { nodeId })).fonts }"
 
        playwright-cli は file: を塞いでいるので HTTP 配信が要る。vite の dev サーバーは
        public/ を base 直下に出すため ../public/calculator.svg が 404 になり代用できない
@@ -25,13 +41,19 @@
        何もコミットされない。resize の 1320x760 はカードが切れないための余裕で、
        要素スクショなので余白は写らない。
 
-       出力後は 1200x630 / 300KB 未満であることと、実際に PNG を開いて
-       ラテン文字が Inter (Arial ではない) で出ていることを目視で確認する。 -->
+       出力後は 1200x630 / 300KB 未満であることを確認する。書体が Inter かどうかは
+       上の関門と CDP で見る —— カード単体を目で見て Inter と fallback は見分けられない
+       (#146 は旧画像と字送りを並べて測って、ようやく気づいた)。 -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <!-- display=swap ではなく block。未ロードのまま描画されると文字が「消える」ので
-       フォント取得の失敗が目で分かる。swap だと Arial でそれらしく描かれた PNG が
-       できてしまい、間違いに気づかないまま配信することになる。 -->
+  <!-- 宣言しないとブラウザが /favicon.ico を取りに行き、コンソールに 404 が 1 本出る。 -->
+  <link rel="icon" href="data:," />
+  <!-- display=swap ではなく block。@font-face が生成されたうえで woff2 が遅い / 落ちる
+       ときは、文字が「消える」ので失敗が目で分かる (swap だと fallback でそれらしく
+       描かれた PNG ができてしまう)。
+       ただしスタイルシート自体が届かなければ block は効かない。@font-face が 1 本も
+       無いので、待つものが無く最初から fallback で静かに描かれる —— #146 で実際に
+       そうなった。block だけでは足りないので、上の手順に関門がある。 -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=block" rel="stylesheet" />
   <style>
     /* 色は src/index.css のライトテーマ値を写したもの。ここはアプリの CSS ではなく
