@@ -10,8 +10,8 @@ export default defineConfig(({ command, isPreview }) => ({
   // preview を isPreview で拾うのは、`vite preview` の command が 'build' ではなく 'serve' で
   // 来るため (Vite は preview の設定を resolveConfig(inlineConfig, 'serve', …, true) で解決する)。
   // command だけで分けると、preview サーバーは `/` で配信する一方、配信する dist/index.html は
-  // `/spoke-length-calculator/assets/*` を指したままになり、アプリが起動しない (#140)。
-  base: command === 'build' || isPreview ? '/spoke-length-calculator/' : '/',
+  // `/the-spoke-calculator/assets/*` を指したままになり、アプリが起動しない (#140)。
+  base: command === 'build' || isPreview ? '/the-spoke-calculator/' : '/',
   plugins: [react(), tailwindcss()],
   server: {
     host: '0.0.0.0',
