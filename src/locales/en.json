@@ -122,7 +122,7 @@
     "leftShort": "Left",
     "right": "Right Side",
     "rightShort": "Right",
-    "placeholder": "Calculation results will be displayed here",
+    "placeholder": "Results will appear here",
     "calculationName": "Calculation Name",
     "namePlaceholder": "Name your calculation for saving",
     "savedCalculations": "Saved Calculations",

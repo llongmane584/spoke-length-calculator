@@ -122,7 +122,7 @@
     "leftShort": "左側",
     "right": "右側",
     "rightShort": "右側",
-    "placeholder": "計算結果がここに表示されます",
+    "placeholder": "ここに結果が表示されます",
     "calculationName": "計算名",
     "namePlaceholder": "計算に名前を付けて保存",
     "savedCalculations": "保存された計算",

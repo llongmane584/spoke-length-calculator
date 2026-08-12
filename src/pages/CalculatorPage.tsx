@@ -896,9 +896,16 @@ const ResultBand: React.FC<{
               <ResultBandValue label={rightLabel} value={results.right} full={full} />
             </>
           ) : (
+            /* 文言は短く保つ。ここの文字サイズは px 固定なので、老眼対応でブラウザの
+               最小フォントサイズを上げている利用者では 14px がその値まで持ち上げられ、
+               長い文言は狭い画面で折り返す (#154 は最小フォント 16px・390px 幅で 2 行)。
+               現行の文言なら 320px 幅・最小フォント 20px までは 1 行に収まる。
+               縮めて収めるのは老眼対応の逆なので、幅は文言の側で空ける。
+               text-balance はそれを超えて折り返したときの保険で、1 行なら何も起きない。
+               見出しが直上に「計算結果」と出ているので、ここで繰り返さなくてよい。 */
             <p
               style={{ fontSize: dockPx(full.label, BAND_COMPACT.label) }}
-              className="col-span-2 text-fg-subtle"
+              className="col-span-2 text-balance text-fg-subtle"
             >
               {placeholder}
             </p>
