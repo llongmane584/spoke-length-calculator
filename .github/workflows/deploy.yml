@@ -20,6 +20,12 @@ permissions:
   pages: write
   id-token: write
 
+# cancel-in-progress: false が守るのは「実行中」の run だけ。待機中の run は保護されず、
+# 同じグループに新しい待機要求が来た時点で古い方が
+# "Canceling since a higher priority waiting request for pages exists" で落ちる ——
+# 待機枠がグループに 1 本しかないため。これは公式の Pages ワークフローそのままの意図した
+# 挙動で、「実行中の本番デプロイは完走させる / 途中で溜まった run は飛ばして最新だけ出す」。
+# 溜まった run のコミットは最新 run の祖先なので、飛ばされても出荷内容は変わらない。
 concurrency:
   group: pages
   cancel-in-progress: false

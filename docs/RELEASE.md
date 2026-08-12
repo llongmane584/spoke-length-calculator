@@ -141,6 +141,25 @@ gh run watch
 
 **ここで失敗したら §6 へ進まない。** 直してから §4 をやり直す。
 
+### 途中の run が cancelled になっているのは正常
+
+`deploy.yml` の `concurrency: group: pages` は待機枠をグループに 1 本しか持たない。
+新しい push が来ると古い待機分が
+`Canceling since a higher priority waiting request for pages exists` で落ちる ——
+`cancel-in-progress: false` が守るのは実行中の run だけで、待機中の run は保護されない。
+飛ばされた run のコミットは最新 run の祖先なので、出荷内容は変わらない。
+
+### 自分の run が `pending` のまま動かないとき
+
+先に `queued` の run がグループを保持している。`git merge-base --is-ancestor <その run の sha> HEAD`
+が真なら、その run を `gh run cancel <id>` で落としてよい（内容は今回の run に含まれている）。
+落とした瞬間にグループが空いて自分の run が走り出す。
+
+```bash
+gh run list --limit 5 --json databaseId,status,headSha \
+  -q '.[] | select(.status != "completed") | "\(.databaseId) \(.headSha[0:7]) \(.status)"'
+```
+
 ## §6 タグを打つ
 
 デプロイの成功を確認してから打つ。先に打つと、出荷されなかったものを指すタグが残る。
