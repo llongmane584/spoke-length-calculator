@@ -77,9 +77,18 @@ export function AppDrawer({ isOpen, onClose }: AppDrawerProps) {
   }
 
   return (
+    // overflow-y-auto + overscroll-contain は背景を止めるためのもの。下の nav が同じ
+    // 道具を持っているが、あちらが効くのは本文の上だけで、見出し・言語/テーマの帯・
+    // バックドロップの上ではスワイプが裏のページへ流れる。ルート要素の overflow: hidden
+    // は useDialogLayer が掛けるものの、iOS のタッチはそれを取りこぼす
+    // (WebKit #153852) ので、一番外側でも受けて止める。
+    // パネルは h-full なので、スクロールコンテナにしてもスクロールバーは出ない。
+    // 横は overflow-clip の中で完結するので、スライド中の transform も外へ出ない。
     <div
       style={{ zIndex }}
-      className={`fixed inset-0 ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+      className={`fixed inset-0 overflow-y-auto overscroll-contain ${
+        isOpen ? 'pointer-events-auto' : 'pointer-events-none'
+      }`}
       onClick={onClose}
       aria-hidden={!isOpen}
       inert={!isOpen}
