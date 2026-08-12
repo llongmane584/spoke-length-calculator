@@ -8,7 +8,7 @@ import licenseText from '../../LICENSE?raw'
 
 // Lucide の ISC 表記。public/ に置いた静的ファイルで、thirdPartyNotices.test.ts が
 // node_modules の原本とバイト一致していることを見張っている。base が
-// /spoke-length-calculator/ のサブパス配信なので BASE_URL 経由で組む。
+// /the-spoke-calculator/ のサブパス配信なので BASE_URL 経由で組む。
 const thirdPartyNoticesUrl = `${import.meta.env.BASE_URL}THIRD_PARTY_NOTICES.txt`
 
 export function LicensePage() {

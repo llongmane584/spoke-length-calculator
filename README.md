@@ -1,7 +1,7 @@
 # Bicycle Spoke Calculator
 
 ## Demo page
-GitHub pages: https://llongmane584.github.io/spoke-length-calculator/
+GitHub pages: https://llongmane584.github.io/the-spoke-calculator/
 
 [日本語](README_ja.md)
 
@@ -92,7 +92,7 @@ pnpm test
 
 ### Regenerating the OG image
 
-`public/og-image-2.png` is the social share card (1200×630). It is committed, not built,
+`public/og-image-3.png` is the social share card (1200×630). It is committed, not built,
 so it only needs regenerating when the card design changes. The source is
 [`og/og-card.html`](og/og-card.html) — its header comment holds the authoritative
 command sequence, which uses the globally installed `playwright-cli` plus the
@@ -136,7 +136,7 @@ text renders in Inter rather than a fallback face.
 ## Project Structure
 
 ```
-/spoke-length-calculator/
+/the-spoke-calculator/
 ├── src/
 │   ├── App.tsx                    # Shell: header, routes and the menu drawer
 │   ├── main.tsx                   # Entry point (HashRouter lives here)
@@ -204,7 +204,7 @@ text renders in Inter rather than a fallback face.
 │   ├── calculator.svg             # Favicon
 │   ├── icons/                     # Home-screen icons (192 / 512 / maskable / apple-touch)
 │   ├── manifest.webmanifest       # Web app manifest
-│   ├── og-image-2.png             # Social share card (1200×630)
+│   ├── og-image-3.png             # Social share card (1200×630)
 │   └── THIRD_PARTY_NOTICES.txt    # Lucide's ISC notice, linked from the License page
 ├── og/                            # Source of the share card; not part of the build
 │   ├── og-card.html               # The card itself; its header comment holds the commands

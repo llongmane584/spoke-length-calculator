@@ -105,7 +105,7 @@ test('rejects a fragment that only names a route', () => {
 });
 
 test('reads the payload out of the route fragment it now writes', () => {
-  const shared = buildShareUrl('https://llongmane584.github.io/spoke-length-calculator/', sampleInputs);
+  const shared = buildShareUrl('https://llongmane584.github.io/the-spoke-calculator/', sampleInputs);
   const { hash } = new URL(shared);
 
   assert.equal(hash.startsWith('#/?'), true, `expected a routed fragment, got ${hash}`);
@@ -171,13 +171,13 @@ test('refuses to build a link from incomplete inputs', () => {
 
 test('replaces only the fragment of the current URL', () => {
   const shared = buildShareUrl(
-    'https://llongmane584.github.io/spoke-length-calculator/?lang=ja#stale',
+    'https://llongmane584.github.io/the-spoke-calculator/?lang=ja#stale',
     sampleInputs,
   );
   const url = new URL(shared);
 
   assert.equal(url.origin, 'https://llongmane584.github.io');
-  assert.equal(url.pathname, '/spoke-length-calculator/');
+  assert.equal(url.pathname, '/the-spoke-calculator/');
   assert.equal(url.search, '?lang=ja');
   assert.equal(url.hash, `#/?${buildShareFragment(sampleInputs)}`);
   assert.deepEqual(parseShareFragment(url.hash), sampleInputs);

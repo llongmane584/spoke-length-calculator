@@ -1,7 +1,7 @@
 # 自転車スポーク長計算機
 
 ## デモページ
-GitHub pages: https://llongmane584.github.io/spoke-length-calculator/
+GitHub pages: https://llongmane584.github.io/the-spoke-calculator/
 
 [English](README.md)
 
@@ -92,7 +92,7 @@ pnpm test
 
 ### OGP 画像の再生成
 
-`public/og-image-2.png` は SNS 共有用のカード画像 (1200×630)。ビルドで生成せずコミットして
+`public/og-image-3.png` は SNS 共有用のカード画像 (1200×630)。ビルドで生成せずコミットして
 いるので、カードのデザインを変えたときだけ再生成すればよい。ソースは
 [`og/og-card.html`](og/og-card.html) で、正確なコマンド列はそのファイル冒頭のコメントにある。
 グローバルの `playwright-cli` と、依存ゼロの静的サーバー [`og/serve.mjs`](og/serve.mjs) を使う。
@@ -135,7 +135,7 @@ pnpm test
 ## プロジェクト構造
 
 ```
-/spoke-length-calculator/
+/the-spoke-calculator/
 ├── src/
 │   ├── App.tsx                    # シェル。ヘッダー / ルーティング / ドロワー
 │   ├── main.tsx                   # エントリーポイント (HashRouter はここ)
@@ -203,7 +203,7 @@ pnpm test
 │   ├── calculator.svg             # ファビコン
 │   ├── icons/                     # ホーム画面用アイコン (192 / 512 / maskable / apple-touch)
 │   ├── manifest.webmanifest       # Web App Manifest
-│   ├── og-image-2.png             # SNS 共有用カード画像 (1200×630)
+│   ├── og-image-3.png             # SNS 共有用カード画像 (1200×630)
 │   └── THIRD_PARTY_NOTICES.txt    # Lucide の ISC 表記。ライセンスページから開く
 ├── og/                            # 共有カードのソース。ビルド対象ではない
 │   ├── og-card.html               # カード本体。再生成の手順は冒頭のコメント

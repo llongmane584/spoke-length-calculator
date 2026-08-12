@@ -89,7 +89,7 @@ const shareQuery = (fragment: string): string => {
 
 /**
  * 現在の URL の fragment だけを共有用に差し替える。
- * origin / pathname / search は保持する —— base が `/spoke-length-calculator/` の
+ * origin / pathname / search は保持する —— base が `/the-spoke-calculator/` の
  * サブパス配信なので、組み立て直すと配置場所を二重に持つことになる。
  */
 export const buildShareUrl = (currentUrl: string, values: Record<string, string>): string => {
