@@ -703,7 +703,9 @@ const BAND_FULL_WIDE = { pad: 1.5, headingLine: 1.75, headingGap: 1, gridMin: 5,
 // 高さが全区間で gridMin 側で決まるようにしてある。こうすると帯の高さが --dock の
 // 一次関数になり、DOCK_ABSORB で変形距離を詰めても不変条件を保てる。
 // 逆にここが 0 のままだと高さは折れ線になり、着地直前の変化率が跳ね上がる。
-// 狭い画面で文字を大きくすると数値が 2 行になり、この関係が崩れる場合がある (#157)。
+// 狭い画面で文字を大きくすると数値が 2 行になり、この関係は崩れる。崩れても
+// スペーサーは帯の実高に追従するので文書の高さは動かない (#157) が、
+// 一次関数でいられるほうが変形は素直なので、この値は保つ。
 //
 // 見出しとラベルの畳み方は下の ResultBand / ResultBandValue を参照。
 // どちらも「見えている間は切り落とさない」ことを守る。
@@ -794,15 +796,23 @@ const dockFadeOutIn = (range: readonly [number, number]): string => `calc(1 - ${
 // 同じ語が別の行へ飛び移って見える)。
 //
 // 幅の指定は本来の姿では 100% = 何も拘束しない。縮むのは変形中だけ。
+//
+// 下限 (`--dock-text-floor`) は useDockMorph が実測して書く。ブラウザの最小フォント
+// サイズ設定が効いていると、字面はそれ以上小さくならないのに箱だけが狭まり、
+// 折り返しが増えて帯が本来の姿より膨らむ (#157)。使う文字サイズが
+// max(下限, 指定サイズ) なら箱も同じ形にすればよい、という対応関係。
+// 設定が無ければ下限は 0 に近い値になり、max() は素通しになる。
+// 対になる要素には data-dock-text を付けること —— フックはそれを目印に測る。
 const dockTextBox = (from: number, to: number): string =>
-  `calc(100% * (1 - ${Number(((from - to) / from).toFixed(6))} * ${dockVar}))`;
+  `calc(100% * max(var(--dock-text-floor, 0), 1 - ${Number(((from - to) / from).toFixed(6))} * ${dockVar}))`;
 
 // 帯の姿の寸法と、ドック度合いを測るための比。
 const bandMetrics = (isCompactViewport: boolean) => {
   const full = isCompactViewport ? BAND_FULL_NARROW : BAND_FULL_WIDE;
   // 本来の姿での高さ
   const fullHeight = full.pad * 2 + full.headingLine + full.headingGap + full.gridMin;
-  // 帯が縮むことで吸収する量
+  // 帯が縮むことで吸収する量。スペーサーの高さは実測から書かれるので (#157)、
+  // これはフックが動いていないときのフォールバックとしてだけ使う
   const travel = fullHeight - BAND_COMPACT_HEIGHT;
 
   // 変形が完了するまでのスクロール距離を、本来の高さに対する比で持つ。
@@ -860,13 +870,14 @@ const ResultBand: React.FC<{
   leftLabel: string;
   rightLabel: string;
   isCompactViewport: boolean;
-  slotEndRef: React.RefObject<HTMLDivElement | null>;
-}> = ({ results, heading, placeholder, leftLabel, rightLabel, isCompactViewport, slotEndRef }) => {
+  bandRef: React.RefObject<HTMLDivElement | null>;
+}> = ({ results, heading, placeholder, leftLabel, rightLabel, isCompactViewport, bandRef }) => {
   const { full, travel } = bandMetrics(isCompactViewport);
 
   return (
     <>
       <div
+        ref={bandRef}
         style={{
           paddingTop: dockRem(full.pad, BAND_COMPACT.pad),
           // 下端にドックしている間はホームインジケータを避ける。畳んだ余白より
@@ -904,6 +915,7 @@ const ResultBand: React.FC<{
               被らないようにするため。箱が headingLine の想定を超えても着地位置は
               狂わない —— useDockMorph は本来の下端を DOM から実測している (#155)。 */}
           <h2
+            data-dock-text
             style={{
               fontSize: dockRem(BAND_HEADING_FONT, 0),
               lineHeight: full.headingLine / BAND_HEADING_FONT,
@@ -932,6 +944,7 @@ const ResultBand: React.FC<{
                text-balance はそれを超えて折り返したときの保険で、1 行なら何も起きない。
                見出しが直上に「計算結果」と出ているので、ここで繰り返さなくてよい。 */
             <p
+              data-dock-text
               style={{
                 fontSize: dockRem(full.label, BAND_COMPACT.label),
                 width: dockTextBox(full.label, BAND_COMPACT.label),
@@ -948,12 +961,12 @@ const ResultBand: React.FC<{
           シート以下・文書全体・スクロール可能範囲の高さが変わらない。再レイアウトは帯の
           内部に閉じ、保存欄や比較パネルの再配置とスクロール範囲の再計算が消える。
           ドック中は帯の本来の下端が必ず画面下端より下にあるので、ここが見えることはない。
-          ここの変形量は rem 定数なので、狭い画面で文字を大きくして帯の実際の変形量が
-          モデルからずれると合計が一定でなくなる (ドック中だけ文書が数十 px 伸縮する)。
-          着地位置は実測なので狂わないが、この揺れ自体は #157 で残っている。
-          ref はドック度合いの計測のため —— sticky で引き上げられる帯と違い、ここは
-          流れの中に留まるので、下端が「帯の本来の下端」を表す (useDockMorph) */}
-      <div ref={slotEndRef} aria-hidden="true" style={{ height: dockRem(0, travel) }} />
+          高さは --dock からの計算ではなく、useDockMorph が実測から書く px 値で受ける
+          (本来の高さ - 帯の実高)。rem 定数で持っていた頃は、狭い画面で文字を大きくして
+          帯の実際の変形量がモデルからずれると合計が一定でなくなり、ドック中だけ文書が
+          数十 px 伸縮していた (#157)。フォールバックの calc() は旧来のモデルそのもので、
+          フックが動いていないときだけ効く */}
+      <div aria-hidden="true" style={{ height: `var(--band-spacer, ${dockRem(0, travel)})` }} />
     </>
   );
 };
@@ -986,7 +999,12 @@ const ResultBandValue: React.FC<{
         maxHeight: dockRemIn(LABEL_BOX_MAX, 0, LABEL_COLLAPSE),
         opacity: dockFadeOutIn(LABEL_FADE),
       }}
-      className="overflow-hidden font-medium text-fg-muted"
+      // overflow は切らない。箱が中身より小さくなるのは (a) 不透明度が 0 になった後の
+      // max-height 畳み —— 見えないので切る意味がない —— と、(b) ブラウザの最小フォント
+      // サイズ設定が字面だけを持ち上げた場合の 2 つだけ。(b) で切ると、文字を大きくして
+      // いる利用者にだけラベルが欠けて見える (最小フォント 24px で 6px 欠けていた #157)。
+      // 老眼対応の逆になるので、はみ出させて読ませるほうを採る
+      className="font-medium text-fg-muted"
     >
       {label}
     </h3>
@@ -1220,8 +1238,8 @@ const SpokeLengthCalculator: React.FC = () => {
   // 結果帯の直前の要素。帯は sticky で自分の位置から自分の状態を決められないので、
   // ドック度合いはこの下端 (= 帯の本来の上端) を測って決める
   const inputSectionRef = useRef<HTMLDivElement>(null);
-  // 結果帯の直後のスペーサー。その下端が帯の本来の下端になる
-  const bandSlotEndRef = useRef<HTMLDivElement>(null);
+  // 結果帯そのもの。本来の姿の高さと、ドック中に画面下端を覆っている高さを実測する
+  const bandRef = useRef<HTMLDivElement>(null);
   // ドック度合い (--dock) の書き込み先。帯だけでなくシート内の兄弟にも継承させたいので、
   // 帯自身ではなくシートに置く
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -1234,7 +1252,7 @@ const SpokeLengthCalculator: React.FC = () => {
   // 子側で呼ぶと祖先 (シート) の ref がまだ null で、フックが何もせずに抜けてしまう (#62)。
   const bandDock = bandMetrics(isCompactViewport);
 
-  useDockMorph(inputSectionRef, sheetRef, bandSlotEndRef, bandDock.morphRatio);
+  useDockMorph(inputSectionRef, bandRef, sheetRef, bandDock.morphRatio);
 
   const calculation = useMemo(() => getCalculationState(inputs), [inputs]);
   const currentResults = calculation.results;
@@ -1973,7 +1991,7 @@ const SpokeLengthCalculator: React.FC = () => {
         leftLabel={resultsLeftText}
         rightLabel={resultsRightText}
         isCompactViewport={isCompactViewport}
-        slotEndRef={bandSlotEndRef}
+        bandRef={bandRef}
       />
 
       {/* 計算結果に対してできることは、この 1 行にすべて集約する (#102)。

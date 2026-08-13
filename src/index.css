@@ -187,14 +187,16 @@
     border-color: var(--color-line);
   }
 
-  /* 画面下端にドックしている結果帯 (簡易表示で 2.875rem + border 1px) の裏にフォーカスが
-     潜らないように。Tab 移動と Android のソフトキーボードで、ブラウザが自動スクロール
-     する先を押し上げる。値の出所は CalculatorPage.tsx の BAND_COMPACT。rem で持つのは
-     帯の高さも rem だから —— ブラウザの文字サイズ設定で帯が伸びれば、ここも一緒に伸びる。
-     ただし狭い画面で文字を大きくすると簡易表示の中で数値が折り返し、実高がここを
-     超えることがある (#157)。 */
+  /* 画面下端にドックしている結果帯の裏にフォーカスが潜らないように。Tab 移動と
+     Android のソフトキーボードで、ブラウザが自動スクロールする先を押し上げる。
+     値は useDockMorph が帯の実高から書く (--band-cover)。ドックしていない間は 0px、
+     つまり帯が実際に覆っているぶんだけ押し上げる。
+     rem 定数だった頃は、狭い画面で文字を大きくすると簡易表示の中で数値が折り返して
+     実高が定数を超え、入力欄が帯の裏に隠れることがあった (#157)。
+     フォールバックの 3rem は簡易表示のモデル値 (CalculatorPage.tsx の BAND_COMPACT)。
+     計算機の画面以外や、フックが動く前の一瞬はこちらが効く。 */
   html {
-    scroll-padding-bottom: 3rem;
+    scroll-padding-bottom: var(--band-cover, 3rem);
   }
 
   /* v4 の preflight は button の cursor を default にする。v3 の挙動に戻す。 */
