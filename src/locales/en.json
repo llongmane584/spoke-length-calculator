@@ -255,6 +255,9 @@
       "backToChangelog": "Back to the changelog",
       "empty": "There are no changes recorded for this year.",
       "releases": {
+        "v0_2_1": {
+          "notes": "The results bar now follows your browser's font size settings, like the rest of the app.\nText in the results bar no longer wraps or gets clipped when it is enlarged.\nThe results bar no longer floats above the bottom edge, and inputs no longer hide behind it."
+        },
         "v0_2_0": {
           "notes": "Renamed the app to The Spoke Calculator and set its typeface to Sora.\nThe app now lives at /the-spoke-calculator/.\nWheel comparison can use your current inputs without saving them first.\nModals fade in and out, and the page behind them no longer scrolls.\nPreset options wrap so they stay readable on a phone, and screen rotation follows the device setting."
         },
