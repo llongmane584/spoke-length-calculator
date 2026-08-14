@@ -12,6 +12,7 @@ import { Modal } from '../components/Modal';
 import { SaveDialog } from '../components/SaveDialog';
 import { MtbHubIcon } from '../components/icons/MtbHubIcon';
 import CompareWheels, { type WheelOption } from '../components/CompareWheels';
+import { NumberInput } from '../components/NumberInput';
 import { SegmentedControl, type SegmentedOption } from '../components/SegmentedControl';
 import { PresetSelect, type PresetSelectGroup } from '../components/PresetSelect';
 import { btnIcon, btnSecondaryIcon, sectionHeadingIcon } from '../styles';
@@ -636,16 +637,6 @@ if (INITIAL_SAVED_CALCULATIONS.status !== 'ok') {
   );
 }
 
-const getControlClassName = (hasError: boolean, className?: string): string => (
-  [
-    'w-full px-3 py-2 border rounded-md bg-surface text-fg tabular-nums placeholder:text-fg-subtle transition-colors focus-visible:outline-2 focus-visible:outline-offset-2',
-    hasError
-      ? 'border-danger-line bg-danger-soft focus-visible:outline-danger'
-      : 'border-line-strong focus-visible:outline-focus',
-    className || '',
-  ].join(' ')
-);
-
 const FieldError: React.FC<{ id: string; message?: string }> = ({ id, message }) => {
   const hasMessage = message !== undefined;
 
@@ -1077,133 +1068,6 @@ const FieldGroup: React.FC<{
         <div className="space-y-4">{children}</div>
       </div>
     </div>
-  );
-};
-
-// Regular number input component
-interface NumberInputProps {
-  id: string;
-  value: string;
-  onChange: (value: string) => void;
-  onBlur?: () => void;
-  step: number;
-  min?: number;
-  max?: number;
-  error?: string;
-  describedBy?: string;
-  placeholder?: string;
-  className?: string;
-}
-
-const NumberInput: React.FC<NumberInputProps> = ({
-  id,
-  value,
-  onChange,
-  onBlur,
-  step,
-  min,
-  max,
-  error,
-  describedBy,
-  placeholder,
-  className,
-}) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-
-    // Allow empty string as is
-    if (newValue === '') {
-      onChange(newValue);
-      return;
-    }
-
-    // Allow just decimal point (during input)
-    if (newValue === '.') {
-      onChange(newValue);
-      return;
-    }
-
-    // Allow decimal point at the end of number (e.g., "2.")
-    if (newValue.endsWith('.') && !isNaN(parseFloat(newValue.slice(0, -1)))) {
-      onChange(newValue);
-      return;
-    }
-
-    const numValue = parseFloat(newValue);
-
-    // Reject changes if not a number
-    if (isNaN(numValue)) {
-      return;
-    }
-
-    onChange(newValue);
-  };
-
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const currentValue = e.target.value;
-    onBlur?.();
-
-    // Do nothing for empty string or decimal point only
-    if (currentValue === '' || currentValue === '.') {
-      return;
-    }
-
-    const numValue = parseFloat(currentValue);
-
-    // When valid as number and step is 0.1 (for Spoke Hole Diameter)
-    if (!isNaN(numValue) && step === 0.1) {
-      // Display to 1 decimal place
-      onChange(numValue.toFixed(1));
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Allow numbers, decimal point, backspace, delete, arrow keys, tab and other control keys
-    const allowedKeys = [
-      'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
-      'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
-      'Home', 'End'
-    ];
-
-    if (allowedKeys.includes(e.key)) {
-      return;
-    }
-
-    // Allow shortcuts like Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
-    if (e.ctrlKey || e.metaKey) {
-      return;
-    }
-
-    // Reject anything other than numbers and decimal point
-    if (!/^[0-9.]$/.test(e.key)) {
-      e.preventDefault();
-      return;
-    }
-
-    // Check for duplicate decimal points
-    if (e.key === '.' && value.includes('.')) {
-      e.preventDefault();
-      return;
-    }
-
-  };
-
-  return (
-    <input
-      id={id}
-      type="number"
-      step={step}
-      min={min}
-      max={max}
-      value={value}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
-      aria-invalid={error !== undefined}
-      aria-describedby={error !== undefined ? `${id}-error` : describedBy}
-      className={getControlClassName(error !== undefined, className)}
-      placeholder={placeholder}
-    />
   );
 };
 
@@ -1765,6 +1629,7 @@ const SpokeLengthCalculator: React.FC = () => {
                 </div>
                 <NumberInput
                   id="erd"
+                  label={t('input.erd')}
                   value={inputs.erd}
                   onChange={(value) => handleInputChange('erd', value)}
                   onBlur={() => markFieldTouched('erd')}
@@ -1783,6 +1648,7 @@ const SpokeLengthCalculator: React.FC = () => {
                 </div>
                 <NumberInput
                   id="rimOffset"
+                  label={t('input.rimOffset')}
                   value={inputs.rimOffset}
                   onChange={(value) => handleInputChange('rimOffset', value)}
                   onBlur={() => markFieldTouched('rimOffset')}
@@ -1824,6 +1690,7 @@ const SpokeLengthCalculator: React.FC = () => {
                 </div>
                 <NumberInput
                   id="pitchCircleLeft"
+                  label={t('input.pcdLeft')}
                   value={inputs.pitchCircleLeft}
                   onChange={(value) => handleInputChange('pitchCircleLeft', value)}
                   onBlur={() => markFieldTouched('pitchCircleLeft')}
@@ -1842,6 +1709,7 @@ const SpokeLengthCalculator: React.FC = () => {
                 </div>
                 <NumberInput
                   id="pitchCircleRight"
+                  label={t('input.pcdRight')}
                   value={inputs.pitchCircleRight}
                   onChange={(value) => handleInputChange('pitchCircleRight', value)}
                   onBlur={() => markFieldTouched('pitchCircleRight')}
@@ -1863,6 +1731,7 @@ const SpokeLengthCalculator: React.FC = () => {
                 </div>
                 <NumberInput
                   id="flangeDistanceLeft"
+                  label={t('input.flangeDistanceLeft')}
                   value={inputs.flangeDistanceLeft}
                   onChange={(value) => handleInputChange('flangeDistanceLeft', value)}
                   onBlur={() => markFieldTouched('flangeDistanceLeft')}
@@ -1881,6 +1750,7 @@ const SpokeLengthCalculator: React.FC = () => {
                 </div>
                 <NumberInput
                   id="flangeDistanceRight"
+                  label={t('input.flangeDistanceRight')}
                   value={inputs.flangeDistanceRight}
                   onChange={(value) => handleInputChange('flangeDistanceRight', value)}
                   onBlur={() => markFieldTouched('flangeDistanceRight')}
@@ -1901,6 +1771,7 @@ const SpokeLengthCalculator: React.FC = () => {
               </div>
               <NumberInput
                 id="spokeHoleDiameter"
+                label={t('input.spokeHoleDiameter')}
                 value={inputs.spokeHoleDiameter}
                 onChange={(value) => handleInputChange('spokeHoleDiameter', value)}
                 onBlur={() => markFieldTouched('spokeHoleDiameter')}

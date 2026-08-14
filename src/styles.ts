@@ -173,6 +173,40 @@ export const dismissOpenPicker = (event: PointerEvent<HTMLSelectElement>) => {
   }
 };
 
+/**
+ * 数値入力欄。右端にステッパーを重ねるぶんの余白 (pr-20) を最初から持つ。
+ *
+ * ステッパーは欄の外に生やさない。欄の左右にボタンを置くと、行の幅を 3 つで
+ * 分け合うことになって入力欄そのものが痩せ、フォームの縦の線も崩れる。
+ * ボックスの外形は据え置いて、中の余白にだけ寝かせる。
+ *
+ * ステッパーはフォーカス中しか出ないが、余白は出したり引っ込めたりしない。
+ * フォーカスのたびに右 padding が動くと、値のほうが動いていないのに欄の中で
+ * 文字の折り返し位置が変わる。空欄のプレースホルダーが一番長い欄
+ * (ERD の "Effective Rim Diameter") でも pr-20 のまま収まることは実測済み。
+ */
+export const getNumberInputClassName = (hasError: boolean, className?: string): string => (
+  [
+    'w-full py-2 pl-3 pr-20 border rounded-md bg-surface text-fg tabular-nums placeholder:text-fg-subtle transition-colors focus-visible:outline-2 focus-visible:outline-offset-2',
+    hasError
+      ? 'border-danger-line bg-danger-soft focus-visible:outline-danger'
+      : 'border-line-strong focus-visible:outline-focus',
+    className || '',
+  ].join(' ')
+);
+
+/**
+ * 数値入力欄の中に寝かせるステッパー。36 段のゴースト。
+ *
+ * btnGhost をそのまま使わないのは、欄の中では文字と同じ面に載るため
+ * 既定の text-fg-muted では値と張り合ってしまうから。一段落とした
+ * text-fg-subtle から始めて、触れたときだけ前へ出す。
+ */
+export const stepperGhost =
+  `${ghostIconBox} rounded-md text-fg-subtle transition-colors hover:bg-sunken hover:text-fg ` +
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ' +
+  'disabled:pointer-events-none disabled:text-fg-subtle/40';
+
 const selectBase =
   'w-full min-h-11 rounded-md border border-line-strong bg-surface py-2 pl-3 text-fg ' +
   'transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus';
