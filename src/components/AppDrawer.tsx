@@ -65,7 +65,13 @@ export function AppDrawer({ isOpen, onClose }: AppDrawerProps) {
   const titleId = useId()
   const languageId = useId()
   const closeButtonRef = useRef<HTMLButtonElement>(null)
-  const { dialogRef, zIndex } = useDialogLayer(isOpen, onClose, closeButtonRef)
+  // 閉じるときにスクロール位置を戻さない。ここのリンクは遷移を伴い、遷移先では
+  // PageShell が window.scrollTo(0, 0) を呼ぶので、戻すとその後から前のページの
+  // 位置へ引き戻すことになる。戻す必要があるのはソフトキーボードでルートが
+  // 動かされるダイアログのほうで (#160)、ドロワーには入力欄がない。
+  const { dialogRef, zIndex } = useDialogLayer(isOpen, onClose, closeButtonRef, {
+    restoreScroll: false,
+  })
 
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang)
