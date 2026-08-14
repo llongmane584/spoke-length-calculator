@@ -36,6 +36,8 @@
     "crossingsRight": "Crossings [R]",
     "radialLacing": "0 (Radial Lacing)",
     "crossingsRadialHint": "0 = radial lacing",
+    "stepUp": "Increase {{label}}",
+    "stepDown": "Decrease {{label}}",
     "group": {
       "rim": "Rim",
       "hub": "Hub",
