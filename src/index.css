@@ -98,13 +98,15 @@
   --color-overlay-line: var(--color-line);
 
   /* Sora に CJK グリフは無いのでグリフ単位のフォールバックが働く:
-     ラテンと数字は Sora、かな漢字と全角約物は Noto Sans JP。
+     ラテンと数字は Sora、かな漢字と全角約物は M PLUS 2。
      これで :lang(ja) 別指定が不要になる。
-     Sora を先頭に置く実利は tabular-nums —— Noto Sans JP のラテン数字は
-     tnum の挙動が一貫しないが Sora は素直で、lang に関係なく桁が揃う。
-     Chromium で実測 (40px、数字 1 文字の送り幅): 指定なしだと 16.813–29.734 と
-     ばらつくが、tabular-nums で全桁 27.047 に揃う。 */
-  --font-sans: "Sora", "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
+     Sora を先頭に置く実利は tabular-nums —— 数字を Sora に描かせれば lang に
+     関係なく桁が揃う。Chromium で実測 (40px、数字 1 文字の送り幅): 指定なしだと
+     16.813–29.734 とばらつくが、tabular-nums で全桁 27.047 に揃う。
+     この順序は入れ替えられない。M PLUS 2 のラテン数字に tnum は無く、
+     tabular-nums を指定しても揃わないため (400px で 253.203–253.609)。
+     裏を返すと Sora の読み込みが落ちた場合だけ、数字がわずかにばらつく。 */
+  --font-sans: "Sora", "M PLUS 2", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 }
 
