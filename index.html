@@ -8,10 +8,14 @@
   <link rel="apple-touch-icon" href="%BASE_URL%icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <!-- Sora はラテンと数字、Noto Sans JP は CJK を担当する。1 リクエストにまとめる。
-       Sora は可変フォント (400..700) なのでウェイト分のファイルは増えない。 -->
+  <!-- Sora はラテンと数字、M PLUS 2 は CJK を担当する。1 リクエストにまとめる。
+       どちらも可変フォントなのでウェイト分のファイルは増えない。ウェイトごとに
+       静的ファイルが要る Noto Sans JP とはここが違い、subset スライス 1 枚につき
+       woff2 は 1 本で済む (同じ和文を描くのに要るスライスの実測で 68 → 17)。
+       範囲が 400..600 なのはアプリが使うのがそこまでだから。font-medium (500) と
+       font-semibold (600) どまりで、<strong> も font-bold も無い。 -->
   <link
-    href="https://fonts.googleapis.com/css2?family=Sora:wght@400..700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Sora:wght@400..600&family=M+PLUS+2:wght@400..600&display=swap"
     rel="stylesheet" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- src/index.css の --color-page と一致させる (petrol の oklch(0.985 0.006 205) /
