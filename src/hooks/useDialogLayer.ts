@@ -26,17 +26,23 @@ const Z_STEP = 10;
 // 覆う要素自身を overscroll-behavior: contain のスクロールコンテナにして止める
 // (Modal.tsx と AppDrawer.tsx の一番外側)。保険の重ね掛けではなく担当が違う。
 //
-// position: fixed で body を流れから外す iOS 定番の手は採らない —— スクロール位置を
-// JS で復元することになり、ドロワーのリンクで遷移したときに PageShell の
-// window.scrollTo(0, 0) と順番を争う。結果帯が position: sticky なのも噛み合わない。
-// overflow: hidden はレイアウトを変えずに止まるので、戻す作業そのものが要らない。
+// position: fixed で body を流れから外す iOS 定番の手は採らない —— レイアウトを
+// 変えずに止まる overflow: hidden と違い、結果帯の position: sticky と噛み合わない。
+//
+// ただし overflow: hidden が止めるのは利用者の操作だけで、プログラム的なスクロールは
+// 素通りする。Android のソフトキーボードはフォーカス中の入力を見せるために
+// スクロール可能な祖先をすべて送るので、覆っている間にルートだけが動かされる ——
+// scrim は position: fixed なので見た目は変わらず、閉じて overflow を戻した瞬間に
+// ずれが出る (#160)。iOS で起きないのは、あちらのキーボードがビジュアルビューポートを
+// パンするだけでルートのスクロール位置に触らないため。
+// なので位置を控えて、解除するときに戻す (下の restoreScroll)。
 //
 // 数えるのは開いている枚数。真偽値だと、保存ダイアログの上の削除確認を閉じた時点で
 // 背景が動き出す。
 let lockCount = 0;
 let unlock: (() => void) | null = null;
 
-const lockBackgroundScroll = (): void => {
+const lockBackgroundScroll = (restoreScroll: boolean): void => {
   lockCount += 1;
 
   if (lockCount > 1) return;
@@ -48,6 +54,7 @@ const lockBackgroundScroll = (): void => {
   const scrollbarWidth = window.innerWidth - root.clientWidth;
   const previousOverflow = root.style.overflow;
   const previousPaddingRight = root.style.paddingRight;
+  const previousScrollY = window.scrollY;
 
   root.style.overflow = 'hidden';
 
@@ -56,6 +63,16 @@ const lockBackgroundScroll = (): void => {
   }
 
   unlock = () => {
+    // 戻すのは overflow を戻すより先。まだ覆っているうちに動かすので、位置が飛ぶ
+    // ところは誰の目にも入らない。overflow: hidden の間もプログラム的スクロールは
+    // 効くので、先に戻せないということもない。
+    //
+    // キーボードがまだ出ていて画面が縮んでいても行き先は切り詰められない ——
+    // 縮んでいる間はスクロールできる幅が広がるほうなので、控えた位置は必ずその中にある。
+    if (restoreScroll && window.scrollY !== previousScrollY) {
+      window.scrollTo(0, previousScrollY);
+    }
+
     root.style.overflow = previousOverflow;
     root.style.paddingRight = previousPaddingRight;
   };
@@ -70,6 +87,18 @@ const unlockBackgroundScroll = (): void => {
   unlock = null;
 };
 
+interface DialogLayerOptions {
+  /**
+   * 閉じるときにルートのスクロール位置を開く前へ戻すか。既定は戻す。
+   *
+   * リンクで遷移するもの (ドロワー) だけ false にする —— 遷移先で PageShell が
+   * window.scrollTo(0, 0) を呼ぶので、戻すとその後から前のページの位置へ引き戻し、
+   * 遷移先のページを途中から見せることになる。ドロワーはキーボードを呼ぶ入力欄を
+   * 持たないので、そもそも戻す必要がない。
+   */
+  restoreScroll?: boolean;
+}
+
 interface DialogLayer {
   /** 覆う本体に付ける ref。Tab の輪もフォーカスの落としどころもこの中で決まる。 */
   dialogRef: RefObject<HTMLDivElement | null>;
@@ -82,11 +111,13 @@ interface DialogLayer {
  * @param onClose Escape で呼ぶもの。毎レンダリングで別の関数を渡してよい ——
  *   下の ref 経由で読むので、識別子が変わっても登録はやり直さない。
  * @param initialFocusRef 開いた直後にフォーカスする要素。空のときは本体へ移す。
+ * @param options 既定から外すぶんだけ渡す。中身は DialogLayerOptions を参照。
  */
 export const useDialogLayer = (
   isOpen: boolean,
   onClose: () => void,
   initialFocusRef?: RefObject<HTMLElement | null>,
+  { restoreScroll = true }: DialogLayerOptions = {},
 ): DialogLayer => {
   const dialogRef = useRef<HTMLDivElement>(null);
   const [depth, setDepth] = useState(0);
@@ -112,7 +143,7 @@ export const useDialogLayer = (
     const token = Symbol('dialog');
     openDialogs.push(token);
     setDepth(openDialogs.length - 1);
-    lockBackgroundScroll();
+    lockBackgroundScroll(restoreScroll);
 
     const handleKeyDown = (event: KeyboardEvent) => {
       // 最前面でなければ何もしない。下の 1 枚が上の 1 枚の代わりに反応しないため
@@ -150,7 +181,7 @@ export const useDialogLayer = (
       openDialogs.splice(openDialogs.indexOf(token), 1);
       unlockBackgroundScroll();
     };
-  }, [isOpen]);
+  }, [isOpen, restoreScroll]);
 
   // フォーカスの出入り。開いた瞬間に中へ移し、閉じたら開く前の場所へ返す。
   // 上と分けてあるのは、購読の張り直しに引きずられて、利用者が中で選んだ場所から
