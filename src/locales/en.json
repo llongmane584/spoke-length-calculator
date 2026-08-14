@@ -257,6 +257,9 @@
       "backToChangelog": "Back to the changelog",
       "empty": "There are no changes recorded for this year.",
       "releases": {
+        "v0_3_0": {
+          "notes": "Tapping a number field now shows stepper buttons inside it, so you can adjust a value without retyping it.\nPasting into a number field no longer wipes the value, and scrolling the wheel over a focused field no longer changes it.\nThe decimal point key now appears on phone keyboards, so decimals can be entered in any field.\nThe Japanese typeface is now M PLUS 2. It matches Sora used for Latin text, and loads less font data.\nClosing a dialog on Android no longer leaves the page behind it scrolled out of place."
+        },
         "v0_2_1": {
           "notes": "The results bar now follows your browser's font size settings, like the rest of the app.\nText in the results bar no longer wraps or gets clipped when it is enlarged.\nThe results bar no longer floats above the bottom edge, and inputs no longer hide behind it."
         },
