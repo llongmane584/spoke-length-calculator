@@ -226,8 +226,33 @@
   transition: transform 240ms linear;
 }
 
+/* 横のジェスチャーは useSwipeToClose が受けるので、ブラウザには渡さない。
+   渡すと、閉じる向きのスワイプがそのまま「進む/戻る」のオーバースクロール操作になり、
+   ドラッグは pointercancel で切られ、ページごと履歴を戻ってしまう
+   (Chromium でタッチ実機 / CDP の実タッチ注入の両方で再現)。
+   縦はメニューの列を送るために残す。pinch-zoom を並べるのは、pan-y だけだと
+   パネルの上で拡大できなくなるため —— 値を解さないブラウザは 2 行目を捨てて
+   1 行目のまま動く。
+
+   子孫にも掛けるのが要点。touch-action は継承しない上に、指が載った要素からの
+   遡りはスクロールコンテナで止まる —— パネルにだけ書くと、実際に触れるのが中の
+   nav (overflow-y: auto) なので宣言が届かない。将来スクロールする箱が増えても
+   落ちないよう、要素を名指しせず子孫すべてに掛ける。 */
+.drawer-panel-motion,
+.drawer-panel-motion * {
+  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
+}
+
 .drawer-panel-motion[data-state='open'] {
   transform: translateX(0);
+}
+
+/* 指でつまんでいる間だけ尺を持たない。transition が残っていると 240ms 遅れて
+   付いてくるので、指と離れて見える。位置は useSwipeToClose がインラインの
+   transform で直に書く (インラインは上の 2 つより強い)。 */
+.drawer-panel-motion[data-dragging] {
+  transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

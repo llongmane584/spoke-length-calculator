@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router'
 import { APP_VERSION } from '../changelog'
 import { useDialogLayer } from '../hooks/useDialogLayer'
+import { useSwipeToClose } from '../hooks/useSwipeToClose'
 import { useTheme } from '../hooks/useTheme'
 import {
   btnGhost,
@@ -57,6 +58,10 @@ interface AppDrawerProps {
  * 開閉は CSS の transform だけで横にスライドする。閉じるときも同じ軌道を逆向きに
  * 辿れるよう、閉じた直後にはアンマウントしない。動きを望まない環境では CSS 側の
  * prefers-reduced-motion で即時切替になる。
+ *
+ * その軌道は指でも辿れる —— 出てきた向きの逆 (右) へスワイプすると閉じる
+ * (useSwipeToClose)。ただし画面の左右の端から始めたスワイプは受けない。閉じる向きは
+ * iOS / Android の「戻る」ジェスチャーと同じ向きで、端は OS の領分だから。
  */
 export function AppDrawer({ isOpen, onClose }: AppDrawerProps) {
   const { t, i18n } = useTranslation()
@@ -72,6 +77,7 @@ export function AppDrawer({ isOpen, onClose }: AppDrawerProps) {
   const { dialogRef, zIndex } = useDialogLayer(isOpen, onClose, closeButtonRef, {
     restoreScroll: false,
   })
+  const swipeHandlers = useSwipeToClose(dialogRef, isOpen, onClose)
 
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang)
@@ -111,6 +117,7 @@ export function AppDrawer({ isOpen, onClose }: AppDrawerProps) {
           aria-modal="true"
           aria-labelledby={titleId}
           data-state={isOpen ? 'open' : 'closed'}
+          {...swipeHandlers}
           className="drawer-panel-motion ml-auto flex h-full w-full flex-col bg-surface shadow-lg focus:outline-none sm:max-w-[19.2rem] sm:border-l sm:border-line"
         >
           <div className="flex flex-none items-center justify-between gap-4 border-b border-line px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-8">
