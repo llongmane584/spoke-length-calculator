@@ -257,6 +257,9 @@
       "backToChangelog": "Back to the changelog",
       "empty": "There are no changes recorded for this year.",
       "releases": {
+        "v0_4_0": {
+          "notes": "The menu can now be closed by swiping it back the way it came in.\nThe left and right screen edges are left to the device's own back gesture, so start the swipe a little inside them."
+        },
         "v0_3_0": {
           "notes": "Tapping a number field now shows stepper buttons inside it, so you can adjust a value without retyping it.\nPasting into a number field no longer wipes the value, and scrolling the wheel over a focused field no longer changes it.\nThe decimal point key now appears on phone keyboards, so decimals can be entered in any field.\nThe Japanese typeface is now M PLUS 2. It matches Sora used for Latin text, and loads less font data.\nClosing a dialog on Android no longer leaves the page behind it scrolled out of place."
         },
